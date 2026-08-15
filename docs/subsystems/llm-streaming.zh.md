@@ -213,7 +213,7 @@ interface LlmFailure {
 - **一次适配器调用就是一次提供方尝试。** 适配器禁用库重试。agent 层恢复会打开另一个持久、带编号的轮次；直接调用 `ctx.llm.stream()` 的调用方仍然只尝试一次。
 - **提供方停顿在传输层受到时限约束。** 两个已交付的远程适配器都暴露正数且有限的 `streamIdleTimeoutMs`，默认五分钟。watchdog 只在 iterator `next()` 尚未完成时启动，整个请求使用同一个稳定 signal，把自身到期映射为 `TIMEOUT`，并把更早发生的调用方中止保留为 `ABORTED`。
 - **上下文溢出只有一个规范 code。** 两个 DeepSeek 适配器都通过 `isContextWindowExceededError()` 对提供方的显式细节分类并暴露 `CONTEXT_WINDOW_EXCEEDED`，无论失败以抛出的 HTTP `LlmError` 还是带内 finish error 到达。消费方按 code 路由，绝不依赖提供方文本。
-- **空 completion 是可重试错误，而不是静默的成功结果。** 两个适配器都把没有携带任何内容块的终止性 `stop` 结束映射为携带规范 `EMPTY_RESPONSE` code 的 `finish {kind:'error'}`，`dsh-llm-retry` 默认会重试它；详见[空模型响应可重试](../../.agents/notes/implemented/bug-fix/2026-07-24-empty-model-response-is-retryable.md)。
+- **空 completion 是可重试错误，而不是静默的成功结果。** 两个适配器都把没有携带任何内容块的终止性 `stop` 结束映射为携带规范 `EMPTY_RESPONSE` code 的 `finish {kind:'error'}`，`lasmex-llm-retry` 默认会重试它；详见[空模型响应可重试](../../.agents/notes/implemented/bug-fix/2026-07-24-empty-model-response-is-retryable.md)。
 - **每个提供方 HTTP 请求都携带应用归属头。** 适配器发送 `attributionHeaders()`（见下文）作为 `User-Agent` 基线，并通过协议级测试加以证明。
 - **回放状态归适配器所有。** 成功的 `finish` 可以携带重建提供方原生响应所需的无损 JSON 状态。循环会将其与组装后的 assistant 消息一起存储。后续请求中，仅当历史提供方与目标提供方当前注册到完全相同的适配器实例时，`LlmRuntime` 才会传递该状态。该适配器负责校验状态并拥有所有跨模型或跨提供方转换；其他适配器只会收到提供方无关的内容以及提供方／模型字段，不会收到私有状态。
 
@@ -223,7 +223,7 @@ interface LlmFailure {
 
 ## `AppIdentity`：应用归属
 
-每个适配器都会向提供方发送的静态公开应用标识（[`packages/llm/llm/src/attribution.ts`](../../packages/llm/llm/src/attribution.ts)）。`attributionHeaders(identity?)` 只把它映射到标准 `User-Agent` header；该约定有意不支持 OpenRouter 特有的应用归属 header。默认 `APP_IDENTITY` 从包 manifest（元数据清单）获取版本；每个字段都是公开产品事实——不含 secret、路径、会话 id 或逐用户标识，且任何逐请求信息都不得影响这些值。设计理由见[强制 `User-Agent` 归属](../../.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md)。
+每个适配器都会向提供方发送的静态公开应用标识（[`packages/llm/llm/src/attribution.ts`](../../packages/llm/llm/src/attribution.ts)）。`attributionHeaders(identity?)` 只把它映射到标准 `User-Agent` header；该约定有意不支持 OpenRouter 特有的应用归属 header。默认 `APP_IDENTITY` 标识 LasmeX，并从包 manifest（元数据清单）获取版本。公开产品主页是可选字段，在真实主页存在前会被省略；上游源代码 URL 不会被冒充为 LasmeX 主页。每个字段都是公开产品事实——不含 secret、路径、会话 id 或逐用户标识，且任何逐请求信息都不得影响这些值。设计理由见[强制 `User-Agent` 归属](../../.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md)。
 
 ```ts type-equiv
 /**
@@ -238,8 +238,8 @@ interface AppIdentity {
   product: string
   /** Product version; sourced from package metadata, never hand-copied. */
   version: string
-  /** Repository home URL of the app, used as the `User-Agent` comment. */
-  url: string
+  /** Public product home, used as the `User-Agent` comment when one exists. */
+  url?: string
 }
 ```
 
@@ -309,7 +309,7 @@ declare class BlockAssembler {
    * @param source - producer attribution for the assembled message.
    * @returns a frozen assistant-role message over `blocks()` (same open-block assembly rules).
    */
-  message(source: MessageSource = { kind: 'plugin', plugin: 'dsh-llm/assembler' }): Message;
+  message(source: MessageSource = { kind: 'plugin', plugin: 'lasmex-llm/assembler' }): Message;
 }
 ```
 
@@ -475,7 +475,7 @@ interface GenerateOptions {
   /**
    * Ordered conversation messages, exactly as the provider sees them (after
    * the `system` slot). A loop-built request assembles them as
-   * the derived history (dsh-agent-loop); a hand-built one-shot passes any list.
+   * the derived history (lasmex-agent-loop); a hand-built one-shot passes any list.
    */
   messages: Message[]
   /** System prompt text (adapters map to the provider's system slot). */
@@ -523,14 +523,14 @@ interface FinishReasonMap {
 
 `FinishReason = FinishReasonMap[keyof FinishReasonMap]`。`TokenUsage`（逐调用计量，含不相交的缓存字段）详见[下文](#tokenusage)。
 
-`GenerateOptions.tools` 携带 `ToolSchema`——工具的 JSON Schema 描述，发送给模型。它声明在 dsh-llm（而非 dsh-tools）中，正是因为它是循环每一步组装请求的一部分：
+`GenerateOptions.tools` 携带 `ToolSchema`——工具的 JSON Schema 描述，发送给模型。它声明在 lasmex-llm（而非 lasmex-tools）中，正是因为它是循环每一步组装请求的一部分：
 
 ```ts type-equiv
 /**
  * JSON-schema description of a tool, as sent to the model.
  *
- * Declared here (not in dsh-tools) because it is part of {@link GenerateOptions};
- * dsh-tools' ToolDefinition and dsh-system-prompt's PromptAssembly both import
+ * Declared here (not in lasmex-tools) because it is part of {@link GenerateOptions};
+ * lasmex-tools' ToolDefinition and lasmex-system-prompt's PromptAssembly both import
  * it from this package.
  */
 interface ToolSchema {

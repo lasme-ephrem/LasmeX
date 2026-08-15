@@ -2,9 +2,9 @@
 
 import {
   IconInspectOutline12, IconStopFill16, IconTrashOutline16, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
+} from 'lasmex-client-ui-primitives'
+import type { PropsLocale } from 'lasmex-client-ui-slots'
+import type { ToolCallViewProps } from 'lasmex-client-ui-tool/client'
 import { cordisActionCard } from './card-model.ts'
 import css from './CordisRunRow.module.css'
 
@@ -31,7 +31,7 @@ export function CordisActionRow({ callId, toolName, block, inspect, t }: CordisA
         <span className={css.separator} aria-hidden />
         <span className={card.errorSummary === null ? css.summary : css.error}>{summary}</span>
         {inspect !== undefined && (
-          <button type="button" className={css.inspect} aria-label="Inspect" onClick={inspect}>
+          <button type="button" className={css.inspect} aria-label={t('row.inspect')} onClick={inspect}>
             <IconInspectOutline12 />
           </button>
         )}

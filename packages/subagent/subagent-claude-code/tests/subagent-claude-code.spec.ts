@@ -17,17 +17,17 @@ import {
   type Mock,
   vi,
 } from 'vitest'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
+import type { Agent } from 'lasmex-agent'
+import type { InvariantInstaller } from 'lasmex-invariants'
+import type { ContentBlock } from 'lasmex-llm'
+import SubagentRuntime from 'lasmex-subagent'
 import type {
   SubprocessHandle,
   SubprocessOutcome,
   SubprocessSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+} from 'lasmex-subprocess'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import { MAX_TIMER_DELAY_MS } from 'lasmex-timeout'
 import * as claudeCode from '../src/index.ts'
 import * as invariant from '../src/invariant.ts'
 import {
@@ -403,7 +403,7 @@ describe('task admission and package contracts', () => {
     const ctx = { invariants: { register } } as unknown as Context
     await expect(invariant.apply(ctx)).resolves.toBe(dispose)
     expect(register).toHaveBeenCalledWith(
-      '@deepseek-ai/dsh-subagent-claude-code',
+      'lasmex-subagent-claude-code',
       expect.any(Function),
     )
     const install = register.mock.calls[0]![1]

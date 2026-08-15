@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import clsx from 'clsx'
-import type { PermissionSelect as PermissionSelectValue } from '@deepseek-ai/dsh-permission-presets/client'
-import { IconChevronDownOutline14, Menu, RiskConfirmation } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { MenuEntry } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { PermissionSelect as PermissionSelectValue } from 'lasmex-permission-presets/client'
+import { IconChevronDownOutline14, Menu, RiskConfirmation } from 'lasmex-client-ui-primitives'
+import type { MenuEntry } from 'lasmex-client-ui-primitives'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import css from './PermissionSelect.module.css'
 
@@ -48,17 +48,30 @@ function permissionGlyph(value: string): ReactNode | undefined {
 /**
  * Display transform: kebab-case machine names render as title-case labels
  * (`workspace-write` → `Workspace Write`); non-kebab host-configured names
- * pass through. Full access intentionally overrides the machine-name
- * transform so both permission surfaces use the product label `Full access`;
- * the warning body remains locale-aware.
+ * pass through. Shipped presets resolve through the conversation dictionary;
+ * extension presets keep the host-provided label.
  */
 function displayName(name: string): string {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) return name
   return name.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
-function optionLabel(option: PermissionSelectValue['options'][number]): string {
-  return option.value === FULL_ACCESS ? 'Full access' : displayName(option.name)
+function optionLabel(option: PermissionSelectValue['options'][number], t: ComposerBarProps['t']): string {
+  switch (option.value) {
+    case 'read-only': return t('access.preset.readOnly')
+    case 'workspace-write': return t('access.preset.workspaceWrite')
+    case FULL_ACCESS: return t('access.preset.fullAccess')
+    default: return displayName(option.name)
+  }
+}
+
+function optionDescription(option: PermissionSelectValue['options'][number], t: ComposerBarProps['t']): string | undefined {
+  switch (option.value) {
+    case 'read-only': return t('access.preset.readOnly.detail')
+    case 'workspace-write': return t('access.preset.workspaceWrite.detail')
+    case FULL_ACCESS: return t('access.preset.fullAccess.detail')
+    default: return option.description
+  }
 }
 
 export interface PermissionSelectProps {
@@ -92,7 +105,7 @@ export function PermissionSelect({ value, locked, command, t }: PermissionSelect
     .filter(o => o.value !== 'custom')
     .map((option) => {
       const icon = permissionGlyph(option.value)
-      return { id: option.value, label: optionLabel(option), ...icon === undefined ? {} : { icon } }
+      return { id: option.value, label: optionLabel(option, t), ...icon === undefined ? {} : { icon } }
     })
 
   const submit = (id: string): void => {
@@ -138,15 +151,15 @@ export function PermissionSelect({ value, locked, command, t }: PermissionSelect
           <button
             type="button"
             className={css.trigger}
-            aria-label={t('input.accessMode', { name: current === undefined ? displayName(currentValue) : optionLabel(current) })}
-            title={current?.description}
+            aria-label={t('input.accessMode', { name: current === undefined ? displayName(currentValue) : optionLabel(current, t) })}
+            title={current === undefined ? undefined : optionDescription(current, t)}
             disabled={locked || busy}
             onClick={() => { setOpen(!open) }}
           >
             {permissionGlyph(currentValue) !== undefined && (
               <span className={css.triggerIcon} aria-hidden>{permissionGlyph(currentValue)}</span>
             )}
-            <span className={css.triggerLabel}>{current === undefined ? displayName(currentValue) : optionLabel(current)}</span>
+            <span className={css.triggerLabel}>{current === undefined ? displayName(currentValue) : optionLabel(current, t)}</span>
             {/* Same glyph + open rotation as the sibling ModelSelect trigger. */}
             <span className={clsx(css.chevron, open && css.chevronOpen)} aria-hidden>
               <IconChevronDownOutline14 />

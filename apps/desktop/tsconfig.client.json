@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "renderer-src",
+    "outDir": "lib/renderer-types",
+    "tsBuildInfoFile": "lib/tsconfig.client.tsbuildinfo"
+  },
+  "include": ["renderer-src"],
+  "references": [
+    { "path": "../../packages/client/web" }
+  ]
+}

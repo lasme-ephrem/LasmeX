@@ -18,3 +18,11 @@ export const en = {
   'appearance.dark': 'Dark',
   'appearance.system': 'System',
 } satisfies Record<ThemeKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'appearance.title': 'Apparence',
+  'appearance.light': 'Clair',
+  'appearance.dark': 'Sombre',
+  'appearance.system': 'Système',
+} satisfies Record<ThemeKey, string>

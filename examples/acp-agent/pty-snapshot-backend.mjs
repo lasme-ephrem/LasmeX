@@ -1,12 +1,12 @@
 /** Deterministic in-memory PTY backend for transcript snapshots. */
 
 class SnapshotSession {
-  motd = 'dsh> '
+  motd = 'lasmex> '
   statusValue = { kind: 'running' }
-  scrollback = 'dsh> '
+  scrollback = 'lasmex> '
 
   startSend(request) {
-    const viewport = `${request.text}\nPTY_OK\ndsh> `
+    const viewport = `${request.text}\nPTY_OK\nlasmex> `
     this.scrollback += viewport
     const result = {
       viewport,

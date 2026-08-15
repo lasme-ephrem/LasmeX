@@ -1,11 +1,11 @@
 /** Ownerless-copy registrations: the five seats, dictionaries, thunked labels, and HMR recovery. */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { apply, inject } from '@deepseek-ai/dsh-client-ui-settings-general/client'
+import { resolveSlotLabel } from 'lasmex-client-ui-slots'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { apply, inject } from 'lasmex-client-ui-settings-general/client'
 import { CloseLabel, HeaderContent, TriggerContent } from '../src/client/chrome.tsx'
 import { GeneralSection } from '../src/client/GeneralSection.tsx'
 import { SettingsDocumentAction } from '../src/client/SettingsDocumentAction.tsx'
@@ -88,7 +88,7 @@ describe('ui-settings-general apply', () => {
     const entry = generalEntry(before.slots)!
     expect(entry.options).toMatchObject({ id: 'general', order: 0 })
     // The nav label is a locale-following thunk; owners resolve at read time.
-    expect(resolveSlotLabel(entry.options.label)).toBe('通用设置')
+    expect(resolveSlotLabel(entry.options.label)).toBe('Général')
     expect(before.slots.spec('settings.general.item')).toEqual({ kind: 'list', scope: 'root' })
     expect(before.slots.entries('settings.general.item')).toEqual([])
     // The onboarding hole stays declared for feature-owned steps; this plugin
@@ -117,12 +117,12 @@ describe('ui-settings-general apply', () => {
     })
   })
 
-  it('registers the zh/en settings dictionaries and frees the seats on teardown', async () => {
+  it('registers all settings dictionaries and frees the seats on teardown', async () => {
     const b = await bench()
     declare(b.slots)
     const fiber = b.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
-    expect(b.locale.bind('settings')('title')).toBe('设置')
+    expect(b.locale.bind('settings')('title')).toBe('Paramètres')
     b.locale.setLocale('en')
     expect(b.locale.bind('settings')('close')).toBe('Close')
     b.locale.setLocale('zh')
@@ -130,6 +130,7 @@ describe('ui-settings-general apply', () => {
     // The (ns, locale) seats are free again — the dictionary disposer ran.
     expect(() => b.locale.register('settings', 'zh', {})).not.toThrow()
     expect(() => b.locale.register('settings', 'en', {})).not.toThrow()
+    expect(() => b.locale.register('settings', 'fr', {})).not.toThrow()
   })
 
   it('the nav label thunk follows the active locale without re-registration', async () => {

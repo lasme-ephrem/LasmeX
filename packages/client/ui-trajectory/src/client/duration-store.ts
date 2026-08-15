@@ -1,6 +1,6 @@
 import {
   createSnapshotStore, type SnapshotStore,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 
 /**
  * Create the browser-wide trajectory duration preference source.
@@ -8,6 +8,6 @@ import {
  */
 export function createTrajectoryDurationStore(): SnapshotStore<boolean> {
   return createSnapshotStore(false, {
-    persist: { name: 'dsh.trajectory.duration' },
+    persist: { name: 'lasmex.trajectory.duration' },
   })
 }

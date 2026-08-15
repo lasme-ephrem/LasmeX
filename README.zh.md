@@ -1,74 +1,47 @@
-# DeepSeek Harness
+# LasmeX
 
-[English](README.md) | 中文
+[Français](LASMEX.md) | [English](README.md) | 中文
 
-DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的开源 agent harness（智能体框架）。
+LasmeX 是由 [lasme-ephrem/LasmeX](https://github.com/lasme-ephrem/LasmeX) 维护、以法语为先的开源 agent harness（智能体框架）。它是 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 的独立分支，并保留 Cordis 的「一切皆插件」架构。
 
-它采用**一切皆插件**的架构，并由 [Cordis](https://github.com/cordiverse/cordis) 驱动，其设计参见论文 [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper)。
+## 产品
 
-## 开发者预览
+LasmeX Code 是默认开发 agent。Web 与桌面应用包含 Mission 仪表盘，展示目标、步骤、权限、验证命令、审批、活动、token 用量和编排的子级，不暴露私有推理。持久项目记忆受限、显式、按工作区隔离，并在交互式 profile 中受审批保护。会话可从本地持久化恢复，后台任务与 subagent 始终可观察、可控制。
 
-DeepSeek Harness 目前处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
+启动器、npm 包系列、TypeScript SDK、Python SDK、浏览器身份、文档站和桌面应用均使用 LasmeX 身份。用户数据默认位于 `~/.lasmex`，启动器会禁用从上游项目继承的遥测。
 
-## 运行
+## 从源码运行
 
-### 通过 `npm` 运行
+<a id="run"></a>
 
-安装 `Node.js`，然后运行：
-
-```sh
-npx @deepseek-ai/dsh web
-```
-
-该命令会启动 Web UI，默认地址为 `http://127.0.0.1:3080`。详见 [Web UI 指南](docs/user/guide/index.md)。
-
-### 从源码运行
-
-如需从仓库源码运行：
+安装 Node.js 22.19 或更高版本以及 pnpm，然后在本 checkout 中运行：
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
-pnpm install
+pnpm install --frozen-lockfile
 pnpm run build
-pnpm dsh web
+pnpm lasmex web
 ```
 
-## 社区与支持
+Web UI 默认在 `http://127.0.0.1:3080` 提供服务。设置 `LASMEX_HOME` 可使用其他用户数据目录。供应商凭据始终保留在本地，不得提交到仓库。
 
-- 欢迎通过 [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) 提交反馈或 bug 报告。
-- 为你的插件仓库添加 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 话题，便于被发现。
-- 欢迎加入 DeepSeek Harness 企微群：扫码添加企微小助手并填写入群问卷，完成后小助手会邀请你入群。
+## 桌面应用
 
-<table>
-  <thead>
-    <tr>
-      <th align="center">企微小助手</th>
-      <th align="center">入群问卷</th>
-      <th align="center">微信公众号</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><img src="assets/community-wecom-assistant.png" alt="DeepSeek Harness 企微小助手二维码" width="180" height="180"></td>
-      <td align="center"><a href="https://trtgsjkv6r.feishu.cn/share/base/form/shrcnIt5twSVdLGD52KJBckGCgg"><img src="assets/community-wecom-survey.png" alt="DeepSeek Harness 入群问卷二维码" width="180" height="180"></a></td>
-      <td align="center"><img src="assets/community-wechat-official-account.png" alt="DeepSeek Harness 团队微信公众号二维码" width="180" height="180"></td>
-    </tr>
-  </tbody>
-</table>
+使用 `pnpm desktop:package` 为当前操作系统构建便携式应用。原生发行命令可生成 Windows Squirrel 安装程序、在已配置 Apple 凭据时生成已签名且已公证的 macOS 应用 ZIP，或生成 Linux 便携式 tarball：
 
-## 参与贡献
+```sh
+pnpm desktop:make:windows
+pnpm desktop:make:macos
+pnpm desktop:make:linux
+```
 
-参见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+每个原生产物都必须在其目标操作系统上构建。本地未签名构建会禁用自动更新；已签名发行构建需要 HTTPS 更新源和平台签名凭据。
 
-## 开发
+## 文档与开发
 
-请先阅读[开发指南](docs/development.md)与[架构文档](docs/architecture.md)。
+请先阅读[法语产品指南](LASMEX.md)、[用户指南](docs/user/guide/index.fr.md)、[开发指南](docs/development.md)和[架构文档](docs/architecture.md)。贡献者必须遵循 [AGENTS.md](AGENTS.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-面向 agent：请遵循 [AGENTS.md](AGENTS.md)。
+名为 `origin` 的 Git remote 指向 LasmeX 仓库。名为 `upstream` 的 remote 跟踪 DeepSeek Harness，用于归属说明和明确的上游同步。产品变更应与上游同步工作分开。
 
 ## 许可证
 
-[MIT](LICENSE)
-
-第三方依赖及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+[MIT](LICENSE)。第三方依赖及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

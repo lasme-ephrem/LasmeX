@@ -42,7 +42,7 @@ Context 与 AgentEventDispatch 调用只贡献由字符串字面量构成的有�
 
 提交到仓库的 [`scoped-events.generated.ts`](../../../../packages/core/scope/src/scoped-events.generated.ts) 是位于 scoped dispatch 所属包中的纯运行时映射，不导入任何事件声明方包。语义完整性由生成器自身保证：根 Program 枚举所有 scoped `Events` 声明与真实 `scopeTarget` 约定，通过 checker 解析唯一的 payload 路径，并在渲染 `unknown[]` 运行时边界前拒绝缺失、陈旧或含义不明确的条目。
 
-`dsh-scope/invariant` companion 消费这份映射，不再维护手写事件表。Program 分析发生在仓库门禁内，而不是依赖生成的类型导入，因此 `dsh-scope` 和 `dsh-invariants` 都不需要依赖所有事件声明方。
+`lasmex-scope/invariant` companion 消费这份映射，不再维护手写事件表。Program 分析发生在仓库门禁内，而不是依赖生成的类型导入，因此 `lasmex-scope` 和 `lasmex-invariants` 都不需要依赖所有事件声明方。
 
 ### 语义缺口必须显式失败
 

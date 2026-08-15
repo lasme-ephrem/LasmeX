@@ -18,10 +18,10 @@ import type {
 } from '@anthropic-ai/claude-agent-sdk'
 import { Context } from '@deepseek-ai/cordis'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import type { SubprocessHandle, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
+import type { Agent } from 'lasmex-agent'
+import SubagentRuntime from 'lasmex-subagent'
+import type { SubprocessHandle, SubprocessSpawnSpec } from 'lasmex-subprocess'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
 import * as claudeCode from '../src/index.ts'
 import {
   startMessagesFixture,
@@ -80,7 +80,7 @@ const claudeBin = join(
   platformRoot,
   process.platform === 'win32' ? 'claude.exe' : 'claude',
 )
-const settingsModel = 'dsh-settings-inheritance-marker'
+const settingsModel = 'lasmex-settings-inheritance-marker'
 const fakeKey = 'dsh-fake-anthropic-key'
 
 const roots: string[] = []

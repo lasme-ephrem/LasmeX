@@ -7,14 +7,14 @@
 
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage, LlmError, ReasoningEffortId  } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmModelReasoningInfo, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import SessionStore, { Session, SessionId, foldRequestHeader } from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import LlmRuntime, { createUserMessage, LlmError, ReasoningEffortId  } from 'lasmex-llm'
+import type { GenerateOptions, LlmModelReasoningInfo, LlmResolvedModelInfo, StreamChunk } from 'lasmex-llm'
+import SessionStore, { Session, SessionId, foldRequestHeader } from 'lasmex-session'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime, { defineContentToolFixture } from 'lasmex-tools'
+import AgentRegistry, { type Agent } from 'lasmex-agent'
 
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
+import AgentLoop from 'lasmex-agent-loop'
 import { MockAdapter, textResponse, toolCallResponse } from './mock-adapter.ts'
 
 async function harness(adapter: MockAdapter, persona = 'stable base') {
@@ -101,6 +101,13 @@ describe('request stability across the loop', () => {
     const adapter = new MockAdapter([textResponse('one'), textResponse('two')])
     const ctx = await harness(adapter)
     const agent = ctx.agentLoop.create(SessionId('a1'), { provider: 'mock', model: 'mock' })
+    ctx.on('agent/pre-step', async ({ messages, turn }) => ({
+      kind: 'enter',
+      messages: [...messages, createUserMessage({
+        content: [{ type: 'text', text: `context ${turn}` }],
+        source: { kind: 'plugin', plugin: 'cache-order-test' },
+      })],
+    }))
 
     send(agent, 'first')
     await waitForIdle(ctx, agent)
@@ -109,6 +116,10 @@ describe('request stability across the loop', () => {
 
     expect(adapter.requests).toHaveLength(2)
     expectPrefixExtension(adapter.requests[0]!, adapter.requests[1]!)
+    expect(adapter.requests.map(request => request.messages.slice(-2).map(message => message.source))).toEqual([
+      [{ kind: 'plugin', plugin: 'cache-order-test' }, { kind: 'user' }],
+      [{ kind: 'plugin', plugin: 'cache-order-test' }, { kind: 'user' }],
+    ])
   })
 
   it('logs adapter defaults, supports per-turn effort changes, and restores the effective value', async () => {

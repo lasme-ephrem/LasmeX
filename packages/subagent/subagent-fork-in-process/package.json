@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-subagent-fork-in-process",
+  "name": "lasmex-subagent-fork-in-process",
   "description": "In-process fork subagent backend: runs a child agent seeded with a prefix of the parent's log",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/subagent/subagent-fork-in-process"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,11 +27,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subagent-in-process-driver": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subagent-in-process-driver": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
@@ -44,15 +39,24 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subagent-in-process-driver": "workspace:^",
-    "@deepseek-ai/dsh-subagent-spawn-in-process": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-loop": "workspace:^",
+    "lasmex-agent-loop-testkit": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subagent-in-process-driver": "workspace:^",
+    "lasmex-subagent-spawn-in-process": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/subagent/subagent-fork-in-process"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

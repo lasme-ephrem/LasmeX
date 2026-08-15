@@ -7,10 +7,10 @@ import { memo, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   ModelRetryNode, TurnErrorNode, UserMessageNode,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { JsonBlock, MessageText, StateDot } from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-runtime/client'
+import { JsonBlock, MessageText, StateDot } from 'lasmex-client-ui-primitives'
 import type { ChatNodeViewProps, ChatViewSlotProps } from '../contract/slots.ts'
-import { ImageGallery, type ImageLoader } from '@deepseek-ai/dsh-client-ui-attachment'
+import { ImageGallery, type ImageLoader } from 'lasmex-client-ui-attachment'
 import { messageImageLabels } from '../image-labels.ts'
 import { CompactionItem } from './CompactionItem.tsx'
 import { ContextInjectionRow } from './ContextInjectionRow.tsx'
@@ -123,7 +123,7 @@ function TurnErrorItem({ node, t }: {
       <StateDot state="error" className={css.turnErrorDot} />
       <div className={css.turnErrorCopy}>
         <span className={css.turnErrorTitle}>{t('message.turnError')}</span>
-        <span className={css.turnErrorMessage}>{node.message}</span>
+        <span className={css.turnErrorMessage}>{node.code === 'AUTH' ? t('message.authInvalid') : node.message}</span>
       </div>
       {node.code !== undefined && <code className={css.turnErrorCode}>{node.code}</code>}
     </div>

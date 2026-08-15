@@ -10,17 +10,17 @@ import type {
   AssistantMessageNode, CommandNode, CompactionSummaryNode, ConversationNode, ConversationSnapshot,
   ModelRetryNode, RunningToolCall, SessionId, SessionListState, ToolCallBlock, ToolResultNode, TurnErrorNode,
   TurnMaxTokensNode, UserMessageNode, WorkspaceListState,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
+} from 'lasmex-client-runtime/client'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
 import {
   createSnapshotStore, EMPTY_CONVERSATION_VIEWS, PendingWait,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { RpcId } from '@deepseek-ai/dsh-client-connection/client'
+} from 'lasmex-client-runtime/client'
+import { RpcId } from 'lasmex-client-connection/client'
 import type {
   ChatNode, ChatNodeOwnerProps, ChatNodeViewProps, ChatViewSlotProps, SelectionTarget, UseChatNodeTurnData,
-} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+} from 'lasmex-client-ui-conversation/client'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import { createChatStore } from '../src/client/stores.ts'
 import { ChatView } from '../src/client/chat/ChatView.tsx'
 import { zh } from '../src/client/locales.ts'
@@ -585,7 +585,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     const statuses = view.getAllByRole('status')
     expect(statuses.map(status => status.textContent)).toEqual([
-      '本轮运行失败API key is invalidAUTH',
+      '本轮运行失败API 密钥无效AUTH',
       '本轮运行失败plugin exploded',
     ])
   })
@@ -875,7 +875,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
     expect(h.toolOwners[0]?.block).toMatchObject({ callId: 'r1', argsRaw: '{"command":"cmd-r1"}' })
-    expect(view.getByRole('status').textContent).toBe('Deep diving...')
+    expect(view.getByRole('status').textContent).toBe('深入处理中…')
   })
 
   it('keeps the Tool renderer mounted when a running call settles into log order', () => {
@@ -935,7 +935,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     // Freshly mounted (as after a reload) yet already past the 15s gate.
     const status = view.getByRole('status')
-    expect(status.textContent).toMatch(/^Deep diving\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^深入处理中…2分0\d秒$/)
     expect(status.querySelector('[aria-hidden="true"]')).not.toBeNull()
     act(() => {
       h.set({ queue: [{
@@ -947,7 +947,7 @@ describe('ChatView', () => {
         text: 'also',
       }] })
     })
-    expect(status.textContent).toMatch(/^Deep diving\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^深入处理中…2分0\d秒$/)
   })
 
   it('hands each ordered root call to the keyed business-node slot', () => {

@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-plan",
+  "name": "lasmex-client-ui-plan",
   "description": "Plan-mode composer control: the conversation.input.plan seat over the plan projection and the /plan command channel",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/ui-plan"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,12 +24,12 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "lasmex-api-remotes",
+        "lasmex-client-locale",
+        "lasmex-client-ui-conversation"
       ],
       "platform": "web"
     }
@@ -45,28 +40,28 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-plan-mode": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-conversation": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-plan-mode": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-web-react": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-plan-mode": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-test-runtime": "workspace:^",
+    "lasmex-client-ui-conversation": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-web-react": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-plan-mode": "workspace:^",
     "@types/react": "~18.3.1",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
@@ -76,5 +71,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-plan"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

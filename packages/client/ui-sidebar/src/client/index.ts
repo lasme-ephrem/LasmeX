@@ -1,10 +1,10 @@
 /** Registers the sidebar shell into the layout-owned slot. */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext } from 'lasmex-client-runtime/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 import type { SidebarRootInjected } from './contract/slots.ts'
 import { SidebarRoot } from './SidebarRoot.tsx'
-import { en, zh, type SidebarKey } from './locales.ts'
+import { en, fr, zh, type SidebarKey } from './locales.ts'
 
 export type {
   SidebarFooterActionOwnerProps, SidebarRootComponentProps, SidebarRootInjected,
@@ -12,7 +12,7 @@ export type {
 } from './contract/slots.ts'
 export type { SidebarKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Sidebar shell controls copy. */
     sidebar: SidebarKey
@@ -29,7 +29,7 @@ export const inject = ['slots', 'layout', 'sessions', 'workspaces', 'locale']
  * @param ctx - Client root context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-sidebar: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-sidebar: dictionaries')
 
   const injectProps = (): SidebarRootInjected => ({
     // The shell's New Session button rides the runtime's shared action

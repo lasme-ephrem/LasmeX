@@ -1,4 +1,4 @@
-# Agent Note: Private npm publication as three independent sequences
+# Agent Note: npm publication as three independent sequences
 
 Status: implemented
 
@@ -8,31 +8,31 @@ English | [中文](2026-08-10-npm-release-sequences.zh.md)
 
 This repository held three unrelated groups of publishable packages and no channel that sent any of them to a registry.
 
-`packages/*/*` and `apps/*` form the runtime surface of `@deepseek-ai/dsh`; `vendor/*` holds nine rescoped Cordis framework packages, each carrying its upstream version; `native/landlock-run/packages/*` holds Linux platform packages with their own workflow. The three differ in version baseline, change rate, and build requirements: dsh moves with the product, vendor moves only when upstream is re-synced or a local modification changes, and native needs a musl toolchain and one build per architecture. Forcing them through one pipeline means every product release republishes the framework and the native binaries.
+`packages/*/*`, `apps/cli`, and `apps/web` form the npm runtime distribution of `lasmex`; the private `apps/desktop` assembly is not an npm release member. `vendor/*` holds nine rescoped Cordis framework packages, each carrying its upstream version; `native/landlock-run/packages/*` holds Linux platform packages with their own workflow. The three differ in version baseline, change rate, and build requirements: LasmeX moves with the product, vendor moves only when upstream is re-synced or a local modification changes, and native needs a musl toolchain and one build per architecture. Forcing them through one pipeline means every product release republishes the framework and the native binaries.
 
-Two hard blockers sat in the way. All 217 workspace manifests set `private: true`, which npm refuses to publish. The subtler one was 933 hand-written `peerDependencies: "^0.0.1"` entries between sibling dsh packages: `pnpm pack` substitutes the `workspace:` protocol but leaves semver ranges alone, and `^0.0.1` means `>=0.0.1 <0.0.2` — it excludes `0.0.2`, and semver excludes prereleases from a range without a prerelease of its own, so it excluded `0.0.1-rc.1` too. Those entries never failed only because the version never left `0.0.1`.
+Two hard blockers sat in the way. Publishable workspace manifests set `private: true`, which npm refuses to publish. The subtler one was hand-written `peerDependencies: "^0.0.1"` entries between sibling product packages: `pnpm pack` substitutes the `workspace:` protocol but leaves semver ranges alone, and `^0.0.1` means `>=0.0.1 <0.0.2` — it excludes `0.0.2`, and semver excludes prereleases from a range without a prerelease of its own, so it excluded `0.0.1-rc.1` too. Those entries never failed only because the version never left `0.0.1`.
 
-`scripts/publish-npm-baseline.ts` is a local publication script: it packs and publishes in one process, needs a human to authenticate and retry on their own machine, and excludes vendor from its release set. It cannot be the basis for CI publication, though its tarball payload validation and installed-artifact probes are verified parts.
+`scripts/publish-npm-baseline.ts` is a local publication script: it stages the LasmeX and vendored packages, packs and publishes in one process, and needs a human to authenticate and retry on their own machine. It cannot be the basis for CI publication, though its tarball payload validation and installed-artifact probes are verified parts.
 
 ## Decision
 
 ### Three independent sequences
 
-`packages/`, `vendor/`, and `native/` each have one bump sequence and one publication, sharing no version, no trigger, and no waiting. Releasing dsh does not republish vendor; releasing vendor does not republish native.
+`packages/`, `vendor/`, and `native/` each have one bump sequence and one publication, sharing no version, no trigger, and no waiting. Releasing LasmeX does not republish vendor; releasing vendor does not republish native.
 
 | Sequence | Members | Version baseline | Tag | Workflow |
 |---|---|---|---|---|
-| dsh | `packages/*/*` + `apps/*` (`@deepseek-ai/dsh` and `@deepseek-ai/dsh-web-frontend`) | one version for the family and the workspace root, `0.0.x` | `dsh-v<version>` | `release.yml` |
+| LasmeX | `packages/*/*` + `apps/cli` + `apps/web` (`lasmex` and `lasmex-web-frontend`; private desktop excluded) | one version for the family and the workspace root, `0.0.x` | `lasmex-v<version>` | `release.yml` |
 | vendored framework | the nine `vendor/*` packages | each package on its own version line | `vendor-<package>-v<version>` (one per package) | `release-vendor.yml` |
 | native | `native/landlock-run/packages/*` | its own `0.0.x` | `landlock-run-v<version>` | `landlock-run-release.yml` |
 
-All three publish to the `@deepseek-ai` scope on npmjs.com, and access is per sequence rather than per scope: the vendored framework and the native packages are `public`, the dsh family is `restricted` ([rationale](2026-08-13-public-vendor-and-native-sequences.md)). No publish path passes `--access`, because one flag cannot serve sequences that disagree and would override the manifest that owns the level.
+All three publish publicly on npmjs.com. LasmeX uses unscoped `lasmex` and `lasmex-*` names; the vendored framework and native packages retain their `@deepseek-ai` scope ([rationale](2026-08-13-public-vendor-and-native-sequences.md)). No publish path passes `--access`: every packed manifest owns its public access level.
 
 ### Versions land in the repository from a local command; CI only checks and uploads
 
 Each sequence has one bump-and-commit command: it derives the target version, writes it into the relevant manifests, runs `pnpm install --lockfile-only`, and commits the manifests with the lockfile. The published version is therefore readable from the repository. A human creates the tag after the commit merges to master; CI never writes to the repository and needs no write permission.
 
-`release:dsh` accepts `major`, `minor`, `patch`, or an explicit version, and writes one version across the family **and the workspace root** — the workspace constraint requires every member's version to equal the root's, so the root carries the family version, and the root check accepts a prerelease segment. A prerelease such as `0.0.1-rc.1` drives pack, the installed-artifact probe, and one real private publication before numbered versions follow. The dist-tag decision is the one `landlock-run-release.yml` already made: a version with a prerelease segment publishes under `--tag next`, anything else takes `latest`.
+`release:lasmex` accepts `major`, `minor`, `patch`, or an explicit version, and writes one version across the family **and the workspace root** — the workspace constraint requires every member's version to equal the root's, so the root carries the family version, and the root check accepts a prerelease segment. A prerelease such as `0.1.0-rc.6` drives pack, the installed-artifact probe, and a real rehearsal publication before numbered versions follow. The dist-tag decision is the one `landlock-run-release.yml` already made: a version with a prerelease segment publishes under `--tag next`, anything else takes `latest`.
 
 ### vendor: publish what changed, and let tags be the ledger
 
@@ -78,7 +78,7 @@ Two registry behaviours shape how a publish is attempted. Writes are spaced by a
 
 Every reference to a workspace member uses `workspace:^`, so `pnpm pack` substitutes a range matching the target version: sibling `peerDependencies` follow the family version, and a reference to a vendored package follows that package's own line. The Landlock platform packages keep `workspace:*`, which publishes the exact version, because a platform package and its entry must agree exactly.
 
-`scripts/check-workspace-constraints.ts` requires the protocol, so a new package cannot reintroduce a hand-written range; the invariant-companion rule requires `workspace:^` for `@deepseek-ai/dsh-invariants` for the same reason.
+`scripts/check-workspace-constraints.ts` requires the protocol, so a new package cannot reintroduce a hand-written range; the invariant-companion rule requires `workspace:^` for `lasmex-invariants` for the same reason.
 
 ### Release family objects
 
@@ -95,7 +95,7 @@ The entity in this domain is a **release family**: a set of packages sharing one
 | `publish` | the three registry states above |
 | `process` / `tarball` | the one home for spawning commands and for reading a packed tarball, including the entry guard that keeps every script importable |
 
-The dsh family applies the repository's publication payload policy, which rejects sources and declaration maps. The vendored family keeps upstream's payload, because those manifests export `./src/*` and dropping `src` would publish an export map pointing at absent files.
+The LasmeX family applies the repository's publication payload policy, which rejects sources and declaration maps. The vendored family keeps upstream's payload, because those manifests export `./src/*` and dropping `src` would publish an export map pointing at absent files.
 
 ### Workflow shape: pack everything at once, then publish as one set
 
@@ -103,16 +103,16 @@ The `pack` job walks the whole release set once, packing each member into one di
 
 `pack` carries no credentials and runs on every pull request and master push, so a pull request proves the release set still packs. `publish` is a manual dispatch, sits behind the `npm-publish` environment for human approval, and neither builds nor rebuilds — it uploads the bytes pack produced. Pack runs are grouped per ref so concurrent pull requests do not displace each other; the publish job carries the global group, because dist-tags are shared registry state.
 
-A dsh verification installs the vendored family's pack output too. The harness packages declare the vendored framework as a peer, those packages live in another sequence, and the credential-free job cannot fetch them from a private registry — so `release.yml` packs the vendored family for verification while publishing only its own set.
+A LasmeX verification installs the vendored family's pack output too. The product packages declare the vendored framework as a peer, and one pull request may change both sequences before either reaches the registry, so `release.yml` packs the exact vendored family under test while publishing only its own set.
 
-The verification also packs the Landlock entry, which `dsh-sandbox-local` declares as a plain dependency, and omits optional dependencies. The platform packages behind those optional entries need a musl toolchain and one build per architecture, so a job on one runner cannot produce them; a consumer that cannot install them must still start, which is what optional means here. The verification therefore reads a directory by its contents rather than a pack order, because a directory can hold tarballs packed only to satisfy a cross-sequence dependency.
+The verification also packs the Landlock entry, which `lasmex-sandbox-local` declares as a plain dependency, and omits optional dependencies. The platform packages behind those optional entries need a musl toolchain and one build per architecture, so a job on one runner cannot produce them; a consumer that cannot install them must still start, which is what optional means here. The verification therefore reads a directory by its contents rather than a pack order, because a directory can hold tarballs packed only to satisfy a cross-sequence dependency.
 
 ### Repository changes this carried
 
 | Item | Content |
 |---|---|
-| release-set manifests | `private: true` removed; `publishConfig.access` per sequence and `repository` with each package's `directory` added |
-| release-set boundary | every member of `packages/*/*`, `apps/*`, and `vendor/*` |
+| release-set manifests | `private: true` removed and `publishConfig.access: public` set; LasmeX packages omit `repository` until a canonical public repository URL exists |
+| release-set boundary | every member of `packages/*/*` and `vendor/*`, plus `apps/cli` and `apps/web`; `apps/desktop` remains private |
 | dependency protocol | workspace-internal references are `workspace:^`, with `check-workspace-constraints.ts` and the invariant-companion rule requiring it |
 | root `AGENTS.md` | the convention that vendored packages are `private: true` no longer holds |
 | `vendor/README.md` | records `src` joining `cordis`'s `files` as a local modification |
@@ -138,7 +138,7 @@ This Agent Note replaces the version scheme and the release-set boundary in [art
 
 **Verifying only the packed install, with no local registry.** The reference flow unpacks tarballs into a tree and drives it with plain Node, which bypasses version-range resolution. Running a local registry in CI to cover that layer was rejected: artifact correctness is covered by existing tests, the publication path is exercised by the master rehearsal, and a pull request only needs to prove the release set packs. Installing from `file:` specifiers still exercises range resolution for every internal dependency.
 
-**Selecting a subset by entry closure.** Crawling `dependencies` from `@deepseek-ai/dsh` and `@deepseek-ai/dsh-web-frontend` yields 156 packages, 61 fewer than the whole set. But this repository's plugins are mounted by name from `cordis.yml` rather than imported: `vendor/cordis-plugin-group` and `vendor/cordis-plugin-logger-console` fall outside the dependency closure while being required at runtime. Selecting by code dependency fails as "the consumer installs it and it will not start", and it would need a standing proof that no mounted package was missed. Under a private scope the extra packages are invisible outside the organization. `python/`, the root `examples/`, `docs/`, and `website/` are not members.
+**Selecting a subset by entry closure.** Crawling `dependencies` from `lasmex` and `lasmex-web-frontend` misses plugins mounted by name from `cordis.yml` rather than imported: `vendor/cordis-plugin-group` and `vendor/cordis-plugin-logger-console` fall outside the dependency closure while being required at runtime. Selecting by code dependency fails as "the consumer installs it and it will not start", and it would need a standing proof that no mounted package was missed. `apps/desktop`, `python/`, the root `examples/`, `docs/`, and `website/` are not members.
 
 **Extending `scripts/publish-npm-baseline.ts`.** It is a local publication script that packs and publishes in one process, the opposite of separating credential-free packing from protected publication. Its verified parts — payload validation and installed-artifact probes — are reused so `pnpm run duplication` does not report clones.
 
@@ -152,15 +152,14 @@ This Agent Note replaces the version scheme and the release-set boundary in [art
 
 The release scripts are importable modules behind a guarded entry point, and their judgements carry unit tests: tag naming, publish order and cycle reporting, version-baseline arithmetic, the payload change judgement, and each family's payload policy. Two defects the first draft carried — a publish command that ran the pack command on import, and a change judgement blind to `vendor/cordis` source edits — are exactly what a test at that seam catches.
 
-A pull request runs the full pack for both sequences without credentials and installs the packed dsh tarballs into a throwaway consumer, where plain Node drives `dsh --version`. That probe is deliberately one command: it proves `files` selected a complete payload and that the published ranges resolve, and says nothing about interactive behavior.
+A pull request runs the full pack for both sequences without credentials and installs the packed LasmeX tarballs into a throwaway consumer, where plain Node drives `lasmex --version`. That probe is deliberately one command: it proves `files` selected a complete payload and that the published ranges resolve, and says nothing about interactive behavior.
 
 What this costs:
 
 - **Tags can drift from the registry.** A tag pushed for a publication that then failed is caught by bump's registry check, but only where credentials exist; an unauthenticated machine reports the gap and continues.
 - **The change judgement depends on visible tags.** A shallow clone, or a checkout without tags, degrades the vendored judgement to "publish everything for the first time". `fetch-depth: 0` is a precondition, not an optimization.
 - **The protocol rewrite touched 1504 dependency declarations.** It does not change local resolution — pnpm already resolves from the workspace — but it changes the ranges that go out.
-- **Private packages need credentials to install.** Every consumer — CI, sandbox e2e, outside users — needs scope credentials, including for the Landlock packages, which have never been published and so cut off no existing anonymous path.
-- **`repository` names a different organization than the one running the workflows.** Token-based publication is unaffected; npm provenance (OIDC) requires the two to agree, so adopting it means either repointing `repository` or publishing from the organization it names.
+- **LasmeX packages omit npm source links until the project has a canonical public repository URL.** Inventing a repository field would misdirect consumers and make provenance claims false; adding the real URL later is an explicit metadata update.
 - **Byte reproducibility is assumed, not measured.** The skip-on-identical-integrity state rests on packing the same commit twice producing the same bytes. Nothing measures that yet: if the build embeds absolute paths or timestamps, a re-run reports a false failure. Measure it before the first publication a re-run might follow, and fall back to comparing per-file content hashes if it does not hold.
 - **Re-running publish over an older artifact can move `latest` backwards.** Publication is decided per version, so an older set republished after a newer one takes the stable dist-tag again. The rehearsals run from a prerelease version, which never takes `latest`.
-- **The first publication is one large step.** Nine vendored packages and the whole dsh set publish at once, so any payload defect surfaces in a single release, which is why a prerelease version drives the complete path first.
+- **The first publication is one large step.** Nine vendored packages and the whole LasmeX set publish at once, so any payload defect surfaces in a single release, which is why a prerelease version drives the complete path first.

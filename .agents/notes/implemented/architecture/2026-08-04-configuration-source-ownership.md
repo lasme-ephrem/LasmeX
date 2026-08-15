@@ -6,7 +6,7 @@ English | [中文](2026-08-04-configuration-source-ownership.zh.md)
 
 ## Problem
 
-`$DSH_HOME/.env` had just [become an ordinary environment layer](2026-08-04-credentials-yaml-and-user-environment-layer.md), which left the harness resolving user-facing values from a flattened `process.env` that could no longer say where a value came from. Three consequences followed.
+`$LASMEX_HOME/.env` had just [become an ordinary environment layer](2026-08-04-credentials-yaml-and-user-environment-layer.md), which left the harness resolving user-facing values from a flattened `process.env` that could no longer say where a value came from. Three consequences followed.
 
 A key stored through the web page stayed shadowed by an older key in the user's own `.env`, because the credential provider compared "the environment" against its file and the environment now included that file. The migration dead end the split was supposed to remove had simply moved.
 
@@ -23,7 +23,7 @@ explicit for this run     per-operation override, CLI argument
 > user settings           settings.yaml
 > composition             profile bundles, user patch layers, --patch overlays
 > this launch's shell     inherited process environment
-> discovered file         <invocation cwd>/.env, then $DSH_HOME/.env
+> discovered file         <invocation cwd>/.env, then $LASMEX_HOME/.env
 > defaults                schema default, provider public default
 ```
 
@@ -33,9 +33,9 @@ Settings sit above composition because that is what the [settings seam](2026-07-
 
 ```text
 inherited process environment      (read-only, wins)
-> $DSH_HOME/.credentials.yaml      (provider-managed, writable)
+> $LASMEX_HOME/.credentials.yaml      (provider-managed, writable)
 > <invocation cwd>/.env
-> $DSH_HOME/.env
+> $LASMEX_HOME/.env
 ```
 
 The launching environment wins because `DEEPSEEK_API_KEY=… dsh`, a CI secret, and a container `-e` are the one override an operator must be able to apply per run without editing machine state, and because it cannot be edited from inside it must be *visibly* read-only. Configuration is meant to carry only the *reference* — which name to resolve — and that name follows the non-secret ordering above.
@@ -44,7 +44,7 @@ The launching environment wins because `DEEPSEEK_API_KEY=… dsh`, a CI secret, 
 
 **Trust does not extend to changing the harness itself.** `loadLayeredEnv` rejects, at load and before anything is materialized, any `.env` that sets a variable governing how a process launches (`PATH`, `SHELL`, `NODE_OPTIONS`, `LD_PRELOAD`), what code a runtime executes before the program it was asked to run (`BASH_ENV`, `PERL5OPT`, `PYTHONSTARTUP`, `RUBYOPT`, `JAVA_TOOL_OPTIONS`, the Git hook commands), where model-visible instructions load from (the whole `DSH_*` namespace, `HOME`, `XDG_*`), or how the network is reached and trusted (proxy and CA variables). Matching is case-insensitive, so `https_proxy` is not a bypass.
 
-The line is that these take effect with no user action, before any turn, outside the permission policy and the sandbox. `DSH_PERMISSION_MODE` would switch off the approvals that make trusting a project meaningful at all, and `BASH_ENV` runs a file of the project's choosing on every single `bash -c` the bash tool issues — the project's code running under the agent's policy is the deal; the project rewriting that policy is not. Enumerating these is a losing game one variable at a time, which is why the whole `DSH_*` namespace is denied rather than an audited subset, and why the list is organised by what a variable *does* rather than by which runtime owns it. There is no opt-out: an escape hatch would have to be readable from somewhere, and anything a discovered file could set is the hole itself.
+The line is that these take effect with no user action, before any turn, outside the permission policy and the sandbox. `LASMEX_PERMISSION_MODE` would switch off the approvals that make trusting a project meaningful at all, and `BASH_ENV` runs a file of the project's choosing on every single `bash -c` the bash tool issues — the project's code running under the agent's policy is the deal; the project rewriting that policy is not. Enumerating these is a losing game one variable at a time, which is why the whole `DSH_*` namespace is denied rather than an audited subset, and why the list is organised by what a variable *does* rather than by which runtime owns it. There is no opt-out: an escape hatch would have to be readable from somewhere, and anything a discovered file could set is the hole itself.
 
 **`packages/util/launch-environment` owns the snapshot**, deliberately as a utility rather than a three-package capability seam. The snapshot is frozen before Cordis starts and injected once by the launcher, so there is no runtime implementation to swap; consumers need types and pure functions, which a `util/` package gives them without depending on a UI package. `launchEnvironmentOf(ctx)` returns the launcher's snapshot, or the inherited environment as the only layer — an SDK host or bare `cordis.yml` discovered no files, so its single layer really is what it was launched with, and the same trusted lookups keep working there unchanged.
 

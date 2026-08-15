@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-permission-presets",
-  "description": "User-facing permission presets (ctx.permissionPresets) for the DeepSeek Harness: one product-level Permissions select bundling the sandbox-mode and approval-policy knobs, written through to their own session events",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-permission-presets",
+  "description": "User-facing permission presets (ctx.permissionPresets) for LasmeX: one product-level Permissions select bundling the sandbox-mode and approval-policy knobs, written through to their own session events",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/interaction/permission-presets"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -41,15 +36,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-projection": "workspace:^",
+    "lasmex-settings": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
@@ -57,15 +52,24 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-projection": "workspace:^",
+    "lasmex-settings": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/interaction/permission-presets"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

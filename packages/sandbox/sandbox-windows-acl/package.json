@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-sandbox-windows-acl",
-  "description": "Windows ACL write-restriction sandbox backend (restricted-token spawn with capability-SID write allowlist) for the DeepSeek Harness sandbox seam",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-sandbox-windows-acl",
+  "description": "Windows ACL write-restriction sandbox backend (restricted-token spawn with capability-SID write allowlist) for LasmeX sandbox seam",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/sandbox/sandbox-windows-acl"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -38,16 +33,25 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "koffi": "^3.1.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-pwsh-local": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-local": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-pwsh-local": "workspace:^",
+    "lasmex-sandbox-local": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/sandbox/sandbox-windows-acl"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

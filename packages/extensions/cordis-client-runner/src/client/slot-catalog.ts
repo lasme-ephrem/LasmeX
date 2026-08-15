@@ -10,7 +10,7 @@
  * mounted for the seat to exist. Data only — this module is the one legitimate
  * meeting point of the two planes, so it carries strings, never client imports.
  *
- * @module @deepseek-ai/dsh-cordis-client-runner/client/slot-catalog
+ * @module lasmex-cordis-client-runner/client/slot-catalog
  */
 
 /* jscpd:ignore-start */
@@ -1011,6 +1011,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
     declaredBy: 'an entry in \'conversation.session\' (client-ui-conversation), so it exists while that entry is mounted',
     occupants: [
       'client-ui-conversation ChatView id \'chat\'',
+      'client-ui-mission MissionView id \'mission\'',
       'client-ui-trajectory TrajectoryView id \'trajectory\'',
     ],
     replaceRisk: 'none',
@@ -1653,7 +1654,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       'useInput: SnapshotSelectorHook<InputState>',
       'inputActions: InputActions',
     ],
-    keyDomain: 'open: any string the owner dispatches (no compile-time key set), already taken: ask_user_question, bash, cordis_define, cordis_run, cordis_stop, cordis_undefine, edit, glob, grep, read, skill, todo_write, web_fetch, web_search, write',
+    keyDomain: 'open: any string the owner dispatches (no compile-time key set), already taken: ask_user_question, bash, cordis_define, cordis_run, cordis_stop, cordis_undefine, edit, glob, grep, pwsh, read, skill, todo_write, web_fetch, web_search, write',
     hookContext: '',
     slotInject: '',
     declaredBy: 'an entry in \'conversation.chat.node\' (client-ui-tool), so it exists while that entry is mounted',
@@ -1661,6 +1662,7 @@ export const CLIENT_SLOT_API: readonly ClientSlotEntry[] = [
       'client-ui-skill SkillRow key \'skill\'',
       'client-ui-tool AskQuestionRow key \'ask_user_question\'',
       'client-ui-tool BashRow key \'bash\'',
+      'client-ui-tool BashRow key \'pwsh\'',
       'client-ui-tool FileMutationRow key \'edit\'',
       'client-ui-tool FileMutationRow key \'write\'',
       'client-ui-tool ReadRow key \'read\'',

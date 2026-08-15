@@ -41,5 +41,24 @@ export const en: Record<JobKey, string> = {
   'duration.title.done': 'Took {duration}',
 }
 
+/** Dictionnaire français. */
+export const fr: Record<JobKey, string> = {
+  'count.live.one': '{count} tâche en arrière-plan en cours',
+  'count.live.other': '{count} tâches en arrière-plan en cours',
+  'count.idle.one': '{count} tâche en arrière-plan',
+  'count.idle.other': '{count} tâches en arrière-plan',
+  'list.aria': 'Tâches en arrière-plan',
+  'status.running': 'en cours',
+  'status.stopping': 'arrêt en cours',
+  'status.completed': 'terminée',
+  'status.killed': 'annulée',
+  'status.failed': 'en échec',
+  'duration.seconds': '{seconds} s',
+  'duration.minutes': '{minutes} min {seconds} s',
+  'duration.hours': '{hours} h {minutes} min',
+  'duration.title.live': 'En cours depuis {duration}',
+  'duration.title.done': 'Durée : {duration}',
+}
+
 /** Key domain of the `job` namespace (zh is the source of truth). */
 export type JobKey = keyof typeof zh

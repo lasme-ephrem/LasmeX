@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-host-directory-picker-browse
+# lasmex-host-directory-picker-browse
 
 [English](README.md) | 中文
 

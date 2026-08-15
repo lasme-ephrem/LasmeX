@@ -6,11 +6,11 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import TokenMeter from '@deepseek-ai/dsh-token-meter'
-import BasicCompactionEngine from '@deepseek-ai/dsh-compaction-basic'
-import ToolResultPruner from '@deepseek-ai/dsh-compaction-tool-result-pruner'
+import LlmRuntime from 'lasmex-llm'
+import SessionStore from 'lasmex-session'
+import TokenMeter from 'lasmex-token-meter'
+import BasicCompactionEngine from 'lasmex-compaction-basic'
+import ToolResultPruner from 'lasmex-compaction-tool-result-pruner'
 
 let root: string | undefined
 let context: Context | undefined
@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 async function loadYaml(lines: readonly string[]): Promise<Context> {
-  root = await mkdtemp(join(tmpdir(), 'dsh-token-meter-loader-'))
+  root = await mkdtemp(join(tmpdir(), 'lasmex-token-meter-loader-'))
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [...lines, ''].join('\n'))
 
@@ -32,11 +32,11 @@ async function loadYaml(lines: readonly string[]): Promise<Context> {
   await context.plugin(Loader)
   context.loader.builtins.include = Include
   const modules = new Map<string, unknown>([
-    ['@deepseek-ai/dsh-llm', LlmRuntime],
-    ['@deepseek-ai/dsh-session', SessionStore],
-    ['@deepseek-ai/dsh-token-meter', TokenMeter],
-    ['@deepseek-ai/dsh-compaction-tool-result-pruner', ToolResultPruner],
-    ['@deepseek-ai/dsh-compaction-basic', BasicCompactionEngine],
+    ['lasmex-llm', LlmRuntime],
+    ['lasmex-session', SessionStore],
+    ['lasmex-token-meter', TokenMeter],
+    ['lasmex-compaction-tool-result-pruner', ToolResultPruner],
+    ['lasmex-compaction-basic', BasicCompactionEngine],
   ])
   context.loader.internal = {
     version: 'v2',
@@ -56,15 +56,15 @@ async function loadYaml(lines: readonly string[]): Promise<Context> {
 describe('real Loader composition', () => {
   it('loads the shipped token-meter, pruning, and compaction-basic YAML order', async () => {
     const loaded = await loadYaml([
-      "- name: '@deepseek-ai/dsh-llm'",
-      "- name: '@deepseek-ai/dsh-session'",
-      "- name: '@deepseek-ai/dsh-token-meter'",
-      "- name: '@deepseek-ai/dsh-compaction-tool-result-pruner'",
+      "- name: 'lasmex-llm'",
+      "- name: 'lasmex-session'",
+      "- name: 'lasmex-token-meter'",
+      "- name: 'lasmex-compaction-tool-result-pruner'",
       '  config:',
       '    thresholdChars: 100',
       '    headChars: 20',
       '    tailChars: 10',
-      "- name: '@deepseek-ai/dsh-compaction-basic'",
+      "- name: 'lasmex-compaction-basic'",
       '  config:',
       '    thresholdRatio: 0.5',
       '    retainRatio: 0.125',

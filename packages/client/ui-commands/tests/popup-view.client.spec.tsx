@@ -14,8 +14,8 @@ import type { SelectOption } from '../src/client/contract.ts'
 import type { PopupSpec, TokenSegment } from '../src/client/popup.ts'
 import { PopupSelectController } from '../src/client/popup.ts'
 import { PopupSelectView } from '../src/client/PopupSelectView.tsx'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import { zh } from '../src/client/locales.ts'
 
 // The framework-injected t seat, stubbed over the zh dictionaries (the default locale).
@@ -185,7 +185,7 @@ describe('PopupSelectView', () => {
     await mountOpen({ options: () => Promise.resolve([GATED]) })
     await act(async () => { fireEvent.click(screen.getByRole('option', { name: 'Full access' })) })
     fireEvent.click(screen.getByRole('checkbox'))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByText('Cancel'))
     expect(screen.getByLabelText('/theme 选项')).toBeTruthy()
     await act(async () => { fireEvent.click(screen.getByRole('option', { name: 'Full access' })) })
     expect(screen.getByRole<HTMLInputElement>('checkbox').checked).toBe(false)

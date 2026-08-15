@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-layout",
+  "name": "lasmex-client-ui-layout",
   "description": "Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels)",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/ui-layout"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,11 +24,11 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-theme"
+        "lasmex-client-runtime",
+        "lasmex-client-ui-theme"
       ],
       "platform": "web"
     }
@@ -44,19 +39,19 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-theme": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-theme": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@types/react": "~18.3.1",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
@@ -66,5 +61,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-layout"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

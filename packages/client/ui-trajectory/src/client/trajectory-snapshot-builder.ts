@@ -3,11 +3,12 @@ import type {
   AssistantMessageNode, ConversationNode, ConversationPromptSnapshot,
   ConversationViewBuilder, ConversationViewDefinition, RequestView,
   ToolCallBlock,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import type {
   TrajectoryConversationViewNode, TrajectoryRequestHeaderState,
   TrajectorySnapshot,
 } from './trajectory-contract.ts'
+import { COMPACTION_INTERRUPTED_ERROR } from './trajectory-contract.ts'
 
 const EMPTY_LIST: readonly never[] = []
 type AssistantRequest = Extract<RequestView, { purpose: 'assistant' }>
@@ -106,7 +107,7 @@ function interruptCompactions(
       ...request,
       completedAt: boundary.time,
       status: 'error',
-      error: 'Compaction was interrupted before completion.',
+      error: COMPACTION_INTERRUPTED_ERROR,
     }
   }
 }

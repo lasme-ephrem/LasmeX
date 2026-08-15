@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-tool
+# lasmex-client-ui-tool
 
 English | [中文](README.zh.md)
 
@@ -46,4 +46,4 @@ None. The package is client-only presentation.
 
 - The Host excludes `run_code` from Code Mode program bindings, so production events produce one dispatch level; the recursive Runtime/UI contract supports nesting.
 - First-party Tool views are colocated here and can move to their owning business packages independently through the keyed slot.
-- Tool copy reuses the `ui-conversation` locale namespace.
+- Tool-row titles, input/output gutters, inspection actions, and every structured-card label, count, empty state, truncation notice, and accessible control come from the `ui-conversation` locale namespace. Wire tool names such as `grep`, `glob`, and `pwsh` remain stable technical identifiers.

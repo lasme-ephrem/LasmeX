@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-subagent-acp",
+  "name": "lasmex-subagent-acp",
   "description": "Out-of-process ACP subagent backend: drives a child agent in a spawned subprocess over the Agent Client Protocol",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/subagent/subagent-acp"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,13 +27,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subprocess": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
@@ -47,15 +42,24 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-loader-smoke": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-loader-smoke": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subprocess": "workspace:^",
+    "lasmex-subprocess-local": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/subagent/subagent-acp"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

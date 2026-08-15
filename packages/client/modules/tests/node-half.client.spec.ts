@@ -7,8 +7,9 @@ import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { WebServer, WebRoute } from '@deepseek-ai/dsh-host-webserver'
+import type { WebServer, WebRoute } from 'lasmex-host-webserver'
 import { ClientModuleRegistry } from '../src/index.ts'
+import { createPackageJsonResolver } from '../src/package-resolution.ts'
 
 let root: string | undefined
 
@@ -20,9 +21,9 @@ afterEach(() => {
 /** Create a resolvable package whose client export points at the returned path. */
 function writePackage(
   packageName: string,
-  metadata: Record<string, unknown> = { dsh: { client: { platform: 'web' } } },
+  metadata: Record<string, unknown> = { lasmex: { client: { platform: 'web' } } },
 ): string {
-  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-modules-')))
+  root ??= realpathSync(mkdtempSync(join(tmpdir(), 'lasmex-client-modules-')))
   const pkgRoot = join(root, 'node_modules', ...packageName.split('/'))
   const clientPath = join(pkgRoot, 'lib', 'client.js')
   mkdirSync(pkgRoot, { recursive: true })
@@ -69,10 +70,84 @@ function construct(packageNames: string[]): ClientModuleRegistry {
 }
 
 describe('client bundle activation', () => {
+  it('falls back from the writable profile to the installed runtime package tree', () => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-module-resolver-')))
+    const profile = join(root, 'profile')
+    const runtime = join(root, 'runtime')
+    const packageRoot = join(runtime, 'node_modules', '@fixture', 'runtime-client')
+    mkdirSync(profile, { recursive: true })
+    mkdirSync(packageRoot, { recursive: true })
+    writeFileSync(join(packageRoot, 'package.json'), JSON.stringify({ name: '@fixture/runtime-client' }))
+
+    const resolvePackageJson = createPackageJsonResolver(
+      pathToFileURL(join(profile, 'entry.mjs')).href,
+      pathToFileURL(join(runtime, 'entry.mjs')).href,
+    )
+
+    expect(resolvePackageJson('@fixture/runtime-client')).toBe(join(packageRoot, 'package.json'))
+  })
+
+  it('keeps a profile-local package ahead of the installed runtime', () => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-module-primary-')))
+    const profile = join(root, 'profile')
+    const runtime = join(root, 'runtime')
+    const profilePackage = join(profile, 'node_modules', '@fixture', 'shared-client')
+    const runtimePackage = join(runtime, 'node_modules', '@fixture', 'shared-client')
+    mkdirSync(profilePackage, { recursive: true })
+    mkdirSync(runtimePackage, { recursive: true })
+    writeFileSync(join(profilePackage, 'package.json'), JSON.stringify({ name: '@fixture/shared-client' }))
+    writeFileSync(join(runtimePackage, 'package.json'), JSON.stringify({ name: '@fixture/shared-client' }))
+
+    const resolvePackageJson = createPackageJsonResolver(
+      pathToFileURL(join(profile, 'entry.mjs')).href,
+      pathToFileURL(join(runtime, 'entry.mjs')).href,
+    )
+
+    expect(resolvePackageJson('@fixture/shared-client')).toBe(join(profilePackage, 'package.json'))
+  })
+
+  it('does not hide a profile package that blocks its package.json export', () => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'dsh-client-module-private-')))
+    const profile = join(root, 'profile')
+    const runtime = join(root, 'runtime')
+    const profilePackage = join(profile, 'node_modules', '@fixture', 'private-client')
+    const runtimePackage = join(runtime, 'node_modules', '@fixture', 'private-client')
+    mkdirSync(profilePackage, { recursive: true })
+    mkdirSync(runtimePackage, { recursive: true })
+    writeFileSync(join(profilePackage, 'package.json'), JSON.stringify({
+      name: '@fixture/private-client',
+      exports: { '.': './index.js' },
+    }))
+    writeFileSync(join(runtimePackage, 'package.json'), JSON.stringify({ name: '@fixture/private-client' }))
+
+    const resolvePackageJson = createPackageJsonResolver(
+      pathToFileURL(join(profile, 'entry.mjs')).href,
+      pathToFileURL(join(runtime, 'entry.mjs')).href,
+    )
+
+    expect(() => resolvePackageJson('@fixture/private-client')).toThrow(/package subpath.*package\.json.*exports/i)
+  })
+
+  it('composes the graph without an HTTP server for in-process carriers', () => {
+    const packageName = '@fixture/in-process'
+    const clientPath = writePackage(packageName)
+    mkdirSync(dirname(clientPath), { recursive: true })
+    writeFileSync(clientPath, 'module.exports = {}\n')
+    const ctx = new Context()
+    ctx.baseUrl = pathToFileURL(root!).href + '/'
+    ctx.provide('loader', {
+      *entries() {
+        yield { options: { name: packageName }, fiber: {}, disabled: false }
+      },
+    })
+    const service = new ClientModuleRegistry(ctx)
+    expect(service.graph().entries.map(entry => entry.id)).toEqual([packageName])
+  })
+
   it('allows sibling dsh roles', () => {
     const currentName = '@fixture/current-client-field'
     const clientPath = writePackage(currentName, {
-      dsh: {
+      lasmex: {
         bundle: { patch: './cordis.patch.yml' },
         client: { platform: 'web' },
         profile: { bundles: [] },

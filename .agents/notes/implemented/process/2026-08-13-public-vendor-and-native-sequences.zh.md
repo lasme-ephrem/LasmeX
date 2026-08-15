@@ -1,4 +1,4 @@
-# Agent Note: 按发布序列区分 npm access:vendored 框架与 native 包公开发布
+# Agent Note: 按发布序列区分 npm access
 
 Status: implemented
 
@@ -6,9 +6,9 @@ Status: implemented
 
 ## Problem
 
-[三条发布序列](2026-08-10-npm-release-sequences.md)交付时带的是 `publishConfig.access: restricted`,因此发到 `@deepseek-ai` scope 的每个包只在组织内可见。五次排练发布都是这样跑的:`dsh@0.0.1-rc.5`、vendor 的 `*-rc.4`、`landlock-run@0.0.1`。
+[三条发布序列](2026-08-10-npm-release-sequences.md)必须组成可安装的公开发行版。LasmeX 使用非 scoped 名称，vendored 框架与 Landlock 包则保留 `@deepseek-ai` scope；因此 scope 本身无法表达或强制 access。
 
-真正卡住公开消费者的是**受限的依赖**。每个 harness 包都把 vendored 框架声明成 `peerDependency`,`dsh-sandbox-local` 把 Landlock 入口声明成 `dependency`。一个公开包若要求一个受限包,组织外的人根本装不上;所以这两条序列必须先公开,dsh 族才可能公开 —— 而在 dsh 族仍受限期间,它们也正是外部消费者唯一需要解析到的两条。
+真正卡住公开消费者的是**受限的依赖**。每个 LasmeX 包都把 vendored 框架声明成 `peerDependency`，`lasmex-sandbox-local` 把 Landlock 入口声明成 `dependency`。因此，即便三条序列采用不同的 npm 命名形式，它们也必须一起保持公开。
 
 ## Decision
 
@@ -18,19 +18,19 @@ access 是每条发布序列的属性,不是整个 scope 的属性:
 |---|---|---|
 | vendored 框架 | `vendor/*` 九包 | `public` |
 | native | `native/landlock-run/packages/*` 三包 | `public` |
-| dsh | `packages/*/*` + `apps/*`(221 个成员) | `restricted` |
+| LasmeX | 非 scoped 的 `packages/*/*`、`apps/cli` 与 `apps/web`；排除私有 desktop | `public` |
 
-`check-workspace-constraints.ts` 按各自序列的级别校验每个 manifest,这是阻止 scope 漂移的那道闸:新增的 `vendor/*` 包留在 `restricted`、或某个 dsh 成员被改成 `public`,都会让 workspace 约束失败。
+`check-workspace-constraints.ts` 要求每个 release manifest 都是 `public`，从而阻止新增 scoped 依赖或非 scoped LasmeX 成员变得不可访问。私有 desktop app 不属于 npm 发布族。
 
 **没有任何发布路径传 `--access`。** 一个选项无法服务级别互不相同的序列,而且选项会覆盖真正拥有这个事实的 manifest —— 所以 `publish.ts` 不传,native 的 workflow 也照旧不传,由各 packed manifest 决定。
 
 harness 消费方引用 Landlock 入口改用 `workspace:^` 而非 `workspace:*`,于是发布出去的 harness 包接受该入口的 patch 与 minor 版本,而不是钉死一个精确版本。入口对它那两个平台包仍保持 `workspace:*` —— 那里二进制必须与入口版本完全一致。
 
-access 是包的属性、不是版本的属性:已经以 restricted 发布的这十二个包(`landlock-run@0.0.1` 与 vendored 的 `*-rc.*`)会在**下一次发布**时变为全网可读。
+access 是包的属性、不是版本的属性。每个新打包的发布成员都带着 npm 在发布时采用的公开声明。
 
 ## Alternatives considered
 
-**一次性把整个 scope 改成 public。** 暂不采用:那会让下一次 dsh 发布因为一次 manifest 改动而顺带变成公开,而不是出自一个刻意的发布决定。先公开这两条依赖序列,是能让每一步的已发布包都保持可安装的顺序,也是将来决定公开 dsh 时的前置条件。
+**依赖公开而 LasmeX 保持 restricted。** 不采用：这会在依赖图已经可安装之后，仍让组织外消费者无法取得产品发行版。
 
 **全部保持受限,改为授予一个只读 team。** `npm access grant read-only <org:team> <包>` 是逐包的、没有 scope 通配,覆盖全集意味着每个包一次 grant,外加一个为后续新增包长期补齐的对账任务。它也只能覆盖组织成员,无法服务一个可安装的公开产物。
 
@@ -38,8 +38,7 @@ access 是包的属性、不是版本的属性:已经以 restricted 发布的这
 
 ## Consequences
 
-- **这十二个包从下一次发布起就是公开的,而且不能干净地回退。** 回到受限 scope 需要付费套餐加逐包 `npm access set status=private`,且已经被下载或镜像的内容收不回来。
-- **`@deepseek-ai/dsh` 仍然装不了(组织外)。** 它的 manifest 保持 `restricted`;变化的是它已发布的依赖不再受限,所以将来公开它是一个版本决定,而不再是依赖问题。
-- **两条公开序列交付的内容成为全网可读,它们的 payload 策略分量因此变重。** `vendor/cordis` 有意发布 `src`,因为其导出映射声明了 `./src/*`;Landlock 入口按既有约定发布 `src/main.c` 作为审计面。
-- **这两条序列不再需要私有包套餐。** 阻塞过首次 native 发布的 `402 Payment Required` 失败形态对公开包不会再出现。
-- **对公开序列,无凭据的 `npm view` 成为一个可用的检查手段。** 在所有包都受限的时期,没有凭据的机器对一个确实存在的包会收到 `E404`,与「版本不存在」无法区分。
+- **三条序列都全网可读，而且不能干净地回退。** 已经被下载或镜像的内容不再受发布方控制。
+- **`lasmex` 及其版本与依赖发布后，无需组织凭据即可安装。** release 验证仍会在本地打包跨序列依赖，使一个 pull request 不依赖发布顺序。
+- **每条序列的 payload 策略都更重要。** `vendor/cordis` 有意发布 `src`，因为其导出映射声明了 `./src/*`；Landlock 入口发布 `src/main.c` 作为审计面；LasmeX 则拒绝源码与声明映射 payload。
+- **无凭据的 `npm view` 是可用的发布检查。** public access 能区分缺失版本与不可访问的私有包。

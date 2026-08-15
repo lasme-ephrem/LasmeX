@@ -16,7 +16,7 @@ It had not. The seam (`capSources`, `packages/web/web/src/index.ts`) cuts the pr
 
 The model side is unchanged: the seam still caps sources at `searchMaxResults`, the model-facing render text is untouched, and the `truncated` flag and its `来源列表已截断` indicator stay. The card draws the list the seam produced, in full and scrollable, instead of collapsing its middle.
 
-That list is the one the model reads as long as nothing downstream of the tool rewrites the result content alone. A deployment mounting `dsh-spill-policy` breaks that correspondence for an oversized result: `tools/post-execute` replaces the model-facing `content` with a preview plus a spill locator and leaves `presentationMeta` whole, so the card still draws every source while the model reads a bounded excerpt. The card's contract is therefore the view it receives, not the model's context.
+That list is the one the model reads as long as nothing downstream of the tool rewrites the result content alone. A deployment mounting `lasmex-spill-policy` breaks that correspondence for an oversized result: `tools/post-execute` replaces the model-facing `content` with a preview plus a spill locator and leaves `presentationMeta` whole, so the card still draws every source while the model reads a bounded excerpt. The card's contract is therefore the view it receives, not the model's context.
 
 `CHAT_WEB_MAX_SOURCES` and the primitive's `DEFAULT_WEB_MAX_SOURCES` are removed: with scroll, the chat row and the details panel show the same full list, differentiated only by their container height. `<li value={ordinal}>` still pins each source's 1-based citation index; without the collapse gap the ordinals are now simply contiguous.
 

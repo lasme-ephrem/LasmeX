@@ -4,26 +4,26 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { boot, healProfilesModuleFallback, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
-import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { Agent } from '@deepseek-ai/dsh-agent'
+import { boot, healProfilesModuleFallback, loadOverlayPatches } from 'lasmex-app-boot'
+import { provideCmdline } from 'lasmex-cmdline'
+import { SessionId } from 'lasmex-session'
+import type { Agent } from 'lasmex-agent'
 import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { resolveSessionPreset, SETTINGS_NAMESPACE } from '@deepseek-ai/dsh-agent-presets'
-import { applyChildComposition, childSessionMeta } from '@deepseek-ai/dsh-subagent'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import type {} from '@deepseek-ai/dsh-compaction-basic'
-import type {} from '@deepseek-ai/dsh-skill'
-import type {} from '@deepseek-ai/dsh-tools'
+import { settingsNamespace } from 'lasmex-settings'
+import { resolveSessionPreset, SETTINGS_NAMESPACE } from 'lasmex-agent-presets'
+import { applyChildComposition, childSessionMeta } from 'lasmex-subagent'
+import { CallId } from 'lasmex-llm'
+import type {} from 'lasmex-compaction-basic'
+import type {} from 'lasmex-skill'
+import type {} from 'lasmex-tools'
 // Type-only: resolves `ctx.get('sessionProjections')` and `ctx.get('tokenMeter')`.
-import type {} from '@deepseek-ai/dsh-session-projection'
-import type {} from '@deepseek-ai/dsh-token-meter'
+import type {} from 'lasmex-session-projection'
+import type {} from 'lasmex-token-meter'
 
 const CONFIG_DIR = fileURLToPath(new URL('../config/', import.meta.url))
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
-/** The shipped Web surface: the dsh-base and dsh-web-app bundle patches over an empty preset root. */
+/** The shipped Web surface: the lasmex-base and lasmex-web-app bundle patches over an empty preset root. */
 const BASE_PATCH = join(REPO_ROOT, 'packages/bundle/base/cordis.patch.yml')
 const WEB_PATCH = join(REPO_ROOT, 'packages/bundle/web-app/cordis.patch.yml')
 /** The installation anchor whose dependency surface the preset module fallback mirrors. */
@@ -53,14 +53,14 @@ async function bootWeb(
   const patches: PatchOptions[] = [
     ...loadOverlayPatches('dsh-test', BASE_PATCH),
     ...loadOverlayPatches('dsh-test', WEB_PATCH),
-    // The settings row defaults to `$DSH_HOME/settings.yaml`. Left alone it
+    // The settings row defaults to `$LASMEX_HOME/settings.yaml`. Left alone it
     // reads the developer's own document — and since the default preset is a
     // setting, a stored `agent-presets.default` would decide this file's
     // outcome. Point it at a temp file for the same reason the roster below
     // names only the shipped root.
     { id: 'settings', config: { path: settingsFile, watch: false } },
-    // storage-json's root is anchored to the real $DSH_HOME. Unpinned, this
-    // file writes the developer's own `~/.dsh/storages/` — and then reads it
+    // storage-json's root is anchored to the real $LASMEX_HOME. Unpinned, this
+    // file writes the developer's own `~/.lasmex/storages/` — and then reads it
     // back on the next run, so a stored document from any other build decides
     // this test's boot. Same reason the settings row above is pinned.
     { id: 'storage-json', config: { root: storageRoot } },
@@ -92,17 +92,17 @@ async function bootWeb(
     // supplies `directoryPicker` without one.
     { id: 'directory-picker', disabled: true },
     { insert: [
-      { id: 'directory-picker-browse', name: '@deepseek-ai/dsh-host-directory-picker-browse' },
-      { id: 'ui-directory-picker-browse', name: '@deepseek-ai/dsh-client-ui-directory-picker-browse' },
+      { id: 'directory-picker-browse', name: 'lasmex-host-directory-picker-browse' },
+      { id: 'ui-directory-picker-browse', name: 'lasmex-client-ui-directory-picker-browse' },
     ] },
     // The roster AppCLIEntry would patch in; only the shipped root, so a
-    // developer's own `~/.dsh/.preset` cannot change this test's outcome.
+    // developer's own `~/.lasmex/.preset` cannot change this test's outcome.
     // `default` here is the COMPOSITION default — the base layer the settings
     // document overrides.
     {
       id: 'agent-presets',
       config: {
-        default: 'standard',
+        default: 'lasmex-code',
         roots: [{ path: join(CONFIG_DIR, 'agent-presets'), trust: 'system' }],
         includeUserRoot: false,
       },
@@ -142,7 +142,7 @@ function enablePresetTool(composition: string, id: string): string {
 
 let ctx: Context
 beforeAll(async () => {
-  const settingsFile = join(await mkdtemp(join(tmpdir(), 'dsh-web-presets-')), 'settings.yaml')
+  const settingsFile = join(await mkdtemp(join(tmpdir(), 'lasmex-web-presets-')), 'settings.yaml')
   await writeFile(settingsFile, '{}\n')
   ctx = await bootWeb(settingsFile)
 }, 120_000)
@@ -187,9 +187,9 @@ describe('the shipped Web composition', () => {
   it('supplies both shipped presets, and only those, from the system root', async () => {
     const listed = await ctx.agentPresets.list()
 
-    expect(listed.map(preset => preset.id).sort()).toEqual(['code', 'cordis', 'minimal', 'standard'])
+    expect(listed.map(preset => preset.id).sort()).toEqual(['cordis', 'lasmex-code', 'minimal', 'standard'])
     expect(listed.every(preset => preset.trust === 'system')).toBe(true)
-    expect(ctx.agentPresets.defaultId).toBe('standard')
+    expect(ctx.agentPresets.defaultId).toBe('lasmex-code')
   })
 
   it('composes the full agent from `standard`', async () => {
@@ -205,7 +205,9 @@ describe('the shipped Web composition', () => {
       // depend on ripgrep being present on the machine.
       expect(toolNames(ctx, handle.agent).filter(name => name !== 'glob' && name !== 'grep')).toEqual([
         'ask_user_question', 'bash', 'create_goal', 'edit', 'exit_plan_mode',
-        'get_goal', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents', 'ralph', 'read', 'read_image', 'send_message', 'skill',
+        'get_goal', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents',
+        'memory_forget', 'memory_list', 'memory_read', 'memory_save', 'memory_search',
+        'ralph', 'read', 'read_image', 'send_message', 'skill',
         'subagent', 'subagent_fork', 'todo_write', 'update_goal', 'web_search',
         'workflow', 'write',
       ])
@@ -271,7 +273,7 @@ describe('the shipped Web composition', () => {
         'cordis_define', 'cordis_run', 'cordis_stop', 'cordis_undefine',
       ]))
       // And it keeps the standard agent's own tools rather than replacing them.
-      expect(tools).toEqual(expect.arrayContaining(['bash', 'read', 'edit', 'skill']))
+      expect(tools).toEqual(expect.arrayContaining(['bash', 'read', 'edit', 'skill', 'memory_list']))
       expect(tools).not.toContain('str_replace_editor')
 
       // The preset's own authoring skill registers into ITS layer of the host
@@ -284,13 +286,13 @@ describe('the shipped Web composition', () => {
     }
   })
 
-  it('presents `code` as Code Mode without disturbing a native session beside it', async () => {
+  it('presents `lasmex-code` as Code Mode without disturbing a native session beside it', async () => {
     const coded = await ctx.agents.create({
-      sessionId: SessionId('preset-code'),
-      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'code').then(() => undefined),
+      sessionId: SessionId('preset-lasmex-code'),
+      setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'lasmex-code').then(() => undefined),
     })
     const native = await ctx.agents.create({
-      sessionId: SessionId('preset-code-native'),
+      sessionId: SessionId('preset-lasmex-code-native'),
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
     })
     try {
@@ -307,7 +309,8 @@ describe('the shipped Web composition', () => {
       // The presentation is this agent's alone: the deployment default is
       // native, and the session composed from `standard` still sees it.
       const nativeAssembly = await ctx.systemPrompt.assemble({ scope: native.agent })
-      expect(nativeAssembly.tools.map(tool => tool.name)).toContain('bash')
+      expect(nativeAssembly.tools.map(tool => tool.name))
+        .toContain(process.platform === 'win32' ? 'pwsh' : 'bash')
       expect(nativeAssembly.tools.map(tool => tool.name)).not.toContain('run_code')
       expect(nativeAssembly.sections.some(section => section.name === 'tools:sdk')).toBe(false)
     } finally {
@@ -341,8 +344,8 @@ describe('the shipped Web composition', () => {
 
   it('merges the global skill layer into a preset agent\'s catalog, keeping local discovery preset-side', async () => {
     const proj = await mkdtemp(join(tmpdir(), 'dsh-preset-skill-proj-'))
-    await mkdir(join(proj, '.dsh', 'skills', 'project-proof'), { recursive: true })
-    await writeFile(join(proj, '.dsh', 'skills', 'project-proof', 'SKILL.md'), [
+    await mkdir(join(proj, '.lasmex', 'skills', 'project-proof'), { recursive: true })
+    await writeFile(join(proj, '.lasmex', 'skills', 'project-proof', 'SKILL.md'), [
       '---',
       'name: project-proof',
       'description: Proves the preset layer discovers project skills beside global ones.',
@@ -353,7 +356,7 @@ describe('the shipped Web composition', () => {
     ].join('\n'))
 
     const handle = await ctx.agents.create({
-      // Unique per run: the composition persists into the ambient DSH home,
+      // Unique per run: the composition persists into the ambient LasmeX home,
       // and a fixed id would collide with a log an earlier run left there.
       sessionId: SessionId(`preset-skills-standard-${randomUUID()}`),
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
@@ -361,24 +364,24 @@ describe('the shipped Web composition', () => {
     try {
       // The host (global) view carries the deployment-level provider alone:
       // local discovery moved behind the presets with `skill-filesystem`.
-      expect((await ctx.skills.list({ cwd: proj })).map(skill => skill.name)).toEqual(['dsh-badge'])
+      expect((await ctx.skills.list({ cwd: proj })).map(skill => skill.name)).toEqual(['lasmex-badge'])
 
       // The standard agent's view merges the global layer with its preset's
       // own local discovery over the session cwd.
       const scoped = (await ctx.skills.list({ cwd: proj, scope: handle.agent })).map(skill => skill.name)
-      expect(scoped).toContain('dsh-badge')
+      expect(scoped).toContain('lasmex-badge')
       expect(scoped).toContain('project-proof')
 
       // The preset's own loader tool resolves the global-layer skill.
       const loaded = await ctx.tools.execute({
         callId: CallId('preset-skills-load'),
         name: 'skill',
-        arguments: { name: 'dsh-badge' },
+        arguments: { name: 'lasmex-badge' },
         signal: new AbortController().signal,
         agent: handle.agent,
       })
       expect(loaded.isError).toBe(false)
-      expect(JSON.stringify(loaded.content)).toContain('powered by dsh')
+      expect(JSON.stringify(loaded.content)).toContain('powered by LasmeX')
     } finally {
       await handle.dispose()
     }
@@ -393,7 +396,7 @@ describe('the shipped Web composition', () => {
       // Layer visibility is the registry's; whether an agent can USE skills
       // stays the preset's choice — minimal mounts no `tool-skill`, so its
       // tool table has no loader even though the global layer is readable.
-      expect((await ctx.skills.list({ scope: handle.agent })).map(skill => skill.name)).toContain('dsh-badge')
+      expect((await ctx.skills.list({ scope: handle.agent })).map(skill => skill.name)).toContain('lasmex-badge')
       expect(toolNames(ctx, handle.agent)).toEqual(['bash', 'str_replace_editor'])
     } finally {
       await handle.dispose()
@@ -448,8 +451,8 @@ describe('product subagent rows in user presets', () => {
     }
     productCtx = await bootWeb(settingsFile, [
       { insert: [
-        { id: 'subagent-codex', name: '@deepseek-ai/dsh-subagent-codex' },
-        { id: 'subagent-claude-code', name: '@deepseek-ai/dsh-subagent-claude-code' },
+        { id: 'subagent-codex', name: 'lasmex-subagent-codex' },
+        { id: 'subagent-claude-code', name: 'lasmex-subagent-claude-code' },
       ] },
       {
         id: 'agent-presets',
@@ -647,7 +650,7 @@ describe('a launcher that configures no writable root', () => {
   // The claim this default exists for, asserted through the real shipped
   // bundles rather than a hand-built context: `apps/cli` patches in only the
   // system root, and a person's own presets are found anyway because the
-  // roster derives `<dshHome>/.agent-presets` itself. `$DSH_HOME` is pointed
+  // roster derives `<lasmexHome>/.agent-presets` itself. `$LASMEX_HOME` is pointed
   // at a temp home BEFORE boot — the derived root is resolved when the plugin
   // is constructed, and an unpinned run would read the developer's own.
   let derivedCtx: Context
@@ -655,12 +658,12 @@ describe('a launcher that configures no writable root', () => {
 
   beforeAll(async () => {
     const home = await mkdtemp(join(tmpdir(), 'dsh-preset-derived-'))
-    previousHome = process.env.DSH_HOME
-    process.env.DSH_HOME = home
+    previousHome = process.env.LASMEX_HOME
+    process.env.LASMEX_HOME = home
     await mkdir(join(home, '.agent-presets', 'derived-mine'), { recursive: true })
     await writeFile(
       join(home, '.agent-presets', 'derived-mine', 'agent.cordis.yml'),
-      '- id: tool-todo\n  name: \'@deepseek-ai/dsh-tool-todo\'\n  config:\n    allowParallelInProgress: true\n',
+      '- id: tool-todo\n  name: \'lasmex-tool-todo\'\n  config:\n    allowParallelInProgress: true\n',
     )
     const settingsFile = join(await mkdtemp(join(tmpdir(), 'dsh-preset-derived-settings-')), 'settings.yaml')
     await writeFile(settingsFile, '{}\n')
@@ -677,8 +680,8 @@ describe('a launcher that configures no writable root', () => {
   }, 120_000)
 
   afterAll(async () => {
-    if (previousHome === undefined) delete process.env.DSH_HOME
-    else process.env.DSH_HOME = previousHome
+    if (previousHome === undefined) delete process.env.LASMEX_HOME
+    else process.env.LASMEX_HOME = previousHome
     await derivedCtx.fiber.dispose()
   })
 
@@ -782,7 +785,7 @@ describe('authoring a preset on the shipped composition', () => {
  */
 describe('the default preset as a user setting', () => {
   it('composes an unnamed session from the stored default, not the composed one', async () => {
-    expect(ctx.agentPresets.defaultId).toBe('standard')
+    expect(ctx.agentPresets.defaultId).toBe('lasmex-code')
 
     await ctx.settings.update(settingsNamespace(SETTINGS_NAMESPACE), { default: 'minimal' })
     try {
@@ -794,7 +797,7 @@ describe('the default preset as a user setting', () => {
       })
       try {
         // `mount()` with no id resolves the effective default. Two tools, not
-        // `standard`'s catalog: the setting decided the composition.
+        // `lasmex-code`'s catalog: the setting decided the composition.
         expect(toolNames(ctx, handle.agent)).toEqual(['bash', 'str_replace_editor'])
       } finally {
         await handle.dispose()
@@ -806,7 +809,7 @@ describe('the default preset as a user setting', () => {
       await ctx.settings.replace(settingsNamespace(SETTINGS_NAMESPACE), {})
     }
 
-    expect(ctx.agentPresets.defaultId).toBe('standard')
+    expect(ctx.agentPresets.defaultId).toBe('lasmex-code')
   })
 })
 

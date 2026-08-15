@@ -6,7 +6,7 @@ English | [中文](2026-08-10-vendor-package-rescope.zh.md)
 
 ## Problem
 
-The nine packages under `vendor/` kept their upstream npm names (`cordis`, `cosmokit`, `schemastery`, `@cordisjs/plugin-*`). That premise does not survive publication: every harness package declares `cordis` as a peer dependency, so a consumer installing `@deepseek-ai/dsh-*` must resolve it from the registry, which means publishing the harness publishes this framework layer too. Publishing it under the upstream names squats them on the registry, and where that registry proxies npmjs, the same-name entries shadow the real upstream packages and install the wrong framework into unrelated projects.
+The nine packages under `vendor/` kept their upstream npm names (`cordis`, `cosmokit`, `schemastery`, `@cordisjs/plugin-*`). That premise does not survive publication: every harness package declares `cordis` as a peer dependency, so a consumer installing `lasmex-*` must resolve it from the registry, which means publishing the harness publishes this framework layer too. Publishing it under the upstream names squats them on the registry, and where that registry proxies npmjs, the same-name entries shadow the real upstream packages and install the wrong framework into unrelated projects.
 
 ## Decision
 
@@ -24,7 +24,7 @@ All nine packages move into the `@deepseek-ai` scope. Directory names, upstream 
 | `hmr/` | `@deepseek-ai/cordis-plugin-hmr` | `@cordisjs/plugin-hmr` |
 | `logger-console/` | `@deepseek-ai/cordis-plugin-logger-console` | `@cordisjs/plugin-logger-console` |
 
-The rewrite touches only **delimited, complete package-name tokens**: quoted or backticked specifiers (optionally with a `/subpath`), `package.json` names and dependency keys, `cordis.yml` `name:` values, and `tsconfig.base.json` `paths` keys. Identically spelled strings that are not package names therefore stayed as they were: the `cordis.yml` config-file family, the Loader's literal `cordis:` builtin prefix (`cordis:include`, `cordis:group` — see `vendor/loader/src/config/tree.ts`), kind strings like `cordis-config-entry`, `@deepseek-ai/dsh-tool-cordis`, Schemastery's upstream `Symbol.for('schemastery')` and `vendor:` metadata field, the `packages/<group>/` directory names in `GROUP_ORDER` (`scripts/gen-module-graph.ts`, `scripts/gen-doc-graphs.ts`), and the upstream install instructions in `vendor/*/README.md`.
+The rewrite touches only **delimited, complete package-name tokens**: quoted or backticked specifiers (optionally with a `/subpath`), `package.json` names and dependency keys, `cordis.yml` `name:` values, and `tsconfig.base.json` `paths` keys. Identically spelled strings that are not package names therefore stayed as they were: the `cordis.yml` config-file family, the Loader's literal `cordis:` builtin prefix (`cordis:include`, `cordis:group` — see `vendor/loader/src/config/tree.ts`), kind strings like `cordis-config-entry`, `lasmex-tool-cordis`, Schemastery's upstream `Symbol.for('schemastery')` and `vendor:` metadata field, the `packages/<group>/` directory names in `GROUP_ORDER` (`scripts/gen-module-graph.ts`, `scripts/gen-doc-graphs.ts`), and the upstream install instructions in `vendor/*/README.md`.
 
 Two classes are invisible to a token rule and were renamed site by site. First, property access — `manifest.peerDependencies?.cordis` — where TypeScript cannot catch a stale `Record<string, string>` key. Second, constants that carry the name as data: the vendored set in `check-workspace-constraints.ts`, the group/include names in `verify-cordis-config.ts`, the `declare module` target strings in `cordis-walk.ts`, `gen-scoped-events.ts`, and typert's `analyzer.ts`, and `alwaysBundle` in `app-boot/tsdown.config.ts`.
 
@@ -32,7 +32,7 @@ Markdown splits along what a reader does with it. Every fence follows the rename
 
 ## Consequences
 
-- No upstream name remains in the publication set. `publish-npm-baseline.ts` now requires every published package to be `@deepseek-ai/*` with no vendored exemption, so regressing the rename fails before packing.
+- No upstream name remains in the vendored publication set. `publish-npm-baseline.ts` requires vendored packages to be `@deepseek-ai/*` and product packages to be unscoped `lasmex` or `lasmex-*`, so either naming regression fails before packing.
 - The `vendor/README.md` manifest table gains an upstream-name column; `gen-third-party-notices` parses six columns and renders that name into `THIRD_PARTY_NOTICES.md`, keeping MIT attribution pointed at each fork's origin rather than our scope.
 - `pnpm-workspace.yaml` drops the `cordis` and `@cordisjs/plugin-loader` `minimumReleaseAgeExclude` entries, which can no longer be fetched from a registry, and `knip.json` drops the `@cordisjs/.+` ignore pattern that `@deepseek-ai/.+` already covers.
 - Upstream sync follows the procedure in `vendor/README.md` with one added obligation in step 3: re-apply the rename over the copied sources with `pnpm run rescope-vendor --apply`, whose mapping and the table's two name columns must agree.
@@ -42,7 +42,7 @@ Markdown splits along what a reader does with it. Every fence follows the rename
 
 ## Alternatives considered
 
-**Keep the upstream names and exclude `vendor/` from publication.** Rejected because every harness package declares `cordis` as a peer dependency, so an installed `@deepseek-ai/dsh-*` would have no resolvable framework.
+**Keep the upstream names and exclude `vendor/` from publication.** Rejected because every harness package declares `cordis` as a peer dependency, so an installed `lasmex-*` would have no resolvable framework.
 
 **Rename only at pack time.** Rejected because the published names would disagree with the source tree, every module specifier would have to be rewritten inside the publish path, and no local run could reproduce what was published.
 

@@ -1,6 +1,6 @@
 // Web e2e scenario: the configurable tab in Plugins settings — the cards a
 // deployment's exposed host-plane namespaces produce, one field edited through the real
-// wire down to `$DSH_HOME/settings.yaml`, and the override badge and reset
+// wire down to `$LASMEX_HOME/settings.yaml`, and the override badge and reset
 // that layering produces. Zero model calls: everything is client state plus
 // the settings document on a blank frame, so there is no fixture and a stray
 // stream would fail loud on the open llm seam.
@@ -96,7 +96,7 @@ describe('web e2e: plugin configuration section', () => {
     const timeout = dialog.getByLabel('命令超时（毫秒）')
     await timeout.waitFor({ timeout: 10_000 })
     // The composed default this deployment ships, before any user layer.
-    expect(await timeout.inputValue()).toBe('60000')
+    expect(await timeout.inputValue()).toBe('120000')
     await timeout.fill('12000')
     await timeout.blur()
 
@@ -160,14 +160,14 @@ describe('web e2e: plugin configuration section', () => {
     // The reset stages the composed default; the document still carries the
     // override until the save lands.
     await dialog.getByRole('button', { name: '恢复默认' }).click()
-    await expect.poll(() => timeout.inputValue(), { timeout: 5_000 }).toBe('60000')
+    await expect.poll(() => timeout.inputValue(), { timeout: 5_000 }).toBe('120000')
     expect(await settingsDocument()).toContain('timeoutMs: 12000')
 
     await dialog.getByRole('button', { name: '保存', exact: true }).click()
 
     await expect.poll(async () => (await settingsDocument()).includes('timeoutMs'), { timeout: 10_000 })
       .toBe(false)
-    expect(await timeout.inputValue()).toBe('60000')
+    expect(await timeout.inputValue()).toBe('120000')
     expect(await dialog.getByText('已覆盖').count()).toBe(0)
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)

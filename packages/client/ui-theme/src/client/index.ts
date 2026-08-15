@@ -8,17 +8,17 @@
  * settings General section — the theme feature owns its own settings surface.
  */
 import type { Context } from '@deepseek-ai/cordis'
-import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+import type { BoundActions } from 'lasmex-client-ui-slots'
+import type { ClientContext, SettingsScope } from 'lasmex-client-runtime/client'
 // Type-only: the ctx.settingsScope Context merge. Cross-plugin collaboration
 // goes through the service, never a value import (client bundle purity gate).
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from 'lasmex-client-ui-settings/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 import type { AppearanceRowInjected } from './AppearanceRow.tsx'
 import { AppearanceRow } from './AppearanceRow.tsx'
 import { createAppearanceRowStore } from './settings-store.ts'
-import { en, zh, type ThemeKey } from './locales.ts'
+import { en, fr, zh, type ThemeKey } from './locales.ts'
 import {
   DEFAULT_PREFERENCE, isThemePreference, THEME_PREFERENCE_FIELD, THEME_SETTINGS_NAMESPACE,
   type ThemePreference, type ThemeSettings,
@@ -32,7 +32,7 @@ export type { ThemePreference, ThemeSettings } from '../theme-settings.ts'
 /** Namespace owning this feature's settings-row copy. */
 export const SETTINGS_NS = 'settings.theme'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The Appearance settings row's copy. */
     'settings.theme': ThemeKey
@@ -386,7 +386,7 @@ export function apply(ctx: ClientContext): void {
   const theme = new ThemeRuntime(ctx, host)
   ctx.provide('theme', theme)
 
-  ctx.effect(() => ctx.locale.register(SETTINGS_NS, { zh, en }), 'ui-theme: settings row dictionaries')
+  ctx.effect(() => ctx.locale.register(SETTINGS_NS, { fr, en, zh }), 'ui-theme: settings row dictionaries')
 
   const store = createAppearanceRowStore()
   let bound: BoundActions<typeof store> | undefined

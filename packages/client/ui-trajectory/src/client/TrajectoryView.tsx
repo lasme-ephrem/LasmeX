@@ -1,12 +1,12 @@
 /** Trajectory view: compact summary over a turn-aware event ledger. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ConvViewProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import type { ConvViewProps } from 'lasmex-client-ui-conversation/client'
+import type { InjectFace, PropsLocale } from 'lasmex-client-ui-slots'
 import type {
   AssistantBlock, AssistantMessageNode, ConversationSnapshot,
   SnapshotStore,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import {
   TrajectoryTable,
   type TrajectoryRequestNumber,
@@ -201,7 +201,7 @@ export function TrajectoryView({
           seq: entry.seq,
           turn,
           step,
-          group: `Step ${step}`,
+          group: t('group.step', { step }),
           number: index + 1,
           ...(request?.status === undefined ? {} : { status: request.status }),
           ...(request?.startedAt === undefined ? {} : { startedAt: request.startedAt }),
@@ -226,7 +226,7 @@ export function TrajectoryView({
         seq: request.startSeq,
         turn: request.turn,
         step: 0,
-        group: `Compaction ${request.startSeq}`,
+        group: t('group.compaction', { seq: request.startSeq }),
         number: index + 1,
         purpose: 'compaction',
         status: request.status,
@@ -248,12 +248,13 @@ export function TrajectoryView({
 
     return numbered
   }, [
-    nodes, requests,
+    nodes, requests, t,
   ])
   const partialTurn = partial?.turn ?? null
   const partialStep = partial?.step ?? null
   const finalized = useMemo(() => {
     const turns = deriveTrajectoryLayout({
+      t,
       nodes,
       eventLocations,
       partial: partialTurn === null || partialStep === null
@@ -266,7 +267,7 @@ export function TrajectoryView({
     return { turns, lastIndex: lastCellIndex(turns) }
   }, [
     nodes, eventLocations, partialTurn, partialStep,
-    runningCalls, requests, callSchemas,
+    runningCalls, requests, callSchemas, t,
   ])
   const timelinePartialSignature = partialStructureSignature(partial)
   const timelinePartial = useMemo<ConversationSnapshot['partial']>(() => partial === null
@@ -278,15 +279,15 @@ export function TrajectoryView({
     },
   [partialStep, partialTurn, timelinePartialSignature])
   const timelineTurns = useMemo(
-    () => appendTrajectoryPartialLayout(finalized.turns, timelinePartial, finalized.lastIndex),
-    [finalized, timelinePartial],
+    () => appendTrajectoryPartialLayout(finalized.turns, timelinePartial, finalized.lastIndex, t),
+    [finalized, timelinePartial, t],
   )
   const timelineMode: TrajectoryTimelineMode = actualDuration
     ? actualTime ? 'actual' : 'duration'
     : actualTime ? 'time' : 'sequence'
   const partialSearchTurns = useMemo(
-    () => appendTrajectoryPartialLayout([], partial, finalized.lastIndex),
-    [finalized.lastIndex, partial],
+    () => appendTrajectoryPartialLayout([], partial, finalized.lastIndex, t),
+    [finalized.lastIndex, partial, t],
   )
   const searchLayouts = useMemo(
     () => [finalized.turns, partialSearchTurns] as const,
@@ -294,10 +295,12 @@ export function TrajectoryView({
   )
   const latestSearchLayouts = useRef(searchLayouts)
   latestSearchLayouts.current = searchLayouts
+  const latestSearchTranslate = useRef(t)
+  latestSearchTranslate.current = t
   useEffect(() => {
     if (!searchIndexInitialized.current) {
       searchIndexInitialized.current = true
-      if (searchIndex.update(searchLayouts)) {
+      if (searchIndex.update(searchLayouts, t)) {
         setSearchIndexRevision(revision => revision + 1)
       }
       return
@@ -305,11 +308,11 @@ export function TrajectoryView({
     if (searchIndexTimer.current !== null) return
     searchIndexTimer.current = setTimeout(() => {
       searchIndexTimer.current = null
-      if (searchIndex.update(latestSearchLayouts.current)) {
+      if (searchIndex.update(latestSearchLayouts.current, latestSearchTranslate.current)) {
         setSearchIndexRevision(revision => revision + 1)
       }
     }, SEARCH_INDEX_THROTTLE_MS)
-  }, [searchIndex, searchLayouts])
+  }, [searchIndex, searchLayouts, t])
   useEffect(() => () => {
     if (searchIndexTimer.current !== null) clearTimeout(searchIndexTimer.current)
   }, [])
@@ -465,6 +468,7 @@ export function TrajectoryView({
         t={t}
       />
       <TrajectoryTimeline
+        t={t}
         turns={timelineTurns}
         mode={timelineMode}
         range={timelineRange}
@@ -478,6 +482,7 @@ export function TrajectoryView({
       />
       <div className={css.ledger}>
         <TrajectoryTable
+          t={t}
           requestNumbers={requestNumbers}
           turns={timelineTurns}
           streamingCells={streamingCells}

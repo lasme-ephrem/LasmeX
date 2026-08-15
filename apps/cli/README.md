@@ -1,42 +1,42 @@
-# `@deepseek-ai/dsh`
+# `lasmex`
 
 English | [中文](README.zh.md)
 
-The `dsh` command is the product launcher for profiles: ordered stacks of plugin-bundle patch layers under the user's own overrides. [`src/args.ts`](src/args.ts) owns the command grammar, and [`src/bin.ts`](src/bin.ts) loads only the selected runner. Invalid commands, options from another mode, configuration errors, and boot failures exit nonzero.
+The `lasmex` command is the product launcher for profiles: ordered stacks of plugin-bundle patch layers under the user's own overrides. [`src/args.ts`](src/args.ts) owns the command grammar, and [`src/bin.ts`](src/bin.ts) loads only the selected runner. Invalid commands, options from another mode, configuration errors, and boot failures exit nonzero.
 
 ## Entry modes
 
 | Command | Purpose |
 |---|---|
-| `dsh --profile <name>` | Boot the named profile under `$DSH_HOME/profiles/<name>`. |
-| `dsh --profile headless "job"` | Run one fresh persisted session, print the final answer, and exit. |
-| `dsh web` | Alias of `--profile web`. |
-| `dsh plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
+| `lasmex --profile <name>` | Boot the named profile under `$LASMEX_HOME/profiles/<name>` or `~/.lasmex/profiles/<name>`. |
+| `lasmex --profile headless "job"` | Run one fresh persisted session, print the final answer, and exit. |
+| `lasmex web` | Alias of `--profile web`. |
+| `lasmex plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
 
-The invoking directory is the default workspace root. The `web` and `headless` profiles auto-initialize on first use from shipped templates; any other profile must be created through `dsh plugin`.
+The invoking directory is the default workspace root. The `web` and `headless` profiles auto-initialize on first use from shipped templates; any other profile must be created through `lasmex plugin`.
 
 ## App arguments
 
-The launcher parses only its own flags and hands everything after them to the booted profile, where any injected app plugin may parse the shared immutable snapshot ([`dsh-cmdline`](../../packages/boot/cmdline/README.md)). Launcher flags therefore come first, and the first token the launcher does not recognize starts the app's arguments:
+The launcher parses only its own flags and hands everything after them to the booted profile, where any injected app plugin may parse the shared immutable snapshot ([`lasmex-cmdline`](../../packages/boot/cmdline/README.md)). Launcher flags therefore come first, and the first token the launcher does not recognize starts the app's arguments:
 
 ```sh
-dsh --profile web --port 8080       # --port belongs to the web app
-dsh --profile tui --resume <id>     # example, assuming the tui profile is installed; --resume belongs to the terminal app
-dsh --profile headless "run the tests"
-dsh --profile web --help            # the web app's flags, not the launcher's
-dsh --help                          # the launcher's own help
+lasmex --profile web --port 8080       # --port belongs to the web app
+lasmex --profile tui --resume <id>     # example, assuming the tui profile is installed; --resume belongs to the terminal app
+lasmex --profile headless "run the tests"
+lasmex --profile web --help            # the web app's flags, not the launcher's
+lasmex --help                          # the launcher's own help
 ```
 
 ## Profiles
 
-A profile directory holds a `package.json` (out-of-tree plugin dependencies plus the profile manifest `dsh.profile` with its ordered `bundles` list) and a `cordis.patch.yml` (the user's own patch layer).
+A profile directory holds a `package.json` (out-of-tree plugin dependencies plus the profile manifest `lasmex.profile` with its ordered `bundles` list) and a `cordis.patch.yml` (the user's own patch layer).
 
 The tree composes over an empty root:
-- each bundle's patch in `dsh.profile.bundles` order
-- then the profile's `cordis.patch.yml`, then the home-level `$DSH_HOME/cordis.patch.yml`
+- each bundle's patch in `lasmex.profile.bundles` order
+- then the profile's `cordis.patch.yml`, then the home-level LasmeX `cordis.patch.yml`
 - then `--patch` overlays
 
-Bundles named in `dsh.profile.bundles` resolve from the dsh installation first (`@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, `@deepseek-ai/dsh-headless`), then from the profile's own `node_modules`, where pnpm installs out-of-tree plugins.
+Bundles named in `lasmex.profile.bundles` resolve from the LasmeX installation first (`lasmex-base`, `lasmex-web-app`, `lasmex-headless`), then from the profile's own `node_modules`, where pnpm installs out-of-tree plugins.
 
 Use `--dump-default-config` and `--dump-config` to inspect the composed tree without booting it.
 
@@ -44,4 +44,6 @@ The [CLI behavior reference](reference/README.md) owns exact layer precedence, f
 
 ## Development
 
-Production runs require built package and frontend artifacts. From the repository root, run `pnpm run build` separately, then use `pnpm dsh <args...>` to run the TypeScript entry and forward every argument; the [source-execution reference](reference/README.md#source-execution) owns the module-resolution contract.
+Production runs require built package and frontend artifacts. From the repository root, run `pnpm run build` separately, then use `pnpm lasmex <args...>` to run the TypeScript entry and forward every argument; the [source-execution reference](reference/README.md#source-execution) owns the module-resolution contract.
+
+Application assemblies can import `runProfile` from `lasmex/profile-boot`. User profile and home patches stay live by default; a sealed local surface such as the packaged desktop application passes `watchUserPatches: false` so startup mounts no HMR watcher while retaining the same composed patch layers.

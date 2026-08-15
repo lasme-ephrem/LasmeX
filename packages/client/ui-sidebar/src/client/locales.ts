@@ -18,3 +18,11 @@ export const en = {
   'toggle.open': 'Open sidebar',
   'toggle.collapse': 'Collapse sidebar',
 } satisfies Record<SidebarKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'session.new': 'Nouvelle session',
+  'session.new.label': 'Créer une session',
+  'toggle.open': 'Ouvrir la barre latérale',
+  'toggle.collapse': 'Réduire la barre latérale',
+} satisfies Record<SidebarKey, string>

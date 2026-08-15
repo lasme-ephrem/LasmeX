@@ -1,7 +1,7 @@
 /**
  * Keyless snapshot coverage for the TypeScript SDK path: each scenario spawns
- * the REAL `dsh-jsonrpc-agent` runtime (per `DSH_EXAMPLE_MODE`) through the
- * REAL `@deepseek-ai/dsh-sdk-client`, drives one turn over stdio JSON-RPC,
+ * the REAL `lasmex-jsonrpc-agent` runtime (per `DSH_EXAMPLE_MODE`) through the
+ * REAL `lasmex-sdk-client`, drives one turn over stdio JSON-RPC,
  * and pins the SDK `RunResult`, the complete notification stream, and the
  * persisted session logs. Replay serves recorded model
  * responses via `llm-replay` (`cordis.snapshot.yml`); `DSH_SNAPSHOT=record`
@@ -9,6 +9,7 @@
  * fixtures and rewrites expected outputs.
  */
 
+import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -25,9 +26,9 @@ import {
   tokenizeSessionFixtureCwd,
   type HarvestedLog,
   type NormalizeContext,
-} from '@deepseek-ai/dsh-acp-snapshot'
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
-import { DeepSeekHarness, type HarnessNotification, type RunResult } from '@deepseek-ai/dsh-sdk-client'
+} from 'lasmex-acp-snapshot'
+import { resolveExampleLaunch } from 'lasmex-loader-smoke'
+import { LasmeX, type HarnessNotification, type RunResult } from 'lasmex-sdk-client'
 
 const testsDir = dirOf(import.meta.url)
 const snapshotsDir = join(testsDir, 'snapshots')
@@ -79,6 +80,15 @@ interface SdkScenario {
   expectedToolDescriptions?: Readonly<Record<string, string>>
   /** Expected runtime-context state in the real assembled request. */
   runtimeContext?: false | { includes: readonly string[]; excludes: readonly string[] }
+  /** Host capabilities exercised by the scenario beyond JSON-RPC and replay. */
+  requirements?: readonly SnapshotRequirement[]
+}
+
+type SnapshotRequirement = 'bash' | 'persistent-terminal'
+
+interface SnapshotCapabilities {
+  readonly bash: boolean
+  readonly persistentTerminal: boolean
 }
 
 const SCENARIOS: SdkScenario[] = [
@@ -90,9 +100,10 @@ const SCENARIOS: SdkScenario[] = [
   },
   {
     name: 'bash-tool',
-    prompt: 'Run this exact command with your bash tool, then reply with its stdout only: echo dsh-sdk-proof-7391',
+    prompt: 'Run this exact command with your bash tool, then reply with its stdout only: echo lasmex-sdk-proof-7391',
     sessionId: 'sdk-snapshot-bash',
     children: 0,
+    requirements: ['bash'],
   },
   {
     name: 'subagent-spawn-in-process',
@@ -106,14 +117,43 @@ const SCENARIOS: SdkScenario[] = [
     sessionId: 'persistent-tools-snapshot',
     children: 0,
     configs: { live: minimalLiveConfig, replay: minimalReplayConfig },
-    environment: { DSH_SYSTEM_PROMPT: MINIMAL_SYSTEM_PROMPT },
+    environment: { LASMEX_SYSTEM_PROMPT: MINIMAL_SYSTEM_PROMPT },
     expectedFiles: { 'note.txt': 'target:\n\tnew\n' },
     expectedTools: { bash: ['command'], str_replace_editor: ['command', 'path'] },
     expectedSystem: MINIMAL_SYSTEM_PROMPT,
     expectedToolDescriptions: { bash: MINIMAL_BASH_DESCRIPTION },
     runtimeContext: false,
+    requirements: ['persistent-terminal', 'bash'],
   },
 ]
+
+const REQUIREMENT_UNAVAILABLE: Readonly<Record<SnapshotRequirement, string>> = {
+  bash: 'bash -c is unavailable on this host',
+  'persistent-terminal': 'persistent terminal inspection is unsupported on win32',
+}
+
+function canRunBash(): boolean {
+  const probe = spawnSync('bash', ['-c', 'exit 0'], {
+    stdio: 'ignore',
+    timeout: 5_000,
+    windowsHide: true,
+  })
+  return probe.error === undefined && probe.status === 0
+}
+
+function scenarioSkipReason(scenario: SdkScenario, capabilities: SnapshotCapabilities): string | undefined {
+  const availability: Readonly<Record<SnapshotRequirement, boolean>> = {
+    bash: capabilities.bash,
+    'persistent-terminal': capabilities.persistentTerminal,
+  }
+  const unavailable = scenario.requirements?.find(requirement => !availability[requirement])
+  return unavailable === undefined ? undefined : REQUIREMENT_UNAVAILABLE[unavailable]
+}
+
+const snapshotCapabilities: SnapshotCapabilities = {
+  bash: canRunBash(),
+  persistentTerminal: process.platform !== 'win32',
+}
 
 interface PersistedLog {
   readonly path: string
@@ -187,7 +227,7 @@ function assembledRuntimeContexts(log: PersistedLog): string[] {
     }
     if (event.type !== 'user/message'
       || event.data?.source?.kind !== 'plugin'
-      || event.data.source.plugin !== '@deepseek-ai/dsh-system-prompt') return []
+      || event.data.source.plugin !== 'lasmex-system-prompt') return []
     return event.data.content?.flatMap(block => block.type === 'text' && typeof block.text === 'string' ? [block.text] : []) ?? []
   })
 }
@@ -207,12 +247,17 @@ function contextOfContents(contents: readonly string[]): NormalizeContext {
   }
 }
 
+function injectFixtureCwd(contents: string, cwd: string): string {
+  const encodedCwd = JSON.stringify(cwd).slice(1, -1)
+  return contents.replaceAll('{{cwd}}', () => encodedCwd)
+}
+
 async function hydrateReplayFixtures(scenario: SdkScenario, cwd: string): Promise<string[]> {
   const root = join(cwd, '.replay-fixtures')
   await mkdir(root, { recursive: true })
   return Promise.all(fixtureFiles(scenario).map(async (source) => {
     const destination = join(root, basename(source))
-    await writeFile(destination, (await readFile(source, 'utf8')).replaceAll('{{cwd}}', cwd))
+    await writeFile(destination, injectFixtureCwd(await readFile(source, 'utf8'), cwd))
     return destination
   }))
 }
@@ -278,11 +323,11 @@ async function runScenario(scenario: SdkScenario): Promise<{
   const env: Record<string, string> = {
     ...Object.fromEntries(Object.entries(process.env).filter(([, value]) => value !== undefined)) as Record<string, string>,
     ...Object.fromEntries(Object.entries(launch.env).filter(([, value]) => value !== undefined)) as Record<string, string>,
-    DSH_CORDIS_CONFIG: recording
+    LASMEX_CORDIS_CONFIG: recording
       ? scenario.configs?.live ?? liveConfig
       : scenario.configs?.replay ?? replayConfig,
-    DSH_SESSION_ROOT: sessionsRoot,
-    DSH_CWD: cwd,
+    LASMEX_SESSION_ROOT: sessionsRoot,
+    LASMEX_CWD: cwd,
     DSH_SNAPSHOT: mode,
     NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
     ...parentFixture === undefined ? {} : {
@@ -292,7 +337,7 @@ async function runScenario(scenario: SdkScenario): Promise<{
     ...scenario.environment,
   }
 
-  const harness = new DeepSeekHarness({
+  const harness = new LasmeX({
     launch: {
       command: launch.command,
       args: launch.args,
@@ -343,9 +388,41 @@ function fixtureFiles(scenario: SdkScenario): string[] {
   ]
 }
 
+describe('SDK replay fixture hydration', () => {
+  it('encodes Windows paths as valid JSON string contents', () => {
+    const cwd = String.raw`C:\Users\lasme\SDK $& snapshot`
+    const hydrated = injectFixtureCwd('{"cwd":"{{cwd}}","text":"work in {{cwd}}"}\n', cwd)
+
+    expect(hydrated).toBe('{"cwd":"C:\\\\Users\\\\lasme\\\\SDK $& snapshot","text":"work in C:\\\\Users\\\\lasme\\\\SDK $& snapshot"}\n')
+    expect(JSON.parse(hydrated)).toEqual({ cwd, text: `work in ${cwd}` })
+  })
+})
+
+describe('SDK snapshot scenario selection', () => {
+  it('runs every scenario when its host capabilities are available', () => {
+    const capabilities = { bash: true, persistentTerminal: true }
+    expect(SCENARIOS.map(scenario => scenarioSkipReason(scenario, capabilities)))
+      .toEqual([undefined, undefined, undefined, undefined])
+  })
+
+  it('skips only scenarios that require an unavailable bash', () => {
+    const capabilities = { bash: false, persistentTerminal: true }
+    expect(SCENARIOS.map(scenario => scenarioSkipReason(scenario, capabilities)))
+      .toEqual([undefined, REQUIREMENT_UNAVAILABLE.bash, undefined, REQUIREMENT_UNAVAILABLE.bash])
+  })
+
+  it('skips only the persistent-terminal scenario when win32 cannot inspect it', () => {
+    const capabilities = { bash: true, persistentTerminal: false }
+    expect(SCENARIOS.map(scenario => scenarioSkipReason(scenario, capabilities)))
+      .toEqual([undefined, undefined, undefined, REQUIREMENT_UNAVAILABLE['persistent-terminal']])
+  })
+})
+
 describe('TypeScript SDK snapshots over the jsonrpc runtime', () => {
   for (const scenario of SCENARIOS) {
-    it(`replays ${scenario.name} through the SDK`, async () => {
+    const skipReason = scenarioSkipReason(scenario, snapshotCapabilities)
+    const testName = `replays ${scenario.name} through the SDK${skipReason === undefined ? '' : ` (skipped: ${skipReason})`}`
+    it.skipIf(skipReason !== undefined)(testName, async () => {
       const scenarioDir = join(snapshotsDir, scenario.name)
       const notificationsExpectedPath = join(scenarioDir, 'notifications.expected.jsonl')
       const resultExpectedPath = join(scenarioDir, 'result.expected.json')

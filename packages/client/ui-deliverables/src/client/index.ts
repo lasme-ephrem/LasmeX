@@ -7,17 +7,17 @@
  * composing this plugin out of cordis.yml removes both surfaces entirely;
  * the owning view renders an empty chain and inert prose at zero cost.
  */
-import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ChatFileMentions } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type { ConnectionHandle } from 'lasmex-client-connection/client'
+import type { ClientContext } from 'lasmex-client-runtime/client'
+import type { ChatFileMentions } from 'lasmex-client-ui-conversation/client'
+import type {} from 'lasmex-client-locale/client'
 import { ProducedFiles } from './ProducedFiles.tsx'
-import { en, NS, zh, type DeliverablesKey } from './locales.ts'
+import { en, fr, NS, zh, type DeliverablesKey } from './locales.ts'
 import {
   deliverablesDefinition, producedFileMentions, selectProducedFiles,
 } from './turn-deliverables.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Produced-files row copy. */
     'deliverables': DeliverablesKey
@@ -37,7 +37,7 @@ export const inject = ['slots', 'locale', 'conversationEvents', 'connection']
 export function apply(ctx: ClientContext): void {
   const connection = ctx.get('connection') as ConnectionHandle
   ctx.conversationEvents.register(deliverablesDefinition)
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-deliverables: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-deliverables: dictionaries')
   ctx.slots.inject(
     'conversation.chat.turnTail',
     () => ctx.slots.register({

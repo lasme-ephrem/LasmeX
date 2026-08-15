@@ -14,8 +14,8 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterEach, describe, expect, it, onTestFailed } from 'vitest'
-import type { ReplayOverrideDoc } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { ReplayOverrideDoc } from 'lasmex-llm-replay'
+import type { SessionEvent } from 'lasmex-session'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -34,6 +34,12 @@ const MODE = webSnapshotMode()
 // the scenario would pass against either implementation.
 const NARRATION = 'Reading the workspace now.'
 const PROMPT = `Begin your reply with the plain sentence "${NARRATION}" as text, and in that same message call the bash tool with the command "echo alpha". After the tool result, reply with the single word DONE and stop.`
+
+function normalizeShellSnapshot(snapshot: string): string {
+  return process.platform === 'win32'
+    ? snapshot.split('Pwsh').join('Bash').replace(/\bpwsh\b/g, 'bash')
+    : snapshot
+}
 
 describe('web e2e: assistant IconActions wait for the turn to end', () => {
   let scaffold: WebScaffold | undefined
@@ -62,15 +68,25 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
   async function launch(buildOverride?: (sidecarHome: string) => ReplayOverrideDoc): Promise<void> {
     sessionEvents = []
     let overridePath: string | undefined
+    let replayFixture = FIXTURE
+    if (buildOverride !== undefined || (MODE !== 'record' && process.platform === 'win32')) {
+      sidecarDir = await mkdtemp(join(tmpdir(), 'lasmex-web-e2e-sidecar-'))
+    }
     if (buildOverride !== undefined) {
-      sidecarDir = await mkdtemp(join(tmpdir(), 'dsh-web-e2e-sidecar-'))
-      overridePath = join(sidecarDir, 'replay.override.json')
-      await writeFile(overridePath, JSON.stringify(buildOverride(sidecarDir)))
+      overridePath = join(sidecarDir!, 'replay.override.json')
+      await writeFile(overridePath, JSON.stringify(buildOverride(sidecarDir!)))
+    }
+    if (MODE !== 'record' && process.platform === 'win32') {
+      replayFixture = join(sidecarDir!, 'session.windows.jsonl')
+      await writeFile(
+        replayFixture,
+        (await readFile(FIXTURE, 'utf8')).replaceAll('"name":"bash"', '"name":"pwsh"'),
+      )
     }
     scaffold = await launchWebScaffold(
       MODE === 'record'
         ? {}
-        : { replayFixture: FIXTURE, ...(overridePath === undefined ? {} : { replayOverride: overridePath }) },
+        : { replayFixture, ...(overridePath === undefined ? {} : { replayOverride: overridePath }) },
     )
     scaffold.ctx.on('session/event', (_session, event: SessionEvent) => { sessionEvents.push(event) })
     browser = await chromium.launch()
@@ -119,7 +135,7 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
     await expect.poll(() => existsSync(marker), { timeout: 20_000 }).toBe(true)
     await expect.poll(() => page.getByText(NARRATION, { exact: true }).count(), { timeout: 10_000 }).toBe(1)
     await expect.poll(
-      () => page.getByRole('status').filter({ hasText: 'Deep diving...' }).isVisible(),
+      () => page.getByRole('status').filter({ hasText: 'Deep diving…' }).isVisible(),
       { timeout: 10_000 },
     ).toBe(true)
     // Only the user bubble owns a footer (clock + copy; user bubbles carry no
@@ -128,7 +144,9 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
     await expect.poll(() => copyButtons.count(), { timeout: 10_000 }).toBe(1)
     expect(await page.getByRole('button', { name: 'Branch into a new conversation' }).count()).toBe(0)
     await copyButtons.first().focus()
-    const running = await captureStableAria(page, '[class*="centerCol"]', scaffold!.workspaceCwd)
+    const running = normalizeShellSnapshot(
+      await captureStableAria(page, '[class*="centerCol"]', scaffold!.workspaceCwd),
+    )
     await compareOrRefreshGolden(RUNNING_EXPECTED, running, MODE)
 
     // Closing the turn from the park is the state change under test: an
@@ -140,7 +158,9 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
     await expect.poll(() => copyButtons.count(), { timeout: 10_000 }).toBe(2)
     await expect.poll(() => page.locator('[data-streaming="true"]').count(), { timeout: 10_000 }).toBe(0)
     await copyButtons.last().focus()
-    const settledAria = await captureStableAria(page, '[class*="centerCol"]', scaffold!.workspaceCwd)
+    const settledAria = normalizeShellSnapshot(
+      await captureStableAria(page, '[class*="centerCol"]', scaffold!.workspaceCwd),
+    )
     await compareOrRefreshGolden(SETTLED_EXPECTED, settledAria, MODE)
     expect(tripwire.pageErrors).toEqual([])
     expect(tripwire.warnings).toEqual([])

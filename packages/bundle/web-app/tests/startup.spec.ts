@@ -10,7 +10,7 @@ import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
-import { internals, provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { internals, provideCmdline } from 'lasmex-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, WEB_STARTUP_SERVICE, type WebStartupValues } from '../src/startup.ts'
 
@@ -38,7 +38,7 @@ async function bootProvider(args: string[]): Promise<{
   values: WebStartupValues | undefined
   observed: Observed
 }> {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-web-startup-'))
+  const dir = mkdtempSync(join(tmpdir(), 'lasmex-web-startup-'))
   const observed: Observed = { exits: [], out: '' }
   writeFileSync(join(dir, 'reader.mjs'), `
 export function apply(_ctx, config) { globalThis.__webStartupObserved.readerConfig = config }
@@ -114,7 +114,7 @@ describe('web command-line provider', () => {
 
   it('prints its own help and leaves the consumer pending', async () => {
     const { values, observed } = await bootProvider(['--help'])
-    expect(observed.out).toContain('dsh --profile web')
+    expect(observed.out).toContain('lasmex web')
     expect(observed.out).toContain('--trusted-host')
     expect(values).toBeUndefined()
     expect(observed.readerConfig).toBeUndefined()
@@ -123,7 +123,7 @@ describe('web command-line provider', () => {
 
   it('rejects a non-numeric port before the consumer activates', async () => {
     const { values, observed } = await bootProvider(['--port', 'abc'])
-    expect(observed.out).toContain('--port must be a number')
+    expect(observed.out).toContain('--port doit être un nombre')
     expect(values).toBeUndefined()
     expect(observed.readerConfig).toBeUndefined()
     expect(observed.exits).toEqual([1])
@@ -131,7 +131,7 @@ describe('web command-line provider', () => {
 
   it('rejects the intentionally unsupported all-interfaces host before the consumer activates', async () => {
     const { values, observed } = await bootProvider(['--host', '0.0.0.0'])
-    expect(observed.out).toContain('--host 0.0.0.0 is intentionally not supported yet for safety: it would expose remote code execution to the network; use 127.0.0.1 instead')
+    expect(observed.out).toContain('--host 0.0.0.0 est refusé pour protéger l’exécution locale')
     expect(values).toBeUndefined()
     expect(observed.readerConfig).toBeUndefined()
     expect(observed.exits).toEqual([1])

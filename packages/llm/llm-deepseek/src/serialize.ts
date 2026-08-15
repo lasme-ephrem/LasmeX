@@ -4,11 +4,11 @@
  * Assistant reasoning is replayed as `reasoning_content` only on tool-call turns, as required by
  * thinking-mode passback. Core image blocks are rejected explicitly because this wire route is text-only;
  * unknown declaration-merged block types retain the adapter's documented extension fallback.
- * @module dsh-llm-deepseek/serialize
+ * @module lasmex-llm-deepseek/serialize
  */
 
-import { contentHasImage, LlmError } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, GenerateOptions, Message } from '@deepseek-ai/dsh-llm'
+import { contentHasImage, LlmError } from 'lasmex-llm'
+import type { ContentBlock, GenerateOptions, Message } from 'lasmex-llm'
 import type { WireMessage, WireRequest, WireTool } from './types.ts'
 
 /** Adapter-level request defaults (from plugin config). */

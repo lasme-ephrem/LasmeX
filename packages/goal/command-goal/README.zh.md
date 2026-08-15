@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-command-goal
+# lasmex-command-goal
 
 [English](README.md) | 中文
 
@@ -17,7 +17,7 @@
 
 只有控制词占据完整输入时才不区分大小写。其他任何非空后缀都属于目标，因此 `/goal pause after verification` 会创建该字面目标。goal 领域会去除目标首尾空白并进行验证。由于通用命令平面没有模态编辑器或确认原语，`edit` 会内联接收替换内容；若试图替换未完成的 goal，则直接返回错误，提示用户执行 edit 或 clear。
 
-可预期的领域拒绝会变成稳定的直接命令错误，不公开带品牌类型的 id 或 revision。意外实现失败仍会 reject 分发，使适配器能将其报告为命令失败。通用命令文本和输出仍属于实时 UI 状态；`dsh-goal` 通过自有的持久 `goal/change` 事件记录每项已接受变更。
+可预期的领域拒绝会变成稳定的直接命令错误，不公开带品牌类型的 id 或 revision。意外实现失败仍会 reject 分发，使适配器能将其报告为命令失败。通用命令文本和输出仍属于实时 UI 状态；`lasmex-goal` 通过自有的持久 `goal/change` 事件记录每项已接受变更。
 
 ## 组合
 
@@ -25,14 +25,14 @@
 
 ```yaml
 - id: commands
-  name: '@deepseek-ai/dsh-commands'
+  name: 'lasmex-commands'
 - id: goal
-  name: '@deepseek-ai/dsh-goal'
+  name: 'lasmex-goal'
 - id: command-goal
-  name: '@deepseek-ai/dsh-command-goal'
+  name: 'lasmex-command-goal'
 ```
 
-随附 `dsh` 基础配置启用持久 goal 栈和此命令；Web 客户端提供其交互适配器。ACP（Agent Client Protocol）自动化应用启用领域与模型工具，但不挂载命令适配器；`goals: false` 会移除该栈。无 UI 的 `agent-spine-demo` 必须显式配置 `goals: {}`，避免无头单次调用方在不知情时从一个物理轮次变为包含多个 Round 的操作。
+随附 `lasmex` 基础配置启用持久 goal 栈和此命令；Web 客户端提供其交互适配器。ACP（Agent Client Protocol）自动化应用启用领域与模型工具，但不挂载命令适配器；`goals: false` 会移除该栈。无 UI 的 `agent-spine-demo` 必须显式配置 `goals: {}`，避免无头单次调用方在不知情时从一个物理轮次变为包含多个 Round 的操作。
 
 ## 模型体验
 

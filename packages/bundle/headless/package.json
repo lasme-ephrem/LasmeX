@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-headless",
-  "description": "The dsh one-shot bundle: a direct core Agent/Session runner over dsh-base with no Host, HTTP, or browser layer",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-headless",
+  "description": "The dsh one-shot bundle: a direct core Agent/Session runner over lasmex-base with no Host, HTTP, or browser layer",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/bundle/headless"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -38,33 +33,43 @@
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
-  "dsh": {
+  "lasmex": {
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
   },
   "dependencies": {
-    "@deepseek-ai/dsh-cmdline": "workspace:^",
-    "@deepseek-ai/dsh-code-runtime-worker-thread": "workspace:^",
+    "lasmex-cmdline": "workspace:^",
+    "lasmex-code-runtime-worker-thread": "workspace:^",
+    "lasmex-tool-memory": "workspace:^",
     "@deepseek-ai/schemastery": "workspace:^",
     "commander": "^15.0.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-default-model": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-default-model": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-default-model": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-default-model": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/bundle/headless"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

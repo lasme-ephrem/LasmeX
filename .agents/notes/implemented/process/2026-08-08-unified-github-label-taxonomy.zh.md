@@ -4,6 +4,8 @@ Status: implemented
 
 [English](2026-08-08-unified-github-label-taxonomy.md) | 中文
 
+> **部分被取代。** LasmeX 的个人仓库无法使用组织拥有的原生 Issue Type。[仓库标签驱动的 Issue 生命周期](2026-08-14-personal-repository-issue-label-lifecycle.md) 现在负责 Issue 的 `type/*`、`status/*` 和优先级标签。下文的拉取请求 `kind/*` 与 `area/*` 分类仍然有效。
+
 ## 问题
 
 PR（Pull Request）标签回答两个相互独立的问题：工作带来哪一类变更，以及会对哪些持久的仓库领域产生实质影响。混用这两个维度，或同时保留同义的无前缀标签与带命名空间的标签，都会使查询含义模糊；封闭的领域清单则会迫使新领域归入不准确的类别。

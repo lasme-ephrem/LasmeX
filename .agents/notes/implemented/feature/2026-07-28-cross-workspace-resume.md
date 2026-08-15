@@ -12,13 +12,13 @@ Storage was the binding one. The shipped TUI composition defaulted its persisten
 
 The picker then filtered again. It dropped records whose `cwd` differed from the current session before display, and `summarizeResumeCandidate` independently marked a differing `cwd` as `disabledReason: 'different workspace'`, so a foreign session that did reach the store was both hidden and refused.
 
-Finally, resume never changed directory. The host re-execs `dsh --resume=<id>` through `process.execve`, which inherits the cwd. Session *header* cwd is restored from the log, but process cwd is what `dsh-fs-local`, the bash executor, and glob/grep resolve against, so resuming a foreign session would have replayed its transcript while acting on the wrong project.
+Finally, resume never changed directory. The host re-execs `dsh --resume=<id>` through `process.execve`, which inherits the cwd. Session *header* cwd is restored from the log, but process cwd is what `lasmex-fs-local`, the bash executor, and glob/grep resolve against, so resuming a foreign session would have replayed its transcript while acting on the wrong project.
 
 ## Decision
 
 The shared CLI configuration supplies one session root under the Harness home, the picker gains a workspace scope, and the handoff carries the target directory.
 
-**Storage.** The shared base owns the default in `apps/cli/config/base.cordis.yml`: its `session-persistence-jsonl` row calls the app-boot-provided `dshHomePath('sessions')`, which uses the canonical `DSH_HOME` resolver and its standard `~/.dsh` fallback. TUI, Web, and headless therefore consume one default without a session-specific launcher patch or slot. An overlay or personal patch that states an explicit root replaces that row's whole `config` and remains the deployment's authoritative choice.
+**Storage.** The shared base owns the default in `apps/cli/config/base.cordis.yml`: its `session-persistence-jsonl` row calls the app-boot-provided `lasmexHomePath('sessions')`, which uses the canonical `LASMEX_HOME` resolver and its standard `~/.lasmex` fallback. TUI, Web, and headless therefore consume one default without a session-specific launcher patch or slot. An overlay or personal patch that states an explicit root replaces that row's whole `config` and remains the deployment's authoritative choice.
 
 **Scope, not exclusion.** A workspace other than the current one is a display scope rather than a disabled reason. `showResume()` summarizes every record and the `ResumePicker` owns a `scope` of `'workspace' | 'all'`, defaulting to the current workspace so the common case is unchanged. Tab toggles; the scope line names the active scope and the count the other holds; each row in the all-workspaces scope reports its own workspace, and that label joins the searchable text only in the scope that shows it. A toggle clears the query and selection so the highlighted row always belongs to the visible list, and the per-row workspace line makes a row one terminal row taller in that scope, which the visible-count budget accounts for.
 
@@ -28,7 +28,7 @@ The shared CLI configuration supplies one session root under the Harness home, t
 
 ## Alternatives considered
 
-**Patch `persistenceRoot` from the `dsh` launcher instead of changing the bundle default.** Rejected after finding that a loader patch assigns `config` wholesale. The personal `~/.dsh/config.yaml` overlay already patches the `tui-agent` row with a partial config, which is exactly why `persistenceRoot` was falling back to the bundle default in the first place; a launcher patch would either be erased by that overlay or have to win over it and make the overlay unable to set the field. Owning the default in the bundle survives any partial patch and keeps one home for the fact.
+**Patch `persistenceRoot` from the `dsh` launcher instead of changing the bundle default.** Rejected after finding that a loader patch assigns `config` wholesale. The personal `~/.lasmex/config.yaml` overlay already patches the `tui-agent` row with a partial config, which is exactly why `persistenceRoot` was falling back to the bundle default in the first place; a launcher patch would either be erased by that overlay or have to win over it and make the overlay unable to set the field. Owning the default in the bundle survives any partial patch and keeps one home for the fact.
 
 **Keep `./.sessions` and additionally scan the Harness-home root.** Rejected: two roots means two SQLite indexes and a merged listing whose rows have different liveness and revision authorities, to preserve visibility of logs that the no-migration decision already gives up.
 

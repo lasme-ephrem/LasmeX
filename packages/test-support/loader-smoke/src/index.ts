@@ -4,11 +4,11 @@
  *
  * It also owns the mode-aware launch resolver every example subprocess harness shares
  * ({@link resolveExampleLaunch}): booting an example bin from TypeScript source under `tsx` (the
- * zero-build dev path, resolving `@deepseek-ai/dsh-*` / `@cordisjs/*` through the tsconfig `paths`
+ * zero-build dev path, resolving `lasmex-*` / `@cordisjs/*` through the tsconfig `paths`
  * map) or from built `lib/` under plain Node (resolving bare packages through real `exports`, as an
  * installed consumer does, while Node type-strips relative example-local TypeScript plugins).
  *
- * @module @deepseek-ai/dsh-loader-smoke
+ * @module lasmex-loader-smoke
  */
 
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -139,7 +139,7 @@ export interface LoaderSmokeOptions {
   readonly tsconfigPath: string
   /** Boot from source via tsx (`src`) or built lib via plain Node (`lib`); defaults to the environment's mode. */
   readonly mode?: ExampleMode
-  /** Environment overrides layered over the parent and isolated DSH homes. */
+  /** Environment overrides layered over the parent and isolated LasmeX homes. */
   readonly env?: Readonly<NodeJS.ProcessEnv>
   /** Process deadline override for harness tests. */
   readonly processTimeoutMs?: number
@@ -182,7 +182,7 @@ export async function runLoaderSmoke(options: LoaderSmokeOptions): Promise<Loade
       configArgs: options.binArgs ?? [options.configPath],
       ...options.mode !== undefined ? { mode: options.mode } : {},
       tsconfigPath: options.tsconfigPath,
-      env: { DSH_HOME: join(cwd, '.dsh'), DSH_AGENTS_HOME: join(cwd, '.agents'), ...options.env },
+      env: { LASMEX_HOME: join(cwd, '.lasmex'), LASMEX_AGENTS_HOME: join(cwd, '.agents'), ...options.env },
     })
     // `input: ''` writes nothing and closes stdin — the fixture-visible
     // stdin-close contract. `reject: false` folds spawn errors, the SIGKILL

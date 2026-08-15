@@ -1,21 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage, CallId  } from '@deepseek-ai/dsh-llm'
+import LlmRuntime, { createUserMessage, CallId  } from 'lasmex-llm'
 import SessionStore, {
   SessionId,
   type SessionEvent,
   type TurnEndReason,
   type UserMessage,
-} from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture, type PostToolDecision, type PreToolDecision } from '@deepseek-ai/dsh-tools'
+} from 'lasmex-session'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime, { defineContentToolFixture, type PostToolDecision, type PreToolDecision } from 'lasmex-tools'
 import AgentRegistry, {
   type Agent,
   type PreStepDecision,
   type SessionStartSource,
-} from '@deepseek-ai/dsh-agent'
+} from 'lasmex-agent'
 
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
+import AgentLoop from 'lasmex-agent-loop'
 import { MockAdapter, textResponse, toolCallResponse } from './mock-adapter.ts'
 
 /**
@@ -177,31 +177,45 @@ describe('agent/pre-step', () => {
     expect(JSON.stringify(adapter.requests[0]!.messages)).not.toContain('original')
   })
 
-  it('enter with additional messages records separately sourced context in the turn', async () => {
+  it('stably records context before FIFO direct-user messages without changing identities', async () => {
     const adapter = new MockAdapter([textResponse('ok')])
     const ctx = await harness(adapter)
     const agent = ctx.agentLoop.create(SessionId('a1'), { provider: 'mock', model: 'mock' })
 
+    const prompt = createUserMessage({
+      content: [{ type: 'text', text: 'go' }],
+      source: { kind: 'user' },
+    })
+    const secondPrompt = createUserMessage({
+      content: [{ type: 'text', text: 'then verify' }],
+      source: { kind: 'user' },
+    })
+    const firstContext = createUserMessage({
+      content: [{ type: 'text', text: '<system-reminder>first ctx</system-reminder>' }],
+      source: { kind: 'plugin', plugin: 'first' },
+    })
+    const secondContext = createUserMessage({
+      content: [{ type: 'text', text: '<system-reminder>second ctx</system-reminder>' }],
+      source: { kind: 'plugin', plugin: 'second' },
+    })
+
     ctx.on('agent/pre-step', async ({ messages }): Promise<PreStepDecision> =>
       ({
         kind: 'enter',
-        messages: [...messages, createUserMessage({
-          content: [{ type: 'text', text: '<system-reminder>extra ctx</system-reminder>' }],
-          source: { kind: 'plugin', plugin: 'test' },
-        })],
+        messages: [messages[0]!, firstContext, secondPrompt, secondContext],
       }))
 
-    send(agent, 'go')
+    agent.followup(prompt)
     await waitForIdle(ctx, agent)
 
-    const log = events(agent)
-    const userMsg = log.find(e => e.type === 'user/message' && e.data.source.kind === 'user')
-    const ctxMsg = log.find(e => e.type === 'user/message' && e.data.source.kind === 'plugin')
-    expect(userMsg).toBeDefined()
-    expect(ctxMsg?.type === 'user/message' && ctxMsg.data.content).toEqual([{ type: 'text', text: '<system-reminder>extra ctx</system-reminder>' }])
-    expect(ctxMsg?.type === 'user/message' && ctxMsg.data.source).toEqual({ kind: 'plugin', plugin: 'test' })
-    const sent = JSON.stringify(adapter.requests[0]!.messages)
-    expect(sent).toContain('extra ctx')
+    const entered = events(agent).flatMap(event => event.type === 'user/message' ? [event.data] : [])
+    expect(entered.map(message => message.id)).toEqual([
+      firstContext.id,
+      secondContext.id,
+      prompt.id,
+      secondPrompt.id,
+    ])
+    expect(adapter.requests[0]!.messages.map(message => message.id)).toEqual(entered.map(message => message.id))
   })
 
   it('does not open another step when a completed turn rewrites pending input to empty', async () => {
@@ -642,7 +656,8 @@ describe('tool additionalContexts buffering across a step', () => {
 
     // Event order in the log: both tool/results, THEN both injected contexts —
     // never interleaved (which would break tool-call/result adjacency).
-    const injected = events(agent).filter(e => e.type === 'user/message' && e.data.source.kind === 'plugin')
+    const injected = events(agent).filter(e =>
+      e.type === 'user/message' && e.data.source.kind === 'plugin' && e.data.source.plugin === 'p')
     const seqs = events(agent)
     const firstResult = seqs.findIndex(e => e.type === 'tool/result')
     const lastResult = seqs.map(e => e.type).lastIndexOf('tool/result')
@@ -679,7 +694,10 @@ describe('tool additionalContexts buffering across a step', () => {
 
     const log = events(agent)
     const resultIndex = log.findIndex(event => event.type === 'tool/result')
-    const contextEvents = log.filter(event => event.type === 'user/message' && event.data.source.kind === 'plugin')
+    const contextEvents = log.filter(event =>
+      event.type === 'user/message'
+      && event.data.source.kind === 'plugin'
+      && (event.data.source.plugin === 'a' || event.data.source.plugin === 'b'))
     expect(resultIndex).toBeGreaterThanOrEqual(0)
     expect(log.findIndex(event => event === contextEvents[0])).toBeGreaterThan(resultIndex)
     expect(contextEvents.map(event => event.type === 'user/message' && event.data.source)).toEqual([
@@ -717,7 +735,7 @@ describe('tools/pre-execute gate (native-plugin permission pattern, end-to-end t
 })
 
 describe('worked example: a native hook plugin is just a cordis plugin on the seams', () => {
-  // The whole point of the interception taxonomy: a "native hook" needs no dsh-hook-protocol,
+  // The whole point of the interception taxonomy: a "native hook" needs no lasmex-hook-protocol,
   // no external command, no hook/* log — it is an ordinary cordis plugin subscribing to the
   // canonical events and returning typed decisions.
   const NativeGuard = {

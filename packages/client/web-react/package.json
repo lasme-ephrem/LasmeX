@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-web-react",
+  "name": "lasmex-client-web-react",
   "description": "Shell-side React glue: createSlotRenderer, SessionProvider, bindSnapshotSelector (uSES bridge), useInvoke",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/web-react"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -27,16 +22,16 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
     "react": "^18.2.0",
     "use-sync-external-store": "1.2.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@types/react": "~18.3.1",
     "@deepseek-ai/cordis": "workspace:^"
   },
@@ -44,5 +39,14 @@
     "lib/index.js",
     "lib/invariant.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/web-react"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

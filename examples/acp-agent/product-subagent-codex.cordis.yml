@@ -8,9 +8,9 @@
     patches:
       - insert:
           - id: subagent-codex
-            name: '@deepseek-ai/dsh-subagent-codex'
+            name: 'lasmex-subagent-codex'
           - id: tool-subagent-codex
-            name: '@deepseek-ai/dsh-tool-subagent'
+            name: 'lasmex-tool-subagent'
             config:
               provider: codex
               toolName: subagent_codex

@@ -157,10 +157,10 @@ describe('translation pairing switchers', () => {
   it('accepts only the canonical public URL for an absolute switcher', () => {
     const targets = languageSwitcherTargets('python/sdk/README.zh.md')
     const canonical = parseTranslationMarkdown(
-      '[中文](https://github.com/deepseek-ai/deepseek-harness/blob/master/python/sdk/README.zh.md)',
+      '[中文](https://github.com/lasme-ephrem/LasmeX/blob/master/python/sdk/README.zh.md)',
     )
     const wrongPath = parseTranslationMarkdown(
-      '[中文](https://github.com/deepseek-ai/deepseek-harness/blob/master/other/README.zh.md)',
+      '[中文](https://github.com/lasme-ephrem/LasmeX/blob/master/other/README.zh.md)',
     )
 
     expect(linksTo(canonical, targets)).toBe(true)
@@ -222,8 +222,8 @@ describe('translation scope discovery', () => {
     'packages/example/node_modules/dependency/README.md',
     'packages/example/lib/README.md',
     'coverage/report/README.md',
-    'python/sdk-runtime/src/deepseek_harness_runtime/runtime/dsh-jsonrpc-agent-macos-arm64/README.md',
-    'python/sdk-runtime/src/deepseek_harness_runtime/runtime/node/README.md',
+    'python/sdk-runtime/src/lasmex_runtime/runtime/lasmex-jsonrpc-agent-macos-arm64/README.md',
+    'python/sdk-runtime/src/lasmex_runtime/runtime/node/README.md',
   ])('excludes non-source or non-README path %s', (file) => {
     expect(isTranslationScopeFile(file)).toBe(false)
   })

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { WorkerThreadCodeRuntime } from '@deepseek-ai/dsh-code-runtime-worker-thread'
-import type { Config } from '@deepseek-ai/dsh-code-runtime-worker-thread'
-import type { CodeBindingFunction, CodeBindingNamespace, CodeRunResult } from '@deepseek-ai/dsh-code-runtime'
+import { WorkerThreadCodeRuntime } from 'lasmex-code-runtime-worker-thread'
+import type { Config } from 'lasmex-code-runtime-worker-thread'
+import type { CodeBindingFunction, CodeBindingNamespace, CodeRunResult } from 'lasmex-code-runtime'
 
 /**
  * Integration suite over REAL worker threads (no mocks — workers are cheap
@@ -621,6 +621,31 @@ describe('WorkerThreadCodeRuntime — hostile programs (real workers)', () => {
       toolName: 'never',
       message: 'binding arguments must be lossless JSON',
     }))
+  })
+
+  it('normalizes an omitted binding argument to an empty object without accepting explicit undefined', async () => {
+    const { runtime } = await setup()
+    const calls: unknown[] = []
+    const result = await runtime.run({
+      program: `
+        const omitted = await tools.capture();
+        let explicitUndefined;
+        try { await tools.capture(undefined) } catch (error) {
+          explicitUndefined = { name: error.name, toolName: error.toolName, message: error.message };
+        }
+        return { omitted, explicitUndefined };
+      `,
+      bindings: tools({ capture: async (args) => { calls.push(args); return args } }),
+    })
+    expect(calls).toEqual([{}])
+    expect(result.value).toEqual({
+      omitted: {},
+      explicitUndefined: {
+        name: 'ToolCallError',
+        toolName: 'capture',
+        message: 'binding arguments must be lossless JSON',
+      },
+    })
   })
 
   it('rejects intrinsic-looking exotic objects as arguments and completions', async () => {

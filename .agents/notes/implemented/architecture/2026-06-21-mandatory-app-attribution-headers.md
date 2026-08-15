@@ -28,13 +28,13 @@ Provider-neutral app attribution is mandatory at the LLM adapter boundary, using
 
 OpenRouter app attribution is deliberately not implemented. `HTTP-Referer`, `X-OpenRouter-Title`, `X-Title`, and `X-OpenRouter-Categories` are OpenRouter-specific product-surface headers, not provider-neutral model-request attribution. They can be proposed later by an OpenRouter adapter or explicit OpenRouter mode, with its own privacy/product decision, tests, and docs. Until then, even requests pointed at OpenRouter send only the shared `User-Agent` attribution from this decision.
 
-The provider-neutral identity is owned by `dsh-llm` (`packages/llm/llm/src/attribution.ts`), not by individual adapters. `AppIdentity` contains only public product facts needed to build `User-Agent`, and the default `APP_IDENTITY` values:
+The provider-neutral identity is owned by `lasmex-llm` (`packages/llm/llm/src/attribution.ts`), not by individual adapters. [The LasmeX product-foundation decision](../feature/2026-08-14-lasmex-product-foundation.md) owns the public product identity. `AppIdentity` contains only public product facts needed to build `User-Agent`, and the default `APP_IDENTITY` values:
 
-- product token for `User-Agent`: `deepseek-harness` (continuity with the pre-Agent Note wire value and the repo/org identity)
+- product token for `User-Agent`: `lasmex`
 - version: read from the owning package's manifest via `createRequire`, never a hand-copied constant
-- app URL: `https://github.com/deepseek-ai/deepseek-harness` - the repository home
+- app URL: `https://github.com/lasme-ephrem/LasmeX`, the official public fork
 
-The default is mandatory and non-empty. White-label deployments pass their own `AppIdentity` to `attributionHeaders(identity)` - the override hook is the function parameter, with no deployment config plumbing until a consumer needs it - and omission falls back to the harness default rather than suppressing attribution. There is no per-request API for the model, user prompt, session id, cwd, user email, API key owner, or local machine identity to influence these fields.
+The default product and version are mandatory and non-empty. A URL, when supplied, is a public product home rather than an implementation source or upstream repository. White-label deployments pass their own `AppIdentity` to `attributionHeaders(identity)` - the override hook is the function parameter, with no deployment config plumbing until a consumer needs it - and omission falls back to the LasmeX product/version identity rather than suppressing attribution. There is no per-request API for the model, user prompt, session id, cwd, user email, API key owner, or local machine identity to influence these fields.
 
 Wire mapping (`attributionHeaders`; header names lowercase in code - HTTP field names are case-insensitive on the wire):
 
@@ -51,10 +51,10 @@ Endpoint detection is not part of this Agent Note because no endpoint-specific m
 
 The landed contract:
 
-- `dsh-llm` documents the mandatory `User-Agent` attribution contract for `LlmAdapter` authors (`LlmAdapter` JSDoc, package README, and the adapter-contract section of `docs/subsystems/llm-streaming.md`).
+- `lasmex-llm` documents the mandatory `User-Agent` attribution contract for `LlmAdapter` authors (`LlmAdapter` JSDoc, package README, and the adapter-contract section of `docs/subsystems/llm-streaming.md`).
 - A shared helper (`attributionHeaders` / `userAgent`) constructs the app identity and the standard `User-Agent` value from package metadata, so adapters do not hand-copy version constants.
-- `dsh-llm-deepseek` sends the shared `User-Agent` on every request and its mock-server suite asserts the exact value.
-- `dsh-llm-pi-ai` sends the same `User-Agent` through pi-ai's `StreamOptions.headers` hook and its mock-server suite asserts the exact value.
+- `lasmex-llm-deepseek` sends the shared `User-Agent` on every request and its mock-server suite asserts the exact value.
+- `lasmex-llm-pi-ai` sends the same `User-Agent` through pi-ai's `StreamOptions.headers` hook and its mock-server suite asserts the exact value.
 - No adapter sends OpenRouter-specific attribution headers (`HTTP-Referer`, `X-OpenRouter-Title`, `X-Title`, `X-OpenRouter-Categories`) as part of this decision.
 - No app-attribution field carries secrets, local paths, session ids, prompt text, model output, user email, or per-user stable identifiers.
 - The adapter READMEs state the `User-Agent` attribution policy and explicitly avoid documenting OpenRouter app attribution as implemented behavior.
@@ -71,11 +71,11 @@ The landed contract:
 
 **Config-only opt-in attribution.** Rejected. A default-off setting is exactly how adapters keep drifting. The policy is mandatory default attribution with overrideable public values, not optional attribution.
 
-**SDK-named token (`deepseek-harness-sdk`).** Considered for the `User-Agent` token because the supported runtime client stack uses the SDK name. `deepseek-harness` won because it names the DeepSeek Harness product, matches the org/repo identity and package scope, and keeps wire attribution stable without calling the complete product an SDK.
+**Source-implementation token (`deepseek-harness`).** Rejected for LasmeX because it would identify the upstream implementation rather than the product sending the request. Provider-specific DeepSeek request-identity fields remain unchanged because they follow a separate provider contract.
 
 ## Consequences
 
-**Providers see that traffic comes from the harness.** That is the point, but it means deployments that previously blended into generic SDK traffic become identifiable. Mitigation: send only static public product data and let forks/white-label deployments pass their own `AppIdentity`.
+**Providers see that traffic comes from LasmeX.** That is the point, but it means deployments that previously blended into generic SDK traffic become identifiable. Mitigation: send only static public product data and let forks/white-label deployments pass their own `AppIdentity`.
 
 **Header support differs by client library.** The hand-rolled adapter sets headers directly; the pi-ai-backed adapter depends on pi-ai continuing to honor `StreamOptions.headers` (merged last over provider defaults). The wire-level mock-server tests are the guard: if a pi-ai upgrade stops delivering the header, the suite goes red. This is useful pressure on the abstraction: a provider adapter that cannot set mandatory headers cannot fully implement the harness LLM contract.
 

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import { AssistantMarkdown } from '../src/client/chat/AssistantMarkdown.tsx'
 import { zh } from '../src/client/locales.ts'
 
@@ -96,7 +96,7 @@ describe('ReasoningRow', () => {
     expect(row.getAttribute('aria-expanded')).toBe('true')
     expect(view.getByText(/Check persistence/)).toBeTruthy()
 
-    fireEvent.click(view.getByText('Think'))
+    fireEvent.click(view.getByText('思考'))
     expect(row.getAttribute('aria-expanded')).toBe('false')
   })
 
@@ -108,7 +108,7 @@ describe('ReasoningRow', () => {
         streaming={false}
       />,
     )
-    fireEvent.click(view.getByText('Think'))
+    fireEvent.click(view.getByText('思考'))
     expect(view.getAllByText(/Inspect the session/)).toHaveLength(1)
     expect(view.queryByText('IN')).toBeNull()
     expect(view.container.querySelector('[class*="ioCard"]')).toBeNull()

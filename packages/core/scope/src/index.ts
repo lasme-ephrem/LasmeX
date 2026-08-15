@@ -2,7 +2,7 @@
  * Scoped-context primitive: mint a Cordis context that tags registrations with
  * an opaque identity and build routing-only event carriers for that identity.
  *
- * @module @deepseek-ai/dsh-scope
+ * @module lasmex-scope
  */
 
 import type { Context, Fiber } from '@deepseek-ai/cordis'
@@ -53,7 +53,7 @@ export interface ScopeParentBinding {
 /** Cycle-checked write shared by the bind and every rebind. */
 function linkScopeParent(key: ScopeKey, parent: ScopeKey): void {
   for (let cursor: ScopeKey | undefined = parent; cursor !== undefined; cursor = scopeParents.get(cursor)) {
-    if (cursor === key) throw new Error('dsh-scope: scope parent link would form a cycle')
+    if (cursor === key) throw new Error('lasmex-scope: scope parent link would form a cycle')
   }
   scopeParents.set(key, parent)
 }
@@ -71,7 +71,7 @@ function linkScopeParent(key: ScopeKey, parent: ScopeKey): void {
  */
 export function bindScopeParent(key: ScopeKey, parent: ScopeKey): ScopeParentBinding {
   if (scopeParents.has(key)) {
-    throw new Error('dsh-scope: scope key is already bound to a parent; re-linking requires the binding returned by the original bind')
+    throw new Error('lasmex-scope: scope key is already bound to a parent; re-linking requires the binding returned by the original bind')
   }
   linkScopeParent(key, parent)
   return {

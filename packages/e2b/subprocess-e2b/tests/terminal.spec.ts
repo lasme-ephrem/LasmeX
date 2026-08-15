@@ -9,10 +9,10 @@ import {
   type CommandHandle,
   type CommandResult,
   type Sandbox,
-} from '@deepseek-ai/dsh-e2b'
-import type E2BRuntime from '@deepseek-ai/dsh-e2b'
-import type { SubprocessTerminalSpawnSpec } from '@deepseek-ai/dsh-subprocess'
-import E2BSubprocessRuntime from '@deepseek-ai/dsh-subprocess-e2b'
+} from 'lasmex-e2b'
+import type E2BRuntime from 'lasmex-e2b'
+import type { SubprocessTerminalSpawnSpec } from 'lasmex-subprocess'
+import E2BSubprocessRuntime from 'lasmex-subprocess-e2b'
 import { spawnE2BTerminal } from '../src/terminal.ts'
 
 function commandError(exitCode: number): CommandExitError {
@@ -89,7 +89,7 @@ class FakeTerminalSandbox {
   readonly directories: string[] = []
   readonly writes = new Map<string, string>()
   createOptions: Parameters<Sandbox['pty']['create']>[0] | undefined
-  ambient = 'KEEP=visible\0UNICODE=你好\0NPM_TOKEN=secret\0DSH_STALE=old\0BROKEN\0=bad\0'
+  ambient = 'KEEP=visible\0UNICODE=你好\0NPM_TOKEN=secret\0LASMEX_STALE=old\0BROKEN\0=bad\0'
   sessionId = '123\n'
   foreground = '456\n'
   groups = [123]
@@ -229,7 +229,7 @@ class FakeTerminalSandbox {
 function runtime(fake: FakeTerminalSandbox): E2BRuntime {
   return {
     cwd: '/workspace',
-    runtimeRoot: '/workspace/.dsh-e2b',
+    runtimeRoot: '/workspace/.lasmex-e2b',
     getSandbox: async () => fake.sandbox,
   } as unknown as E2BRuntime
 }
@@ -241,7 +241,7 @@ function spec(overrides: Partial<SubprocessTerminalSpawnSpec> = {}): SubprocessT
     rows: 24,
     cols: 80,
     graceMs: 5,
-    env: { TERM: 'dumb', DSH_SESSION_ID: 'owner', TOKEN_EXPLICIT: 'kept' },
+    env: { TERM: 'dumb', LASMEX_SESSION_ID: 'owner', TOKEN_EXPLICIT: 'kept' },
     ...overrides,
   }
 }
@@ -282,11 +282,11 @@ describe('E2B terminal allocation', () => {
     expect(output).not.toContain('runner.bash')
     expect(fake.createOptions).toMatchObject({ rows: 24, cols: 80, cwd: '/workspace', timeoutMs: 0 })
     const controlEnvs = fake.createOptions?.envs
-    expect(controlEnvs?.HOME).toMatch(/^\/\.dsh-e2b-control-/)
+    expect(controlEnvs?.HOME).toMatch(/^\/\.lasmex-e2b-control-/)
     expect(controlEnvs).toEqual({
       TERM: 'dumb',
       NPM_TOKEN: '',
-      DSH_STALE: '',
+      LASMEX_STALE: '',
       HOME: controlEnvs?.HOME,
     })
     expect(fake.inputs[0]?.data.toString()).toContain("exec /bin/bash '/runtime/terminal-one/runner.bash'")
@@ -294,10 +294,10 @@ describe('E2B terminal allocation', () => {
     expect(fake.writes.get('/runtime/terminal-one/environment')).toContain('UNICODE=你好\0')
     expect(fake.writes.get('/runtime/terminal-one/environment')).toContain('TOKEN_EXPLICIT=kept\0')
     expect(fake.writes.get('/runtime/terminal-one/environment')).not.toContain('secret')
-    expect(fake.writes.get('/runtime/terminal-one/environment')).not.toContain('DSH_STALE')
+    expect(fake.writes.get('/runtime/terminal-one/environment')).not.toContain('LASMEX_STALE')
     expect(fake.writes.get('/runtime/terminal-one/argv')).toBe('/bin/bash\0--noprofile\0--norc\0')
     const marker = fake.writes.get('/runtime/terminal-one/output-marker') ?? ''
-    expect(marker).toMatch(/^dsh-e2b-bootstrap:/)
+    expect(marker).toMatch(/^lasmex-e2b-bootstrap:/)
     expect(fake.inputs[0]?.data.toString()).not.toContain(marker)
     const runner = fake.writes.get('/runtime/terminal-one/runner.bash') ?? ''
     expect(runner).toContain('if (( ${#dsh_argv[@]} == 0 )); then')
@@ -332,7 +332,7 @@ describe('E2B terminal allocation', () => {
     const environment = fake.writes.get('/runtime/abort-live/environment') ?? ''
     expect(environment).toContain('KEEP=visible\0')
     expect(environment).not.toContain('secret')
-    expect(environment).not.toContain('DSH_STALE')
+    expect(environment).not.toContain('LASMEX_STALE')
 
     controller.abort(new Error('stop'))
     await terminal.write('still live\r')
@@ -795,7 +795,7 @@ describe('E2B subprocess terminal service', () => {
       .resolves.toBe('/workspace/tools/bin/node')
     const commandOptions = fake.commandOptions.at(-1)
     expect(commandOptions).toMatchObject({ cwd: '/workspace' })
-    expect(commandOptions?.envs?.HOME).toMatch(/^\/\.dsh-e2b-control-/)
+    expect(commandOptions?.envs?.HOME).toMatch(/^\/\.lasmex-e2b-control-/)
     expect(commandOptions?.envs).toEqual({ HOME: commandOptions?.envs?.HOME })
     expect((ctx.e2b)).toBeDefined()
   })

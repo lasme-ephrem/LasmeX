@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-subagent-codex",
+  "name": "lasmex-subagent-codex",
   "description": "One-shot Codex subagent provider over the official app-server protocol",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/subagent/subagent-codex"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,13 +27,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-sdk-protocol": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subprocess": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
@@ -46,17 +41,26 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-loader-smoke": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-loader-smoke": "workspace:^",
+    "lasmex-sdk-protocol": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subprocess": "workspace:^",
+    "lasmex-subprocess-local": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@openai/codex": "0.147.0",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/subagent/subagent-codex"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

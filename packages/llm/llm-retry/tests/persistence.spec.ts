@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import SqliteSessionPersistence from '@deepseek-ai/dsh-session-persistence-sqlite'
-import { RetryId } from '@deepseek-ai/dsh-llm-retry'
+import SessionStore, { SessionId } from 'lasmex-session'
+import JsonlSessionPersistence from 'lasmex-session-persistence-jsonl'
+import SqliteSessionPersistence from 'lasmex-session-persistence-sqlite'
+import { RetryId } from 'lasmex-llm-retry'
 import type {} from '../src/index.ts'
 
 const dirs: string[] = []
@@ -19,7 +19,7 @@ async function backend(kind: 'jsonl' | 'sqlite'): Promise<Context> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   if (kind === 'jsonl') {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-llm-retry-jsonl-'))
+    const root = await mkdtemp(join(tmpdir(), 'lasmex-llm-retry-jsonl-'))
     dirs.push(root)
     await ctx.plugin(JsonlSessionPersistence, { root })
   } else {

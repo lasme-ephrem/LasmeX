@@ -5,9 +5,9 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react'
 import {
   IconChevronDownOutline14, IconInspectOutline12, IconSkillOutline16, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+} from 'lasmex-client-ui-primitives'
+import type { ToolCallViewProps } from 'lasmex-client-ui-tool/client'
+import type { PropsLocale } from 'lasmex-client-ui-slots'
 import css from './SkillRow.module.css'
 
 /** Skill row lifecycle derived solely from the durable call slice. */
@@ -146,7 +146,7 @@ export function SkillRow({ block, inspect, t }: SkillRowProps) {
       >
         <span className={css.leading}>{leading}</span>
         {status !== null ? <span className={css.visuallyHidden}>{status}</span> : null}
-        <span className={css.title}>Skill</span>
+        <span className={css.title}>{t('row.title')}</span>
         <span className={css.separator} aria-hidden />
         <span className={model.errorSummary === null ? css.summary : `${css.summary} ${css.errorSummary}`}>
           {summary}
@@ -161,7 +161,7 @@ export function SkillRow({ block, inspect, t }: SkillRowProps) {
           {inspect !== undefined ? (
             <button type="button" className={css.inspectButton} onClick={inspect}>
               <IconInspectOutline12 />
-              Inspect
+              {t('row.inspect')}
             </button>
           ) : null}
         </div>

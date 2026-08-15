@@ -8,26 +8,26 @@
  * their CAS ref reads the session's current projected value at call time.
  * Goal creation stays on the /goal host command.
  */
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SessionId } from 'lasmex-client-runtime/client'
 // Type-only: pulls the generated Remote API and ctx.remote merge through the Client assembly boundary.
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from 'lasmex-api-remotes/client'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.dock entry).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from 'lasmex-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 // Type-only: the `goal` SessionProjectionMap key merge (single source, the domain's pure outlet).
-import type { GoalProjection, GoalRef } from '@deepseek-ai/dsh-goal/client'
+import type { GoalProjection, GoalRef } from 'lasmex-goal/client'
 import type { GoalActionResult, GoalBarActions } from './slots.ts'
 import { GoalDock } from './GoalBar.tsx'
 import { GoalCommandInputView } from './GoalCommandInputView.tsx'
 import { goalCommandInputDefinition } from './goal-command-input.ts'
-import { en, zh, type GoalKey } from './locales.ts'
+import { en, fr, zh, type GoalKey } from './locales.ts'
 
 export { GoalBar, GoalDock } from './GoalBar.tsx'
 export type { GoalActionResult, GoalBarActions } from './slots.ts'
 export type { GoalKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The goal strip's copy. */
     goal: GoalKey
@@ -46,7 +46,7 @@ export const inject = ['slots', 'sessions', 'remote', 'remote.goals', 'locale', 
  */
 export function apply(ctx: ClientContext): void {
   ctx.conversationEvents.register(goalCommandInputDefinition)
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-goal: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-goal: dictionaries')
 
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({
     name: 'conversation.chat.node',

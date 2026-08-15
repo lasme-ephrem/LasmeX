@@ -78,7 +78,7 @@ async function makeConsumer(): Promise<string> {
     await link(dirname(resolved), dep, nm)
   }
   await writeFile(join(dir, 'mock-llm.mjs'), [
-    "import { LlmAdapter } from '@deepseek-ai/dsh-llm'",
+    "import { LlmAdapter } from 'lasmex-llm'",
     'class Mock extends LlmAdapter {',
     '  async * stream() {',
     "    yield { type: 'block-start', index: 0, blockType: 'text' }",
@@ -96,11 +96,11 @@ async function makeConsumer(): Promise<string> {
     '- id: mock-llm',
     '  name: \'./mock-llm.mjs\'',
     '- id: subprocess',
-    '  name: \'@deepseek-ai/dsh-subprocess-local\'',
+    '  name: \'lasmex-subprocess-local\'',
     '- id: bash',
-    '  name: \'@deepseek-ai/dsh-bash-local\'',
+    '  name: \'lasmex-bash-local\'',
     '- id: acp-agent',
-    '  name: \'@deepseek-ai/dsh-acp-demo\'',
+    '  name: \'lasmex-acp-demo\'',
     '  config:',
     '    provider: built-acp-mock',
     '    model: built-acp-mock',
@@ -131,15 +131,15 @@ afterEach(async () => {
   consumer = undefined
 })
 
-describe.skipIf(!existsSync(acpBin))('dsh-acp-demo BUILT bin (node lib/bin.js, no tsx)', () => {
+describe.skipIf(!existsSync(acpBin))('lasmex-acp-demo BUILT bin (node lib/bin.js, no tsx)', () => {
   it('boots the published bin, completes a turn, and writes default Zstandard persistence', async () => {
     consumer = await makeConsumer()
     child = spawn(process.execPath, [acpBin, '--config', './cordis.yml'], {
       cwd: consumer,
       env: {
         ...process.env,
-        DSH_HOME: join(consumer, '.dsh'),
-        DSH_AGENTS_HOME: join(consumer, '.agents'),
+        LASMEX_HOME: join(consumer, '.lasmex'),
+        LASMEX_AGENTS_HOME: join(consumer, '.agents'),
       },
       stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -218,8 +218,8 @@ async function runBinExpectingExit(configArg: string, cwd: string = tmpdir()): P
   const result = await execa(process.execPath, [acpBin, '--config', configArg], {
     cwd,
     env: {
-      DSH_HOME: join(cwd, '.dsh'),
-      DSH_AGENTS_HOME: join(cwd, '.agents'),
+      LASMEX_HOME: join(cwd, '.lasmex'),
+      LASMEX_AGENTS_HOME: join(cwd, '.agents'),
     },
     input: '',
     timeout: 25_000,

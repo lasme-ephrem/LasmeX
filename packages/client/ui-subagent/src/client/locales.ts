@@ -77,5 +77,42 @@ export const en: Record<SubagentKey, string> = {
   'readonly.body': 'The parent session is offline; reopen it to continue sending messages.',
 }
 
+/** Dictionnaire français. */
+export const fr: Record<SubagentKey, string> = {
+  'diagnostic.corrupt': 'journal de session corrompu',
+  'diagnostic.unsupported': 'version du journal du sous-agent non prise en charge',
+  'diagnostic.unavailable': 'journal de session temporairement indisponible',
+  'duration.seconds': '{seconds} s',
+  'duration.minutes': '{minutes} min {seconds} s',
+  'duration.hours': '{hours} h {minutes} min {seconds} s',
+  'duration.days': '{days} j',
+  'duration.daysHours': '{days} j {hours} h',
+  'duration.months': 'environ {months} mois',
+  'duration.monthsDays': 'environ {months} mois {days} j',
+  'duration.years': 'environ {years} an(s)',
+  'duration.yearsMonths': 'environ {years} an(s) {months} mois',
+  'duration.exactDays': '{days} j {hours} h {minutes} min {seconds} s',
+  'duration.exactTitle': 'Durée totale d’activité : {duration}',
+  'loading.label': 'Chargement des sous-agents…',
+  'loading.aria': 'Chargement des sous-agents',
+  'load.error': 'Impossible de charger les sous-agents',
+  'retry': 'Réessayer',
+  'mode.oneShot': 'ponctuel',
+  'mode.continuable': 'continuable',
+  'activity.running': 'en cours',
+  'activity.inactive': 'inactif',
+  'branch.collapse': 'Réduire les descendants de {label}',
+  'branch.expand': 'Développer les descendants de {label}',
+  'count.total.one': '{count} sous-agent',
+  'count.total.other': '{count} sous-agents',
+  'count.running.one': '{count} sous-agent en cours',
+  'count.running.other': '{count} sous-agents en cours',
+  'tree.aria': 'Sessions des sous-agents',
+  'readonly.oneShot.title': 'Journal d’un sous-agent ponctuel',
+  'readonly.title': 'Ce sous-agent est actuellement en lecture seule',
+  'readonly.oneShot.body': 'Les tâches ponctuelles n’acceptent pas de suivi ; consultez ici le journal d’exécution complet.',
+  'readonly.body': 'La session parente est hors ligne ; rouvrez-la pour continuer à envoyer des messages.',
+}
+
 /** Key domain of the `subagent` namespace (zh is the source of truth). */
 export type SubagentKey = keyof typeof zh

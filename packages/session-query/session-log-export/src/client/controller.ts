@@ -1,6 +1,6 @@
 /** Browser download state shared by the Session Header button and `/export`. */
 
-import { createSnapshotStore, type SessionId, type SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore, type SessionId, type SnapshotStore } from 'lasmex-client-runtime/client'
 
 /** Download phases presented by the shared modal. */
 export type SessionLogDownloadStatus = 'downloading' | 'success' | 'error'
@@ -28,7 +28,7 @@ const INITIAL: SessionLogDownloadState = { bySession: {} }
  * @returns one safe browser download filename.
  */
 export function sessionLogZipFilename(sessionId: SessionId): string {
-  return `dsh-session-${String(sessionId).replace(/[^A-Za-z0-9_-]/g, '_')}.zip`
+  return `lasmex-session-${String(sessionId).replace(/[^A-Za-z0-9_-]/g, '_')}.zip`
 }
 
 /**

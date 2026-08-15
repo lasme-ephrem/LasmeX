@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-bash-sandbox",
-  "description": "Sandbox-consuming implementation of the DeepSeek Harness bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-bash-sandbox",
+  "description": "Sandbox-consuming implementation of LasmeX bash executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/shell/bash-sandbox"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,22 +27,31 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-bash-local": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-bash-local": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-bash-local": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-local": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-bash-local": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-subprocess-local": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-local": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
     "@deepseek-ai/node-addon-landlock-run": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/shell/bash-sandbox"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

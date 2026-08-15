@@ -1,5 +1,5 @@
 /**
- * End-to-end tests for dsh-mcp-client. Exercises the REAL MCP protocol against:
+ * End-to-end tests for lasmex-mcp-client. Exercises the REAL MCP protocol against:
  * 1. A self-written fixture server over stdio (controlled edge cases)
  * 2. @modelcontextprotocol/server-everything (official integration test server)
  * 3. @modelcontextprotocol/server-filesystem (real filesystem operations)
@@ -19,12 +19,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { z } from 'zod'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import { apply } from '@deepseek-ai/dsh-mcp-client/src/index.ts'
-import { publicToolName } from '@deepseek-ai/dsh-mcp-client/src/tools.ts'
-import type { Config } from '@deepseek-ai/dsh-mcp-client'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime from 'lasmex-tools'
+import { CallId } from 'lasmex-llm'
+import { apply } from 'lasmex-mcp-client/src/index.ts'
+import { publicToolName } from 'lasmex-mcp-client/src/tools.ts'
+import type { Config } from 'lasmex-mcp-client'
 
 const testToolSignal = new AbortController().signal
 

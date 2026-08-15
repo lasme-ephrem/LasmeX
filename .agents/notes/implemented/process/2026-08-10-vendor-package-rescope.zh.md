@@ -6,7 +6,7 @@ Status: implemented
 
 ## 问题
 
-`vendor/` 下的九个包此前保留上游 npm 名（`cordis`、`cosmokit`、`schemastery`、`@cordisjs/plugin-*`）。这个前提在发布时不成立：每个 harness 包都把 `cordis` 声明成 peer dependency，装了 `@deepseek-ai/dsh-*` 的消费者必须能从 registry 解析到它，所以发布 harness 必然连带发布这一层框架。用上游名发布就是在 registry 上占用别人的名字；若该 registry 对 npmjs 做上游代理，本名条目还会遮蔽真正的上游包，把错误的框架装进无关项目。
+`vendor/` 下的九个包此前保留上游 npm 名（`cordis`、`cosmokit`、`schemastery`、`@cordisjs/plugin-*`）。这个前提在发布时不成立：每个 harness 包都把 `cordis` 声明成 peer dependency，装了 `lasmex-*` 的消费者必须能从 registry 解析到它，所以发布 harness 必然连带发布这一层框架。用上游名发布就是在 registry 上占用别人的名字；若该 registry 对 npmjs 做上游代理，本名条目还会遮蔽真正的上游包，把错误的框架装进无关项目。
 
 ## 决定
 
@@ -24,7 +24,7 @@ Status: implemented
 | `hmr/` | `@deepseek-ai/cordis-plugin-hmr` | `@cordisjs/plugin-hmr` |
 | `logger-console/` | `@deepseek-ai/cordis-plugin-logger-console` | `@cordisjs/plugin-logger-console` |
 
-改写只落在**带定界符的完整包名 token** 上：引号或反引号包裹的 specifier（可带 `/子路径`）、`package.json` 的 `name` 与依赖键、`cordis.yml` 的 `name:` 值、`tsconfig.base.json` 的 `paths` 键。因此以下同形串一律未改，它们不是包名：`cordis.yml` 及其家族文件名、Loader 的 `cordis:` 内建前缀（`cordis:include`、`cordis:group`，见 `vendor/loader/src/config/tree.ts`）、`cordis-config-entry` 这类 kind 串、`@deepseek-ai/dsh-tool-cordis`、Schemastery 上游的 `Symbol.for('schemastery')` 与 `vendor:` 元数据、`scripts/gen-module-graph.ts` 与 `gen-doc-graphs.ts` 里 `GROUP_ORDER` 的 `packages/<group>/` 目录名，以及 `vendor/*/README.md` 里的上游安装指引。
+改写只落在**带定界符的完整包名 token** 上：引号或反引号包裹的 specifier（可带 `/子路径`）、`package.json` 的 `name` 与依赖键、`cordis.yml` 的 `name:` 值、`tsconfig.base.json` 的 `paths` 键。因此以下同形串一律未改，它们不是包名：`cordis.yml` 及其家族文件名、Loader 的 `cordis:` 内建前缀（`cordis:include`、`cordis:group`，见 `vendor/loader/src/config/tree.ts`）、`cordis-config-entry` 这类 kind 串、`lasmex-tool-cordis`、Schemastery 上游的 `Symbol.for('schemastery')` 与 `vendor:` 元数据、`scripts/gen-module-graph.ts` 与 `gen-doc-graphs.ts` 里 `GROUP_ORDER` 的 `packages/<group>/` 目录名，以及 `vendor/*/README.md` 里的上游安装指引。
 
 Token 规则看不见两类点位，它们按名字逐处改：一是属性访问 `manifest.peerDependencies?.cordis`——TypeScript 抓不到过期的 `Record<string, string>` 键；二是把名字当数据的常量（`check-workspace-constraints.ts` 的 vendored 集合、`verify-cordis-config.ts` 的 group/include 名、`cordis-walk.ts` 与 `gen-scoped-events.ts` 与 typert `analyzer.ts` 里识别 `declare module` 目标的字符串、`app-boot/tsdown.config.ts` 的 `alwaysBundle`）。
 
@@ -32,7 +32,7 @@ Markdown 按「读者拿它做什么」一分为二。围栏一律跟着改，�
 
 ## 影响
 
-- 发布集里不再有任何上游名：`publish-npm-baseline.ts` 现在无条件要求每个待发包都是 `@deepseek-ai/*`，vendored 包不再豁免，改名一旦回退就会在打包前失败。
+- vendored 发布集里不再有任何上游名：`publish-npm-baseline.ts` 要求 vendored 包属于 `@deepseek-ai/*`，产品包则使用非 scoped 的 `lasmex` 或 `lasmex-*`，任一命名回退都会在打包前失败。
 - `vendor/README.md` 的清单表新增「上游名」列，`gen-third-party-notices` 随之解析六列并把上游名渲进 `THIRD_PARTY_NOTICES.md`；MIT 归属指向 fork 的来源，而不是我们的 scope。
 - `pnpm-workspace.yaml` 的 `minimumReleaseAgeExclude` 删去 `cordis` 与 `@cordisjs/plugin-loader` 两条：改名后这两个名字永远不从 registry 取。`knip.json` 的 `@cordisjs/.+` 忽略模式同理删除，已被 `@deepseek-ai/.+` 覆盖。
 - 上游 sync 照 `vendor/README.md` 的流程走，第 3 步多一项：对拷进来的源码重跑 `pnpm run rescope-vendor --apply`，脚本里的映射与清单表两列名字必须一致。
@@ -42,7 +42,7 @@ Markdown 按「读者拿它做什么」一分为二。围栏一律跟着改，�
 
 ## 考虑过的替代方案
 
-**保留上游名，把 `vendor/` 排除在发布集之外。** 否决：每个 harness 包都声明 `cordis` 为 peer dependency，装好的 `@deepseek-ai/dsh-*` 会解析不到框架。
+**保留上游名，把 `vendor/` 排除在发布集之外。** 否决：每个 harness 包都声明 `cordis` 为 peer dependency，装好的 `lasmex-*` 会解析不到框架。
 
 **只在打包时改名。** 否决：发出去的名字与源码树不一致，所有模块 specifier 得在发布路径里现改，本地也没有任何一次运行能复现发布出去的东西。
 

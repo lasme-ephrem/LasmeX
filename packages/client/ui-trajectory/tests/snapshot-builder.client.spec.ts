@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { RequestView } from '@deepseek-ai/dsh-client-runtime/client'
+import type { RequestView } from 'lasmex-client-runtime/client'
 import type {
   TrajectoryContribution, TrajectoryConversationViewNode, TrajectoryRequestHeaderState,
 } from '../src/client/trajectory-contract.ts'
+import { COMPACTION_INTERRUPTED_ERROR } from '../src/client/trajectory-contract.ts'
 import { TrajectorySnapshotBuilder } from '../src/client/trajectory-snapshot-builder.ts'
 
 function assistantRequest(startSeq: number, step: number): Extract<RequestView, { purpose: 'assistant' }> {
@@ -204,8 +205,14 @@ describe('TrajectorySnapshotBuilder', () => {
     expect(snapshot.requests).toMatchObject([
       { purpose: 'assistant', step: 1, status: 'complete' },
       { purpose: 'assistant', step: 2, status: 'error', error: 'turn failed' },
-      { purpose: 'compaction', startSeq: 10, status: 'error', completedAt: 16 },
-      { purpose: 'compaction', startSeq: 12, status: 'error', completedAt: 14 },
+      {
+        purpose: 'compaction', startSeq: 10, status: 'error', completedAt: 16,
+        error: COMPACTION_INTERRUPTED_ERROR,
+      },
+      {
+        purpose: 'compaction', startSeq: 12, status: 'error', completedAt: 14,
+        error: COMPACTION_INTERRUPTED_ERROR,
+      },
     ])
   })
 

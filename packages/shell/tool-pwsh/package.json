@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-tool-pwsh",
+  "name": "lasmex-tool-pwsh",
   "description": "Model-facing pwsh tool over the bash executor seam",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/shell/tool-pwsh"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,39 +27,48 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-shell-env": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-shell-env": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-system-prompt": "workspace:^",
+    "lasmex-jobs": "workspace:^",
+    "lasmex-tools": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-shell-env": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-loader-smoke": "workspace:^",
-    "@deepseek-ai/dsh-pwsh-local": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-jobs-local": "workspace:^",
-    "@deepseek-ai/dsh-tool-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-shell": "workspace:^",
+    "lasmex-shell-env": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-loader-smoke": "workspace:^",
+    "lasmex-pwsh-local": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-subprocess-local": "workspace:^",
+    "lasmex-system-prompt": "workspace:^",
+    "lasmex-jobs": "workspace:^",
+    "lasmex-jobs-local": "workspace:^",
+    "lasmex-tool-jobs": "workspace:^",
+    "lasmex-tools": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/shell/tool-pwsh"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

@@ -8,14 +8,15 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
+- button "Context injection lasmex-system-prompt":
+  - img
+  - img
+  - text: Context injection lasmex-system-prompt
 - text: "Use only Cordis tools. First call cordis_inspect_self with no arguments. Then call cordis_define with plugin kind \"new\", idPrefix \"snap\", name \"snapshot noop\", purpose \"does nothing, for the snapshot\", code.host exactly \"return { name: \\\"snapshot-noop\\\", apply(ctx) {} }\" and code.client exactly \"return { inject: [\\\"slots\\\"], apply(ctx) { ctx.slots.register({ name: \\\"shell.overlay\\\", id: \\\"snapshot-probe\\\" }, () => React.createElement(\\\"div\\\", { \\\"data-snapshot-probe\\\": \\\"loaded\\\" })) } }\". Read its returned pluginId and packageId, then call cordis_run with those exact IDs and mode \"run\". After the run request returns, reply exactly CORDIS_UI_READY and stop. {{clock}}"
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
-  - img
-  - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
 - button "Think I will inspect the current Session's dynamic Cordis Plugins before defining the snapshot Package.":
   - img
   - img
@@ -24,6 +25,10 @@
   - img
   - img
   - text: "Tool call cordis_inspect_self · {}"
+- button "Context injection agent-loop Continue after tool result":
+  - img
+  - img
+  - text: Context injection agent-loop Continue after tool result
 - button "Think No dynamic Plugins are present, so I will define the requested Host and Client Package.":
   - img
   - img
@@ -40,6 +45,10 @@
   - code: "return { name: \"snapshot-noop\", apply(ctx) {} }"
 - text: Result Defined snap-1/pkg-1 (snapshot noop); it is not running yet. Use cordis_run to activate this Package. Run controls live in the Cordis panel above Settings
 - button "Inspect"
+- button "Context injection agent-loop Continue after tool result":
+  - img
+  - img
+  - text: Context injection agent-loop Continue after tool result
 - button "Think The Host returned snap-1/pkg-1, so I will request its first activation.":
   - img
   - img
@@ -48,6 +57,10 @@
 - text: Run Cordis Plugin snap-1 · pkg-1 Ready
 - button "Inspect"
 - text: snap-1/pkg-1 is awaiting user approval (run-1).
+- button "Context injection agent-loop Continue after tool result":
+  - img
+  - img
+  - text: Context injection agent-loop Continue after tool result
 - button "Think The activation request has been submitted, so I will return the requested readiness marker.":
   - img
   - img
@@ -85,8 +98,6 @@
 - status:
   - text: "This turn failedllm-replay: script exhausted — session requested model call #7 but its script has only 6; re-record the scenario"
   - code: UNKNOWN
-- button "Back to bottom":
-  - img
 - textbox "Message the agent"
 - button "Commands":
   - img

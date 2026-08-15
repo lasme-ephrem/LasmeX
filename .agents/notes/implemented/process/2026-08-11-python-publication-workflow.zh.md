@@ -12,7 +12,7 @@ Python SDK 由一个平台无关的客户端 wheel 包和三个原生运行时 w
 
 GitHub 的 `Release (Python)` 工作流为带有 `python-release-dry-run` 标签的拉取请求和设置 `publish=false` 的手动运行提供无凭据验证。两条路径都会为全部三个平台调用原生 wheel 包构建器，在 Python 3.10 和 3.14 上安装 Linux 发行集合，下载所得四份产物，验证其精确文件名和包元数据，执行 PyPI 默认单文件大小限制，记录 SHA-256 哈希，并保留一份汇总候选发行版。这些作业只有仓库读取权限，没有注册表凭据或 OIDC 权限，拉取请求事件无法进入任何发布作业。
 
-设置 `publish=true` 时，运行必须在私有自动化仓库使用 `python-v<repository-version>` 标签，将该仓库的 `github.repository` 与其仓库级 `PYPI_PUBLISHER_REPOSITORY` 变量匹配，找到 `PUBLIC_PYPI_RELEASE_ENABLED=true`，并分别获得 GitHub `pypi-runtime` 和 `pypi` 环境对运行时与 SDK 发布的批准。只读公开镜像提供包元数据 URL，但不运行发布 Actions。只有两个发布作业获得 `id-token: write`；PyPI Trusted Publishing 会把私有仓库身份换成短期项目凭据，因此仓库不保存 PyPI token。
+设置 `publish=true` 时，运行必须在私有自动化仓库使用 `python-v<repository-version>` 标签，将该仓库的 `github.repository` 与其仓库级 `PYPI_PUBLISHER_REPOSITORY` 变量匹配，找到 `PUBLIC_PYPI_RELEASE_ENABLED=true`，并分别获得 GitHub `pypi-runtime` 和 `pypi` 环境对运行时与 SDK 发布的批准。包元数据把 LasmeX 官方公开 fork 标识为 Homepage、Repository、Issues 与 Source，而 DeepSeek Harness 只作为 Upstream 归属；该事实由 [Python SDK 身份决定](../architecture/2026-08-14-lasmex-python-sdk-public-identity.md)负责。只有两个发布作业获得 `id-token: write`；PyPI Trusted Publishing 会把私有仓库身份换成短期项目凭据，因此仓库不保存 PyPI token。
 
 发布过程使用同一次工作流运行中生成并检查过的汇总产物。每个发布作业都会在选择上传文件前验证保留的 `SHA256SUMS`。一个运行时作业先上传全部三个平台 wheel 包，再由依赖它的作业上传 SDK wheel 包，因为 PyPI 上传不是原子操作，而 SDK 会把运行时分发包固定到完全相同的版本。两个作业都不会检出源码，也不会重新构建 wheel 包。将它们拆开后，GitHub 的失败作业重试可以在 SDK 上传失败时继续执行，而不会尝试替换不可变的运行时文件。
 
@@ -42,7 +42,7 @@ GitHub 的 `Release (Python)` 工作流为带有 `python-release-dry-run` 标签
 
 完整候选发行版与公开发布都从私有自动化仓库运行。选择 `publish=true` 后，只有发布仓库变量、发布开关和标签都能标识一次有意的公开发布，工作流才会进入受保护的发布作业，否则会提前失败。镜像代码不会复制这些私有仓库设置，因此只读公开镜像无法满足授权检查。
 
-私有自动化仓库 owner 和仓库名、工作流文件名以及每个作业的环境（运行时使用 `pypi-runtime`，SDK 使用 `pypi`）都是 Trusted Publisher 身份的一部分。源码仓库转移、工作流改名或环境改名后，必须更新受影响的 PyPI Publisher；仓库身份变化时还必须更新发布仓库变量。只读公开镜像发生变化时，需要修改的是包元数据 URL，而不是发布身份。
+私有自动化仓库 owner 和仓库名、工作流文件名以及每个作业的环境（运行时使用 `pypi-runtime`，SDK 使用 `pypi`）都是 Trusted Publisher 身份的一部分。源码仓库转移、工作流改名或环境改名后，必须更新受影响的 PyPI Publisher；仓库身份变化时还必须更新发布仓库变量。LasmeX 官方公开源码链接仍属于包元数据，不会改变发布身份。
 
 两个分发项目之间的 PyPI 发布仍然不是原子操作。运行时优先的顺序会缩小可见的失败状态；独立的发布作业和校验和验证则让失败的 SDK 上传能够从经过检查的精确文件继续执行，并且绝不替换已上传的同名文件。
 

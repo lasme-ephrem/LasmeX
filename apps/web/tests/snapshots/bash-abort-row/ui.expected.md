@@ -6,18 +6,19 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: "Run two shell commands: wait for cancellation, then write skipped.txt. {{date}} {{clock}}"
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
+- button "Context injection lasmex-system-prompt":
   - img
   - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
+  - text: Context injection lasmex-system-prompt
 - 'button "Failed Bash Error: tool call aborted" [expanded]':
   - img
   - text: "Failed Bash Error: tool call aborted"
-- text: "IN { \"command\": \"node -e \\\"require('node:fs').writeFileSync('started.txt', 'started'); setInterval(() => {}, 1000)\\\"\", \"description\": \"Wait until cancellation\" } OUT Error: tool call aborted"
+- text: "Input { \"command\": \"node -e \\\"require('node:fs').writeFileSync('started.txt', 'started'); setInterval(() => {}, 1000)\\\"\", \"description\": \"Wait until cancellation\" } Output Error: tool call aborted"
 - button "Inspect"
 - 'button "Failed Bash Error: tool call aborted before dispatch"':
   - img

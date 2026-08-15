@@ -12,13 +12,13 @@
  * separate chain entry per shape would race the same carrier, so the shape
  * choice lives inside this entry — see QuestionComposer.
  */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { ClientContext } from 'lasmex-client-runtime/client'
+import type { ComposerChainProps } from 'lasmex-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 import type { QuestionWait } from './contract/slots.ts'
 import { QuestionComposer } from './QuestionComposer.tsx'
-import { en, zh, type QuestionKey } from './locales.ts'
+import { en, fr, zh, type QuestionKey } from './locales.ts'
 
 export { PendingQuestion } from './contract/slots.ts'
 export type {
@@ -26,7 +26,7 @@ export type {
 } from './contract/slots.ts'
 export type { QuestionKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The question composer's copy. */
     question: QuestionKey
@@ -51,7 +51,7 @@ function selectQuestion({ interactions }: ComposerChainProps): QuestionWait | nu
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-user-questions: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-user-questions: dictionaries')
 
   ctx.slots.inject('conversation.composer', () => ctx.slots.register(
     { name: 'conversation.composer', select: selectQuestion, locale: NS },

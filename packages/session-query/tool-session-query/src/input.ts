@@ -1,21 +1,21 @@
 /**
  * Model argument schemas, normalization, and filter construction.
  *
- * @module @deepseek-ai/dsh-tool-session-query/input
+ * @module lasmex-tool-session-query/input
  */
 
 import {
   SessionId,
   type SessionEventType,
   type SessionId as SessionIdValue,
-} from '@deepseek-ai/dsh-session'
+} from 'lasmex-session'
 import {
   SessionQueryError,
   type SessionAvailability,
   type SessionEventMetadataFilter,
   type SessionEventSurface,
   type SessionResultFilter,
-} from '@deepseek-ai/dsh-session-query'
+} from 'lasmex-session-query'
 
 interface SessionSearchArgs {
   query: string

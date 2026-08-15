@@ -1,12 +1,12 @@
-# @deepseek-ai/dsh-subagent-codex
+# lasmex-subagent-codex
 
 English | [中文](README.zh.md)
 
-This package registers the fixed `codex` subagent provider. Each accepted run starts the official `codex app-server --stdio` command in the delegating Session's workspace, creates one ephemeral Codex thread, submits one self-contained text task, and returns only the final answer through the shared [`dsh-subagent`](../subagent/README.md) result contract.
+This package registers the fixed `codex` subagent provider. Each accepted run starts the official `codex app-server --stdio` command in the delegating Session's workspace, creates one ephemeral Codex thread, submits one self-contained text task, and returns only the final answer through the shared [`lasmex-subagent`](../subagent/README.md) result contract.
 
 ## Start and ownership
 
-`start(request)` accepts only a non-empty sequence of text blocks and derives the child cwd from the parent Session. It then spawns the fixed command through [`dsh-subprocess`](../../subprocess/subprocess/README.md), performs `initialize` → `initialized` → `thread/start { cwd, ephemeral: true }`, and publishes the run only after Codex returns a valid ephemeral thread. A failure or cancellation before publication closes the wire, terminates the managed process tree, waits for it to exit, and rejects `start()`.
+`start(request)` accepts only a non-empty sequence of text blocks and derives the child cwd from the parent Session. It then spawns the fixed command through [`lasmex-subprocess`](../../subprocess/subprocess/README.md), identifies the app-server client as LasmeX during `initialize`, performs `initialized` → `thread/start { cwd, ephemeral: true }`, and publishes the run only after Codex returns a valid ephemeral thread. A failure or cancellation before publication closes the wire, terminates the managed process tree, waits for it to exit, and rejects `start()`.
 
 The published `run.result` starts exactly one turn. It accepts only notifications for that run's thread and turn, then waits for the authoritative `turn/completed` terminal notification. The latest `agentMessage` with `phase: "final_answer"` wins; when Codex emits no explicit final phase, the latest message with `phase: null` is the compatibility fallback. Commentary never replaces either answer, and a successful turn with no nonblank answer settles as an error.
 
@@ -31,13 +31,13 @@ Shipped profiles load this provider once on the host and start no Codex process 
 
 ```yaml
 - id: subagent-codex
-  name: '@deepseek-ai/dsh-subagent-codex'
+  name: 'lasmex-subagent-codex'
   config:
     env:
       OPENAI_API_KEY: !!js process.env.OPENAI_API_KEY
 
 - id: tool-subagent-codex
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: 'lasmex-tool-subagent'
   disabled: true
   config:
     provider: codex
@@ -70,7 +70,7 @@ Independent of the parent request cache. Reuse depends only on Codex's own provi
 
 #### What the model sees
 
-Through `dsh-tool-subagent`, the parent sees only the selected final Codex answer or the consumer's exact error for a non-completed result. Codex commentary, reasoning, tool activity, stderr, workspace diffs, and product ids are not copied into the parent Session.
+Through `lasmex-tool-subagent`, the parent sees only the selected final Codex answer or the consumer's exact error for a non-completed result. Codex commentary, reasoning, tool activity, stderr, workspace diffs, and product ids are not copied into the parent Session.
 
 #### Token effect
 
@@ -84,7 +84,7 @@ Append-only: the new tool result follows the reusable parent request prefix.
 
 - **One fresh process, thread, and turn per run** — there is no continuation, resume, pooling, progress stream, or product-session persistence.
 - **Host-managed product installation and account state** — a missing or incompatible `codex`, configuration error, or authentication failure is surfaced as a startup or run error; the plugin provides no installer, login flow, or runtime version gate.
-- **Compatibility is pinned by development evidence** — upgrading from the verified 0.147.0 protocol baseline requires regenerating upstream schema evidence and rerunning handshake, answer-selection, approval, cancellation, keyless real-product, and credentialed DeepSeek nonce tests.
+- **Compatibility is pinned by development evidence** — upgrading from the verified 0.147.0 protocol baseline requires regenerating upstream schema evidence and rerunning hanlasmexake, answer-selection, approval, cancellation, keyless real-product, and credentialed DeepSeek nonce tests.
 - **No human approval path** — known unattended approval requests are denied and unknown server requests fail closed; deployments cannot configure an allow policy through this package.
 - **Final text only** — reasoning, commentary, intermediate messages, tool traffic, usage, stderr, and workspace diffs remain product-local.
 - **No optional shared capabilities** — output schemas, child personas, tool filtering, and harness depth enforcement are rejected by the shared service for this provider.

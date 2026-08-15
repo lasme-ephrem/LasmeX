@@ -2,7 +2,7 @@
  * Shared buffering, serialization, adoption, repair, and disposal orchestration
  * for first-party backends. Third-party backends may implement the public
  * persistence seam directly.
- * @module @deepseek-ai/dsh-session-persistence/coordinator
+ * @module lasmex-session-persistence/coordinator
  */
 
 import { Context } from '@deepseek-ai/cordis'
@@ -14,9 +14,9 @@ import {
   SessionPreparation,
   snapshotJsonValue,
   snapshotSessionEvent,
-} from '@deepseek-ai/dsh-session'
-import type { Session, SessionEvent, SessionId, SessionHeader } from '@deepseek-ai/dsh-session'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+} from 'lasmex-session'
+import type { Session, SessionEvent, SessionId, SessionHeader } from 'lasmex-session'
+import { MAX_TIMER_DELAY_MS } from 'lasmex-timeout'
 import type { SessionInspection, SessionLocation } from './index.ts'
 import type { SessionPersistenceRevision } from './revision.ts'
 import { observeQueuedAbort, SessionPreparations } from './preparations.ts'
@@ -1132,7 +1132,7 @@ export class PersistenceCoordinator<TornMarker = unknown> {
     ctx.on('session/disposed', (session) => { this.retire(session) })
 
     // HMR: a hot reload does not replay session/created, so seed existing live
-    // sessions (mirrors dsh-invariants).
+    // sessions (mirrors lasmex-invariants).
     for (const session of ctx.sessions.list()) void this.initFor(session)
   }
 

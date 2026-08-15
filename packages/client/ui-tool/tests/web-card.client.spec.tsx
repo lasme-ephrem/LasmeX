@@ -12,24 +12,24 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import {
   createSnapshotStore, EMPTY_CONVERSATION_VIEWS,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import type {
   ConversationSnapshot, RunningToolCall, SessionId, SessionListState, ToolResultNode, WorkspaceListState,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { ToolResultView } from '@deepseek-ai/dsh-api-remotes/client'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
-import type { SelectionTarget } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { ToolCallOwnerProps } from '@deepseek-ai/dsh-client-ui-tool/client'
-import { IconGlobeOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-runtime/client'
+import type { ToolResultView } from 'lasmex-api-remotes/client'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
+import type { SelectionTarget } from 'lasmex-client-ui-conversation/client'
+import type { ToolCallOwnerProps } from 'lasmex-client-ui-tool/client'
+import { IconGlobeOutline14 } from 'lasmex-client-ui-primitives'
 import { webCardModel } from '../src/client/tool/models/web-card-model.ts'
-import { createChatStore } from '@deepseek-ai/dsh-client-ui-conversation/src/client/stores.ts'
+import { createChatStore } from 'lasmex-client-ui-conversation/src/client/stores.ts'
 import { GenericToolCard } from '../src/client/tool/toolviews/GenericToolCard.tsx'
-import { DetailsPanel } from '@deepseek-ai/dsh-client-ui-conversation/src/client/skeleton/DetailsPanel.tsx'
+import { DetailsPanel } from 'lasmex-client-ui-conversation/src/client/skeleton/DetailsPanel.tsx'
 import { WebRow, webToolview } from '../src/client/tool/toolviews/web-row.tsx'
 import { renderToolDetails, SessionProviderStub, toolChatSnapshot } from './tool-details-render.client.tsx'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
-import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { zh } from 'lasmex-client-ui-conversation/src/client/locales.ts'
 
 afterEach(cleanup)
 
@@ -144,7 +144,7 @@ describe('chat row web body', () => {
     const globe = render(<IconGlobeOutline14 />).container.querySelector('svg')!.outerHTML
     const view = render(<WebRow {...rowProps(settledSearch(), 'web_search')} />)
     // Collapsed: the summary row alone, no card in the DOM.
-    expect(view.getByText('Search')).toBeTruthy()
+    expect(view.getByText('搜索')).toBeTruthy()
     expect(view.container.querySelector('svg')?.outerHTML).toBe(globe)
     expect(view.queryByText('Titled')).toBeNull()
     expect(view.container.querySelector('[data-web]')).toBeNull()
@@ -158,7 +158,7 @@ describe('chat row web body', () => {
 
   it('the WebRow expands to the fetch card, titled Fetch', () => {
     const view = render(<WebRow {...rowProps(settledFetch(), 'web_fetch')} />)
-    expect(view.getByText('Fetch')).toBeTruthy()
+    expect(view.getByText('抓取')).toBeTruthy()
     expect(view.container.querySelector('[data-web]')).toBeNull()
     toggleRow(view)
     // The url shows as the card's link; scope to the card.
@@ -169,7 +169,7 @@ describe('chat row web body', () => {
 
   it('a running web call is the summary row alone, with nothing to expand', () => {
     const view = render(<WebRow {...rowProps(runningSearch(), 'web_search')} />)
-    expect(view.getByText('Search')).toBeTruthy()
+    expect(view.getByText('搜索')).toBeTruthy()
     expect(view.queryByText('Titled')).toBeNull()
     // No card material and no expandable body: clicking the row reveals nothing.
     expect(view.container.querySelector('[data-expandable]')).toBeNull()
@@ -180,7 +180,7 @@ describe('chat row web body', () => {
     const view = render(<WebRow {...rowProps(settledSearch({
       isError: true, resultView: { card: 'generic' },
     }), 'web_search')} />)
-    expect(view.getByText('Search')).toBeTruthy()
+    expect(view.getByText('搜索')).toBeTruthy()
     expect(view.container.querySelector('[data-web]')).toBeNull()
     // The row reflects the error state so the summary line still reads as failed.
     expect(view.container.querySelector('[data-state="error"]')).not.toBeNull()

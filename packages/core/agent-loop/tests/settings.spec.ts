@@ -3,14 +3,14 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import type { Fiber } from '@deepseek-ai/cordis'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import { SettingsProvider } from '@deepseek-ai/dsh-settings'
-import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import AgentLoop, { AGENT_LOOP_SETTINGS_NAMESPACE } from '@deepseek-ai/dsh-agent-loop'
+import LlmRuntime from 'lasmex-llm'
+import SessionStore from 'lasmex-session'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime from 'lasmex-tools'
+import AgentRegistry from 'lasmex-agent'
+import { SettingsProvider } from 'lasmex-settings'
+import type { SettingsNamespace } from 'lasmex-settings'
+import AgentLoop, { AGENT_LOOP_SETTINGS_NAMESPACE } from 'lasmex-agent-loop'
 
 /** The smallest real provider: one in-memory document, always writable. */
 class MemorySettings extends SettingsProvider {
@@ -39,7 +39,7 @@ async function boot(): Promise<{ ctx: Context; settingsFiber: Fiber; loopFiber: 
   await ctx.plugin(AgentRegistry)
   const settingsFiber = ctx.plugin(MemorySettings)
   await settingsFiber.await()
-  const loopFiber = ctx.plugin(AgentLoop, { agents: [], maxParallelToolCalls: 4 })
+  const loopFiber = ctx.plugin(AgentLoop, { agents: [], maxParallelToolCalls: 4, maxStepsPerTurn: 8 })
   await loopFiber.await()
   return { ctx, settingsFiber, loopFiber }
 }
@@ -55,6 +55,16 @@ describe('agent-loop settings section', () => {
     await bench.ctx.fiber.dispose()
   })
 
+  it('layers the stored per-turn step cap over the composition entry', async () => {
+    const bench = await boot()
+    expect(bench.ctx.agentLoop.config.maxStepsPerTurn).toBe(8)
+
+    await bench.ctx.settings.update(AGENT_LOOP_SETTINGS_NAMESPACE, { maxStepsPerTurn: 3 })
+
+    expect(bench.ctx.agentLoop.config.maxStepsPerTurn).toBe(3)
+    await bench.ctx.fiber.dispose()
+  })
+
   it('refuses a non-positive cap at the write', async () => {
     const bench = await boot()
 
@@ -65,12 +75,22 @@ describe('agent-loop settings section', () => {
     await bench.ctx.fiber.dispose()
   })
 
+  it('refuses a non-positive per-turn step cap at the write', async () => {
+    const bench = await boot()
+
+    await expect(bench.ctx.settings.update(AGENT_LOOP_SETTINGS_NAMESPACE, { maxStepsPerTurn: 0 }))
+      .rejects.toThrow()
+
+    expect(bench.ctx.agentLoop.config.maxStepsPerTurn).toBe(8)
+    await bench.ctx.fiber.dispose()
+  })
+
   it('never offers the composed agents array to the settings document', async () => {
     const bench = await boot()
 
     const descriptor = bench.ctx.settings.describe().find(row => String(row.ns) === 'agent-loop')
 
-    expect(Object.keys(descriptor?.value as object)).toEqual(['maxParallelToolCalls'])
+    expect(Object.keys(descriptor?.value as object)).toEqual(['maxParallelToolCalls', 'maxStepsPerTurn'])
     await bench.ctx.fiber.dispose()
   })
 

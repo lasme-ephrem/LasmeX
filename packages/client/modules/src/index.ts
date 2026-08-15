@@ -1,6 +1,6 @@
 /**
- * Node half of the client module system (`dsh.client` dual-face package): scans
- * the host Loader's entries for packages declaring `dsh.client`, composes the
+ * Node half of the client module system (`lasmex.client` dual-face package): scans
+ * the host Loader's entries for packages declaring `lasmex.client`, composes the
  * `window.__DSH_BOOT__` entry graph (wire single source: {@link WebBootEntry}
  * in `./client/manifest.ts`), serves `/plugins/<id>/client.js` and its source
  * map, taps the index render to inject the boot manifest, and provides the
@@ -17,20 +17,20 @@
  * expires — plugin-set changes take effect on restart; bundle content
  * changes reach the graph only through
  * {@link ClientModuleRegistry.rebuilt}.
- * @module @deepseek-ai/dsh-client-modules
+ * @module lasmex-client-modules
  */
 
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import { Service } from '@deepseek-ai/cordis'
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
-import type {} from '@deepseek-ai/dsh-host-webserver'
+import type {} from 'lasmex-host-webserver'
 import type { WebBootEntry, WebBootGraph } from './client/manifest.ts'
+import { createPackageJsonResolver } from './package-resolution.ts'
 
 export type {
   BootManifest, BootModuleRow, BootPluginRow, WebBootEntry, WebBootGraph,
@@ -43,15 +43,15 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-/** package.json `dsh.client` declaration fields, validated one by one after reading the file. */
-interface DshClientDeclaration {
+/** package.json `lasmex.client` declaration fields, validated one by one after reading the file. */
+interface LasmeXClientDeclaration {
   inject?: string[]
   platform: string
   /** Boot phase-one prefetch mark; absent means lazy (fetched on demand). */
   immediately?: boolean
 }
 
-/** Resolved package metadata for one `dsh.client` package (cached per name, never expires). */
+/** Resolved package metadata for one `lasmex.client` package (cached per name, never expires). */
 interface PkgMeta {
   clientPath: string
   inject?: string[]
@@ -105,21 +105,21 @@ interface WebPluginRecord {
   clientPath: string
 }
 
-/** Narrow an unknown parsed JSON value to the `dsh.client` declaration, throwing on malformed fields. */
-function parseDshClient(pkgName: string, value: unknown): DshClientDeclaration | undefined {
+/** Narrow an unknown parsed JSON value to the `lasmex.client` declaration, throwing on malformed fields. */
+function parseLasmeXClient(pkgName: string, value: unknown): LasmeXClientDeclaration | undefined {
   if (value === undefined) return undefined
   if (typeof value !== 'object' || value === null) {
-    throw new Error(`client-modules: ${pkgName} has a non-object dsh.client declaration`)
+    throw new Error(`client-modules: ${pkgName} has a non-object lasmex.client declaration`)
   }
   const decl = value as Record<string, unknown>
   if (typeof decl.platform !== 'string') {
-    throw new Error(`client-modules: ${pkgName} dsh.client.platform must be a string`)
+    throw new Error(`client-modules: ${pkgName} lasmex.client.platform must be a string`)
   }
   if (decl.inject !== undefined && (!Array.isArray(decl.inject) || decl.inject.some(i => typeof i !== 'string'))) {
-    throw new Error(`client-modules: ${pkgName} dsh.client.inject must be a string array`)
+    throw new Error(`client-modules: ${pkgName} lasmex.client.inject must be a string array`)
   }
   if (decl.immediately !== undefined && typeof decl.immediately !== 'boolean') {
-    throw new Error(`client-modules: ${pkgName} dsh.client.immediately must be a boolean`)
+    throw new Error(`client-modules: ${pkgName} lasmex.client.immediately must be a boolean`)
   }
   return {
     platform: decl.platform,
@@ -158,6 +158,16 @@ function graphRow(id: string, rev: string, injectEdges: string[] | undefined, im
 }
 
 /**
+ * Serialize the boot graph for embedding in an HTML script data block.
+ * Escaping `<` prevents graph-controlled text from closing the element.
+ * @param graph - the composed client entry graph.
+ * @returns JSON safe to place inside a script element.
+ */
+export function serializeBootManifest(graph: WebBootGraph): string {
+  return JSON.stringify(graph).replaceAll('<', '\\u003c')
+}
+
+/**
  * Inject the boot entry graph into index.html: `window.__DSH_BOOT__` as the
  * first script in <head> (before the shell bundle reads it). `<` is escaped in
  * the JSON so plugin-controlled strings cannot break out of the script element.
@@ -166,7 +176,7 @@ function graphRow(id: string, rev: string, injectEdges: string[] | undefined, im
  * @returns the html with the graph script injected.
  */
 export function injectBootManifest(html: string, graph: WebBootGraph): string {
-  const json = JSON.stringify(graph).replaceAll('<', '\\u003c')
+  const json = serializeBootManifest(graph)
   const script = `<script>window.__DSH_BOOT__ = ${json}</script>`
   const head = html.indexOf('<head>')
   if (head !== -1) return `${html.slice(0, head + 6)}${script}${html.slice(head + 6)}`
@@ -175,18 +185,18 @@ export function injectBootManifest(html: string, graph: WebBootGraph): string {
 }
 
 /**
- * The web plugin table service: incremental `dsh.client` scan + wire composition
+ * The web plugin table service: incremental `lasmex.client` scan + wire composition
  * + bundle route + index tap. Construction runs the activation scan
  * synchronously — a malformed declaration or missing bundle among the
  * already-loaded entries aggregates into one loud throw (FAILED fiber; the
  * boot activation audit reports it).
  */
 export class ClientModuleRegistry extends Service {
-  static inject = ['webServer', 'loader']
+  static inject = ['loader']
 
   private readonly table = new Map<string, WebPluginRecord>()
   // Negative verdicts (unresolvable specifier — builtins like cordis:include,
-  // subpath rows — or a package without a web `dsh.client` declaration) are
+  // subpath rows — or a package without a web `lasmex.client` declaration) are
   // cached as null and never expire: plugin-set changes take effect on restart.
   private readonly pkgMeta = new Map<string, PkgMeta | null>()
   private readonly rebuildListeners = new Set<(id: string, rev: string) => void>()
@@ -198,7 +208,7 @@ export class ClientModuleRegistry extends Service {
 
   /**
    * Build the service: subscribe, seed, and run the activation flush.
-   * @param ctx - plugin context carrying webServer and loader.
+   * @param ctx - plugin context carrying the Loader entry tree.
    */
   constructor(ctx: Context) {
     super(ctx, 'clientModules')
@@ -209,8 +219,7 @@ export class ClientModuleRegistry extends Service {
     if (ctx.baseUrl === undefined) {
       throw new Error('client-modules: ctx.baseUrl is unset — the node half needs the config-tree anchor to resolve plugin packages')
     }
-    const require = createRequire(ctx.baseUrl)
-    this.resolvePkgJson = spec => require.resolve(`${spec}/package.json`)
+    this.resolvePkgJson = createPackageJsonResolver(ctx.baseUrl, import.meta.url)
 
     // Subscribe before seeding so a fiber arriving mid-activation lands in the
     // same dirty set (Set idempotence makes the overlap harmless). An entry-less
@@ -238,14 +247,18 @@ export class ClientModuleRegistry extends Service {
       throw new ClientPackageCompositionError(failures)
     }
 
-    ctx.effect(
-      () => ctx.webServer.register({ kind: 'prefix', path: '/plugins', handler: this.serveBundle }),
-      'client-modules: bundle route',
-    )
-    ctx.effect(
-      () => ctx.webServer.tapIndex(html => injectBootManifest(html, this.composed)),
-      'client-modules: boot manifest injection',
-    )
+    const attachWebCarrier = (httpCtx: Context): void => {
+      httpCtx.effect(
+        () => httpCtx.webServer.register({ kind: 'prefix', path: '/plugins', handler: this.serveBundle }),
+        'client-modules: bundle route',
+      )
+      httpCtx.effect(
+        () => httpCtx.webServer.tapIndex(html => injectBootManifest(html, this.composed)),
+        'client-modules: boot manifest injection',
+      )
+    }
+    if (ctx.get('webServer') === undefined) ctx.inject(['webServer'], attachWebCarrier)
+    else attachWebCarrier(ctx)
   }
 
   /**
@@ -342,10 +355,10 @@ export class ClientModuleRegistry extends Service {
       return null
     }
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as Record<string, unknown>
-    const dsh = pkg.dsh
-    const decl = parseDshClient(
+    const lasmex = pkg.lasmex
+    const decl = parseLasmeXClient(
       pkgName,
-      dsh !== null && typeof dsh === 'object' ? (dsh as Record<string, unknown>).client : undefined,
+      lasmex !== null && typeof lasmex === 'object' ? (lasmex as Record<string, unknown>).client : undefined,
     )
     if (decl === undefined || decl.platform !== 'web') {
       this.pkgMeta.set(pkgName, null)
@@ -353,7 +366,7 @@ export class ClientModuleRegistry extends Service {
     }
     const clientRel = clientExportOf(pkgName, pkg.exports)
     if (clientRel === undefined) {
-      throw new Error(`client-modules: ${pkgName} declares dsh.client but exports no "./client" bundle`)
+      throw new Error(`client-modules: ${pkgName} declares lasmex.client but exports no "./client" bundle`)
     }
     const meta: PkgMeta = {
       clientPath: join(dirname(pkgPath), clientRel),

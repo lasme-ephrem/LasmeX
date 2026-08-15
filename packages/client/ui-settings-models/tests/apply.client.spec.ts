@@ -1,11 +1,11 @@
 /** Models section registration: slot declaration injection, the locale-following label thunk, and HMR recovery. */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { apply, inject, refreshIfLoaded } from '@deepseek-ai/dsh-client-ui-settings-models/client'
+import { resolveSlotLabel } from 'lasmex-client-ui-slots'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { TestRemote, usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { apply, inject, refreshIfLoaded } from 'lasmex-client-ui-settings-models/client'
 import { ModelsSection } from '../src/client/ModelsSection.tsx'
 import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog.tsx'
 import { WelcomeNotice } from '../src/client/WelcomeNotice.tsx'
@@ -54,10 +54,10 @@ describe('ui-settings-models apply', () => {
     expect(entry.component).toBe(ModelsSection)
     expect(entry.options).toMatchObject({ id: 'models', order: 10 })
     // The nav label is a locale-following thunk; owners resolve at read time.
-    expect(resolveSlotLabel(entry.options.label)).toBe('模型')
+    expect(resolveSlotLabel(entry.options.label)).toBe('Modèles')
     const injected = (entry.inject as unknown as () => import('../src/client/ModelsSection.tsx').ModelsSectionInjected)()
-    expect(injected.t('nav')).toBe('模型')
-    expect(injected.t('deleteTitle')).toBe('删除 {provider}？')
+    expect(injected.t('nav')).toBe('Modèles')
+    expect(injected.t('deleteTitle')).toBe('Supprimer {provider} ?')
     expect(typeof injected.controller.load).toBe('function')
     expect(typeof injected.useSnapshot).toBe('function')
     expect(injected.api).toBeDefined()
@@ -129,18 +129,19 @@ describe('ui-settings-models apply', () => {
     b.locale.setLocale('zh')
   })
 
-  it('registers the zh/en nav dictionaries and disposes everything with the fiber', async () => {
+  it('registers every nav dictionary and disposes everything with the fiber', async () => {
     const b = await bench()
     declare(b.slots)
     const fiber = b.ctx.plugin({ inject: [...inject], apply })
     await fiber.await()
-    expect(b.locale.bind('settings.models')('nav')).toBe('模型')
+    expect(b.locale.bind('settings.models')('nav')).toBe('Modèles')
     await fiber.dispose()
     expect(b.slots.entries('settings.section')).toHaveLength(0)
     expect(b.slots.entries('settings.onboarding')).toHaveLength(0)
     // The (ns, locale) seats are free again — the dictionary disposers ran.
     expect(() => b.locale.register('settings.models', 'zh', {})).not.toThrow()
     expect(() => b.locale.register('settings.models', 'en', {})).not.toThrow()
+    expect(() => b.locale.register('settings.models', 'fr', {})).not.toThrow()
   })
 
   it('keeps remote-browser acknowledgement in process memory', async () => {

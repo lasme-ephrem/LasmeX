@@ -1,20 +1,20 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-agent-presets`.
- * @module @deepseek-ai/dsh-agent-presets/invariant
+ * Package-owned invariant companion for `lasmex-agent-presets`.
+ * @module lasmex-agent-presets/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 // Type-only: resolves the `system-prompt/assemble` waterfall this companion
-// joins, and the `agent` field `dsh-agent` merges into its context.
-import type {} from '@deepseek-ai/dsh-system-prompt'
-import type {} from '@deepseek-ai/dsh-agent'
+// joins, and the `agent` field `lasmex-agent` merges into its context.
+import type {} from 'lasmex-system-prompt'
+import type {} from 'lasmex-agent'
 // Imported through the package name, not `./mount.ts`: a module shared between
 // the two build entry points becomes a third chunk that the published `files`
 // list does not carry, which `verify-built-package-invariants` rejects.
-import { leakedServices, livePresetMounts } from '@deepseek-ai/dsh-agent-presets'
+import { leakedServices, livePresetMounts } from 'lasmex-agent-presets'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-presets'
+const PACKAGE_NAME = 'lasmex-agent-presets'
 
 /** Cordis companion plugin name. */
 export const name = 'agent-presets-invariant'

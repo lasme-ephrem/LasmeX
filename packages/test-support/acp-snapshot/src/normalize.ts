@@ -3,7 +3,7 @@
  * timestamps, and hook duration while preserving deterministic event sequence numbers.
  * Request-header scrubbers stay composable so one scenario per header class can pin prompt and
  * tool-schema sidecars.
- * @module @deepseek-ai/dsh-acp-snapshot/normalize
+ * @module lasmex-acp-snapshot/normalize
  */
 
 const SESSION_ID = '{{sessionId}}'
@@ -32,7 +32,7 @@ const LOCAL_SPILL_PATH_RE = new RegExp(
   'g',
 )
 const SNAPSHOT_SPILL_PATH_RE = new RegExp(
-  String.raw`(?:[A-Za-z]:)?[\\/](?:tmp|t)[\\/](?:dsh-acp-snap-[0-9a-f]{9}|dsh-acp-snapshot-spill)[\\/]session-[0-9a-f]{12}[\\/][0-9a-f]{12}-([A-Za-z0-9._~-]+?)`
+  String.raw`(?:[A-Za-z]:)?[\\/](?:tmp|t)[\\/](?:lasmex-acp-snap-[0-9a-f]{9}|lasmex-acp-snapshot-spill)[\\/]session-[0-9a-f]{12}[\\/][0-9a-f]{12}-([A-Za-z0-9._~-]+?)`
   + String.raw`(?=\. Use read with offset/limit|[\s)]|$)`,
   'g',
 )
@@ -82,10 +82,14 @@ export interface NormalizeOptions {
   cwdPathMode?: CwdPathMode
 }
 
-/** Return every known spelling of the generated cwd, most specific first. */
+/** Return every known and JSON-literal spelling of the generated cwd, most specific first. */
 function cwdSpellings(ctx: NormalizeContext): string[] {
-  const spellings = [...new Set([ctx.cwd, ...ctx.cwdAliases ?? []])]
+  const directSpellings = [...new Set([ctx.cwd, ...ctx.cwdAliases ?? []])]
     .filter(spelling => spelling.length > 0)
+  const spellings = [...new Set([
+    ...directSpellings,
+    ...directSpellings.map(spelling => spelling.replaceAll('\\', '\\\\')),
+  ])]
   const macAliases = spellings
     .filter(spelling => spelling.startsWith('/') && !spelling.startsWith('/private/'))
     .map(spelling => `/private${spelling}`)
@@ -149,7 +153,10 @@ function scrubString(value: string, ctx: NormalizeContext, cwdPathMode: CwdPathM
   if (cwdPathMode === 'canonical') {
     // Restrict separator conversion to paths rooted at the cwd token. A global
     // backslash rewrite would corrupt regexes, commands, and model-authored text.
-    out = out.replace(CWD_ROOTED_PATH_RE, path => path.replaceAll('\\', '/'))
+    out = out.replace(
+      CWD_ROOTED_PATH_RE,
+      path => path.replaceAll('\\\\', '/').replaceAll('\\', '/'),
+    )
     out = canonicalizeEmbeddedPaths(out)
   }
   out = out.replace(LOCAL_SPILL_PATH_RE, (_match, name: string) => `{{spillLocator:${name}}}`)

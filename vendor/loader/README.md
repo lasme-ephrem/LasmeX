@@ -33,6 +33,8 @@ root.loader.update(id, { config: { enabled: false } })
 | `disabled` | Stops the entry and prevents it from starting. |
 | `inject` | Adds required services or intercept config for this entry. |
 
+Serialized JavaScript expressions compile only when an entry evaluates one. A browser consumer whose entry graph contains no expressions can therefore keep a content security policy without `unsafe-eval`.
+
 ## API
 
 | API | Description |

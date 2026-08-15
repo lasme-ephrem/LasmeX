@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-compaction-basic",
-  "description": "Token-meter-driven compaction policy and LLM summarization backend for the DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-compaction-basic",
+  "description": "Token-meter-driven compaction policy and LLM summarization backend for LasmeX",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/compaction/compaction-basic"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,18 +27,18 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-token-meter": "workspace:^",
-    "@deepseek-ai/dsh-compaction-tool-result-pruner": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-compaction-tool-result-pruner": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-compaction-tool-result-pruner": {
+    "lasmex-compaction-tool-result-pruner": {
       "optional": true
     }
   },
@@ -53,18 +48,27 @@
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-include": "workspace:^",
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-retry": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-token-meter": "workspace:^",
-    "@deepseek-ai/dsh-compaction-tool-result-pruner": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-loop": "workspace:^",
+    "lasmex-agent-loop-testkit": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-llm-retry": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-compaction-tool-result-pruner": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/compaction/compaction-basic"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

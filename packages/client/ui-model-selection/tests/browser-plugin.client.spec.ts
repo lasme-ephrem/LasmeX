@@ -10,15 +10,14 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { createScope } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import type { ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
-import type { CommandContribution, SelectOption } from '@deepseek-ai/dsh-client-ui-commands/client'
+import { createScope } from 'lasmex-client-runtime/client'
+import type { SessionId } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { TestRemote } from 'lasmex-client-test-runtime'
+import type { ModelSelection } from 'lasmex-api-remotes/client'
+import type { CommandContribution, SelectOption } from 'lasmex-client-ui-commands/client'
 import type { ModelSelectInjected } from '../src/client/slots.ts'
 import { apply, inject } from '../src/client/index.ts'
-import { zh } from '../src/client/locales.ts'
 
 const sid = (k: string): SessionId => k as SessionId
 
@@ -250,7 +249,7 @@ describe('ui-model-selection dual entry', () => {
     b.ctx.remote.$dispatch('llm/adapters-updated', [])
     await Promise.resolve()
     await Promise.resolve()
-    expect(b.blockOf('s1')?.reason).toBe(zh['blocked.composer'])
+    expect(b.blockOf('s1')?.reason).toBe('Ce modèle est indisponible — choisissez-en un pour continuer')
 
     // Recovering clears it without a reload of the surface.
     b.setRoutable(true)
@@ -304,18 +303,18 @@ describe('ui-model-selection dual entry', () => {
     await expect(b.contribution().ui.options(
       projection('child'),
       new AbortController().signal,
-    )).rejects.toThrow(/unavailable for addressed subagent/)
+    )).rejects.toThrow(/indisponible pour les sessions de sous-agent/)
 
     const face = b.seat().inject!(sid('child'))
     expect(face.available).toBe(false)
     face.load()
     await expect(face.select({ provider: 'deepseek', model: 'deepseek-v4-pro' })).resolves.toBe(false)
     await expect(b.ctx.modelDirectories.directoryFor(sid('child')).load())
-      .rejects.toThrow(/unavailable for addressed subagent/)
+      .rejects.toThrow(/indisponible pour les sessions de sous-agent/)
     await expect(b.ctx.modelDirectories.directoryFor(sid('child')).select({
       provider: 'deepseek',
       model: 'deepseek-v4-pro',
-    })).rejects.toThrow(/unavailable for addressed subagent/)
+    })).rejects.toThrow(/indisponible pour les sessions de sous-agent/)
     b.ctx.emit('connection/reset')
     await Promise.resolve()
     expect(b.calls).toEqual({ models: 0, select: 0 })

@@ -15,13 +15,13 @@
  * filesystem alike), so it lives here in the policy package rather than in any
  * one capability's seam.
  *
- * @module dsh-sandbox-policy/session-mode
+ * @module lasmex-sandbox-policy/session-mode
  */
 
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
+import type { Session, SessionEvent } from 'lasmex-session'
+import type { SandboxMode } from 'lasmex-sandbox'
 
-declare module '@deepseek-ai/dsh-session/types' {
+declare module 'lasmex-session/types' {
   interface SessionEventMap {
     /**
      * The session's sandbox mode was switched — log-only (like `approval/*`;

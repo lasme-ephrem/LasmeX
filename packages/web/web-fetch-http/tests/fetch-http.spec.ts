@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { AddressInfo } from 'node:net'
+import { createRequire } from 'node:module'
 import { Context } from '@deepseek-ai/cordis'
-import WebRuntime from '@deepseek-ai/dsh-web'
-import { HttpFetchProvider, LOCAL_FETCH_PROVIDER_ID } from '@deepseek-ai/dsh-web-fetch-http'
-import type { HttpFetchLimits } from '@deepseek-ai/dsh-web-fetch-http'
-import * as fetchPlugin from '@deepseek-ai/dsh-web-fetch-http'
+import WebRuntime from 'lasmex-web'
+import { HttpFetchProvider, LOCAL_FETCH_PROVIDER_ID } from 'lasmex-web-fetch-http'
+import type { HttpFetchLimits } from 'lasmex-web-fetch-http'
+import * as fetchPlugin from 'lasmex-web-fetch-http'
 import { classifyContentType, decoderForCharset, isSameOrigin, parseCharset, validateFetchUrl } from '../src/policy.ts'
 
 const limits: HttpFetchLimits = {
@@ -22,6 +23,16 @@ type Handler = (req: IncomingMessage, res: ServerResponse) => void
 let server: Server
 let base: string
 let handler: Handler
+
+const manifest = createRequire(import.meta.url)('../package.json') as { version: string }
+
+describe('product identity', () => {
+  it('uses the package version and official LasmeX source home', () => {
+    expect(fetchPlugin.DEFAULT_USER_AGENT).toBe(
+      `lasmex/${manifest.version} (+https://github.com/lasme-ephrem/LasmeX)`,
+    )
+  })
+})
 
 beforeEach(async () => {
   handler = (_req, res) => { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('default') }

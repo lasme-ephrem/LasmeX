@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-skill-badge",
-  "description": "Bundled dsh badge skill provider for DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-skill-badge",
+  "description": "Bundled LasmeX badge skill provider",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/skill/skill-badge"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,13 +27,22 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-skill": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-skill": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-skill": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-skill": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/skill/skill-badge"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

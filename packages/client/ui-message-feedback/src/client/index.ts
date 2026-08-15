@@ -4,20 +4,20 @@
  * Session backs every message control in that Session, so a single list read
  * seeds the whole transcript. Mutations go through the generated
  * messageFeedback Remote; the Host owns per-item compare-and-set.
- * @module @deepseek-ai/dsh-client-ui-message-feedback/client
+ * @module lasmex-client-ui-message-feedback/client
  */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SessionId } from 'lasmex-client-runtime/client'
 // Type-only: pulls the generated Remote API and ctx.remote merge through the Client assembly boundary.
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from 'lasmex-api-remotes/client'
 // Type-only: pulls the ui-conversation SlotMap merge (the assistant-actions entry).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from 'lasmex-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 import { MessageFeedbackController } from './controller.ts'
 import { MessageFeedbackActions } from './MessageFeedbackActions.tsx'
 import type { MessageFeedbackInjected } from './slots.ts'
-import { en, zh } from './locales.ts'
+import { en, fr, zh } from './locales.ts'
 
 export type {
   MessageFeedbackActionResult, MessageFeedbackStatus, MessageFeedbackView, MessageFeedbackRemote,
@@ -37,7 +37,7 @@ export const inject = ['slots', 'remote', 'remote.messageFeedback', 'locale']
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-message-feedback: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-message-feedback: dictionaries')
 
   const controllers = new Map<SessionId, MessageFeedbackController>()
   const controllerFor = (sessionId: SessionId): MessageFeedbackController => {

@@ -7,11 +7,11 @@
 
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { apply, inject } from '@deepseek-ai/dsh-client-ui-agent-preset/client'
+import { resolveSlotLabel } from 'lasmex-client-ui-slots'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { TestRemote, usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { apply, inject } from 'lasmex-client-ui-agent-preset/client'
 import { AgentPresetLabel } from '../src/client/AgentPresetLabel.tsx'
 import type { AgentPresetLabelInjected } from '../src/client/AgentPresetLabel.tsx'
 import { AgentPresetRow } from '../src/client/AgentPresetRow.tsx'
@@ -194,7 +194,7 @@ describe('ui-agent-preset apply', () => {
     expect(section.component).toBe(AgentPresetSection)
     expect(section.options).toMatchObject({ id: 'agent-presets', order: 20 })
     // The nav label is a locale-following thunk; owners resolve it at read time.
-    expect(resolveSlotLabel(section.options.label)).toBe('Agent 预设')
+    expect(resolveSlotLabel(section.options.label)).toBe('Préréglages de l’agent')
   })
 
   it('registers into a declaration that arrives after apply', async () => {

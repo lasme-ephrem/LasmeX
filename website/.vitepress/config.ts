@@ -2,7 +2,7 @@
 
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import type { DefaultTheme, PageData } from 'vitepress'
+import type { DefaultTheme } from 'vitepress'
 import type { ViteDevServer } from 'vite'
 import { withMermaid } from 'vitepress-plugin-mermaid'
 import { landingLink, orderedPages, routeLink, sectionSpec, type DocsLocale, type DocsPage, type DocsSidebar } from '../docs.ts'
@@ -45,7 +45,7 @@ interface GuideModuleLink {
  */
 interface GuideModules {
   /** Guide sidebar collection for the locale. */
-  guide: 'zh-guide' | 'en-guide'
+  guide: 'fr-guide' | 'en-guide' | 'zh-guide'
   /** Development module link. */
   develop: GuideModuleLink
   /** Reference module link. */
@@ -58,14 +58,19 @@ interface GuideModules {
  */
 const guideModules = {
   root: {
-    guide: 'zh-guide',
-    develop: { label: '开发', collection: 'zh-develop' },
-    reference: { label: '参考', collection: 'zh-reference' },
+    guide: 'fr-guide',
+    develop: { label: 'Développement', collection: 'fr-develop' },
+    reference: { label: 'Référence', collection: 'fr-reference' },
   },
   en: {
     guide: 'en-guide',
     develop: { label: 'Development', collection: 'en-develop' },
     reference: { label: 'Reference', collection: 'en-reference' },
+  },
+  zh: {
+    guide: 'zh-guide',
+    develop: { label: '开发', collection: 'zh-develop' },
+    reference: { label: '参考', collection: 'zh-reference' },
   },
 } satisfies Record<DocsLocale, GuideModules>
 
@@ -95,7 +100,7 @@ function guideSidebar(locale: DocsLocale): DefaultTheme.SidebarItem[] {
  */
 function moduleNav(locale: DocsLocale): DefaultTheme.NavItem[] {
   const { develop, reference } = guideModules[locale]
-  const routePrefix = locale === 'root' ? '' : '/en'
+  const routePrefix = locale === 'root' ? '' : `/${locale}`
   return [
     { text: develop.label, link: landingLink(locale, develop.collection), activeMatch: `^${routePrefix}/develop/` },
     { text: reference.label, link: landingLink(locale, reference.collection), activeMatch: `^${routePrefix}/reference/` },
@@ -115,12 +120,38 @@ function escapeVueInterpolation(html: string): string {
   return html.replaceAll('{{', '&#123;&#123;').replaceAll('}}', '&#125;&#125;')
 }
 
-const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks' | 'editLink'> = {
+const LASMEX_REPOSITORY_URL = 'https://github.com/lasme-ephrem/LasmeX'
+const UPSTREAM_REPOSITORY_URL = 'https://github.com/deepseek-ai/deepseek-harness'
+
+const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks'> = {
   search: {
     provider: 'local',
     options: {
       locales: {
         root: {
+          translations: {
+            button: {
+              buttonText: 'Rechercher',
+              buttonAriaLabel: 'Rechercher dans la documentation',
+            },
+            modal: {
+              displayDetails: 'Afficher la liste détaillée',
+              resetButtonTitle: 'Effacer la recherche',
+              backButtonTitle: 'Fermer la recherche',
+              noResultsText: 'Aucun résultat trouvé',
+              footer: {
+                selectText: 'Sélectionner',
+                selectKeyAriaLabel: 'Entrée',
+                navigateText: 'Parcourir',
+                navigateUpKeyAriaLabel: 'Flèche vers le haut',
+                navigateDownKeyAriaLabel: 'Flèche vers le bas',
+                closeText: 'Fermer',
+                closeKeyAriaLabel: 'Échap',
+              },
+            },
+          },
+        },
+        zh: {
           translations: {
             button: {
               buttonText: '搜索文档',
@@ -147,29 +178,20 @@ const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks' | 'editLin
     },
   },
   socialLinks: [
-    { icon: 'github', link: 'https://github.com/deepseek-ai/deepseek-harness' },
+    { icon: 'github', link: LASMEX_REPOSITORY_URL, ariaLabel: 'Dépôt LasmeX' },
   ],
-  editLink: {
-    pattern: ({ frontmatter }: PageData) => {
-      const data: unknown = frontmatter
-      const editSource: unknown = typeof data === 'object' && data !== null ? Reflect.get(data, 'editSource') : undefined
-      if (typeof editSource !== 'string') throw new Error('Projected documentation page has no editSource frontmatter.')
-      return `https://github.com/deepseek-ai/deepseek-harness/edit/master/${editSource}`
-    },
-    text: '在 GitHub 上编辑此页',
-  },
 }
 
 /** Site base path, carrying the leading and trailing slashes VitePress requires. */
 const base = process.env.DOCS_BASE ?? '/'
 
 /**
- * The DeepSeek wordmark, inlined so its `currentColor` fills follow the active
+ * The LasmeX wordmark, inlined so its `currentColor` fills follow the active
  * theme. An `<img>` would freeze the mark at the colors the file declares.
  */
 const wordmark = readFileSync(resolve(import.meta.dirname, '../public/wordmark.svg'), 'utf8')
   .trim()
-  .replace('<svg ', '<svg class="dsh-wordmark" ')
+  .replace('<svg ', '<svg class="lasmex-wordmark" ')
 
 /**
  * Styles the default theme does not provide, carried inline because the site
@@ -183,9 +205,9 @@ const wordmark = readFileSync(resolve(import.meta.dirname, '../public/wordmark.s
  * stay behind a query only Firefox answers.
  */
 const siteStyle = `
-.dsh-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.dsh-wordmark { display: block; height: 22px; width: auto; color: var(--vp-c-text-1); }
-.dsh-tag {
+.lasmex-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.lasmex-wordmark { display: block; height: 22px; width: auto; color: var(--vp-c-text-1); }
+.lasmex-tag {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--vp-c-brand-soft);
@@ -236,19 +258,27 @@ const scrollbarScript = `
 `
 
 /**
- * Navigation-bar title: the DeepSeek wordmark and the release-stage tag.
+ * Navigation-bar title: the LasmeX wordmark and the release-stage tag.
  * VitePress renders `siteTitle` as HTML.
  *
  * @param previewTag - Localized release-stage label.
  * @returns Markup placed beside the navigation-bar home link.
  */
 function siteTitle(previewTag: string): string {
-  return `<span class="dsh-lockup">${wordmark}<span class="dsh-tag">${previewTag}</span></span>`
+  return `<span class="lasmex-lockup">${wordmark}<span class="lasmex-tag">${previewTag}</span></span>`
+}
+
+function upstreamNav(label: string): DefaultTheme.NavItem {
+  return { text: label, link: UPSTREAM_REPOSITORY_URL }
+}
+
+function sourceNav(label: string): DefaultTheme.NavItem {
+  return { text: label, link: LASMEX_REPOSITORY_URL }
 }
 
 export default withMermaid({
-  title: 'DeepSeek Harness',
-  description: '用于构建 Agent Harness 的插件化 SDK',
+  title: 'LasmeX',
+  description: 'Harness agentique ouvert, composable et extensible',
   base,
   head: [
     // VitePress leaves head hrefs untouched, so the base belongs here explicitly.
@@ -262,18 +292,75 @@ export default withMermaid({
   outDir: '.dist',
   locales: {
     root: {
-      label: '简体中文',
-      lang: 'zh-CN',
+      label: 'Français',
+      lang: 'fr-FR',
+      title: 'LasmeX',
+      description: 'Harness agentique ouvert, composable et extensible',
       themeConfig: {
-        siteTitle: siteTitle('技术预览'),
+        siteTitle: siteTitle('Aperçu'),
         nav: [
-          { text: '入门', link: landingLink('root', guideModules.root.guide), activeMatch: '^/guide/' },
+          { text: 'Guide', link: landingLink('root', guideModules.root.guide), activeMatch: '^/guide/' },
           ...moduleNav('root'),
+          sourceNav('Source'),
+          upstreamNav('Amont DeepSeek'),
         ],
         sidebar: {
           '/guide/': guideSidebar('root'),
-          '/develop/': sidebar('root', 'zh-develop'),
-          '/reference/': sidebar('root', 'zh-reference'),
+          '/develop/': sidebar('root', 'fr-develop'),
+          '/reference/': sidebar('root', 'fr-reference'),
+        },
+        outline: { label: 'Sur cette page' },
+        docFooter: { prev: 'Précédent', next: 'Suivant' },
+        darkModeSwitchLabel: 'Apparence',
+        lightModeSwitchTitle: 'Utiliser le thème clair',
+        darkModeSwitchTitle: 'Utiliser le thème sombre',
+        sidebarMenuLabel: 'Menu',
+        returnToTopLabel: 'Retour en haut',
+        langMenuLabel: 'Changer de langue',
+        skipToContentLabel: 'Aller au contenu',
+      },
+    },
+    en: {
+      label: 'English',
+      lang: 'en-US',
+      link: '/en/',
+      title: 'LasmeX',
+      description: 'Open, composable, and extensible agent harness',
+      themeConfig: {
+        siteTitle: siteTitle('Preview'),
+        nav: [
+          { text: 'Guide', link: landingLink('en', guideModules.en.guide), activeMatch: '^/en/guide/' },
+          ...moduleNav('en'),
+          sourceNav('Source'),
+          upstreamNav('DeepSeek upstream'),
+        ],
+        sidebar: {
+          '/en/guide/': guideSidebar('en'),
+          '/en/develop/': sidebar('en', 'en-develop'),
+          '/en/reference/': sidebar('en', 'en-reference'),
+        },
+        outline: { label: 'On this page' },
+        docFooter: { prev: 'Previous', next: 'Next' },
+      },
+    },
+    zh: {
+      label: '简体中文',
+      lang: 'zh-CN',
+      link: '/zh/',
+      title: 'LasmeX',
+      description: '开放、可组合、可扩展的 Agent Harness',
+      themeConfig: {
+        siteTitle: siteTitle('技术预览'),
+        nav: [
+          { text: '入门', link: landingLink('zh', guideModules.zh.guide), activeMatch: '^/zh/guide/' },
+          ...moduleNav('zh'),
+          sourceNav('源码'),
+          upstreamNav('DeepSeek 上游'),
+        ],
+        sidebar: {
+          '/zh/guide/': guideSidebar('zh'),
+          '/zh/develop/': sidebar('zh', 'zh-develop'),
+          '/zh/reference/': sidebar('zh', 'zh-reference'),
         },
         outline: { label: '本页目录' },
         docFooter: { prev: '上一篇', next: '下一篇' },
@@ -286,34 +373,6 @@ export default withMermaid({
         skipToContentLabel: '跳至内容',
       },
     },
-    en: {
-      label: 'English',
-      lang: 'en-US',
-      link: '/en/',
-      themeConfig: {
-        siteTitle: siteTitle('Preview'),
-        nav: [
-          { text: 'Guide', link: landingLink('en', guideModules.en.guide), activeMatch: '^/en/guide/' },
-          ...moduleNav('en'),
-        ],
-        sidebar: {
-          '/en/guide/': guideSidebar('en'),
-          '/en/develop/': sidebar('en', 'en-develop'),
-          '/en/reference/': sidebar('en', 'en-reference'),
-        },
-        editLink: {
-          pattern: ({ frontmatter }: PageData) => {
-            const data: unknown = frontmatter
-            const editSource: unknown = typeof data === 'object' && data !== null ? Reflect.get(data, 'editSource') : undefined
-            if (typeof editSource !== 'string') throw new Error('Projected documentation page has no editSource frontmatter.')
-            return `https://github.com/deepseek-ai/deepseek-harness/edit/master/${editSource}`
-          },
-          text: 'Edit this page on GitHub',
-        },
-        outline: { label: 'On this page' },
-        docFooter: { prev: 'Previous', next: 'Next' },
-      },
-    },
   },
   vite: {
     // `srcDir` puts the Vite root inside the disposable generated tree, whose
@@ -321,7 +380,7 @@ export default withMermaid({
     publicDir: resolve(import.meta.dirname, '../public'),
     plugins: [
       {
-        name: 'deepseek-harness-doc-projector',
+        name: 'lasmex-doc-projector',
         configureServer: watchCanonicalDocs,
       },
     ],

@@ -1,4 +1,4 @@
-# dsh-client-ui-settings-plugins
+# lasmex-client-ui-settings-plugins
 
 [English](README.md) | 中文
 

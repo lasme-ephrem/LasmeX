@@ -3,16 +3,16 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import AgentRegistry, { Inbox } from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import TerminalSessionService from '@deepseek-ai/dsh-terminal'
-import type { TerminalSendOperation } from '@deepseek-ai/dsh-terminal'
-import SandboxProvider from '@deepseek-ai/dsh-sandbox'
-import type { ConfinedArgv, SandboxPolicy } from '@deepseek-ai/dsh-sandbox'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import * as ptyLocal from '@deepseek-ai/dsh-terminal-bash'
+import { Session, SessionId } from 'lasmex-session'
+import AgentRegistry, { Inbox } from 'lasmex-agent'
+import type { Agent } from 'lasmex-agent'
+import TerminalSessionService from 'lasmex-terminal'
+import type { TerminalSendOperation } from 'lasmex-terminal'
+import SandboxProvider from 'lasmex-sandbox'
+import type { ConfinedArgv, SandboxPolicy } from 'lasmex-sandbox'
+import SandboxPolicyService from 'lasmex-sandbox-policy'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import * as ptyLocal from 'lasmex-terminal-bash'
 
 const roots: string[] = []
 const contexts: Context[] = []
@@ -121,7 +121,7 @@ describe('terminal-bash real shell', () => {
     try {
       const { ctx, root, agent } = await harness('danger-full-access')
       const created = await ctx.terminals.spawn(agent, { type: 'shell', name: 'main', cwd: root })
-      expect(created.motd).toContain('dsh> ')
+      expect(created.motd).toContain('lasmex> ')
 
       const first = ctx.terminals.startSend(agent, created.sessionId, { text: 'export KEEP=ok; cd /', submit: true })
       expect((await first.done).waitReason).toBe('stdin_read')

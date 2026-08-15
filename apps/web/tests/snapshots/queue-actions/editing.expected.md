@@ -8,16 +8,17 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: Reply with a one-sentence description of event sourcing, then stop. {{clock}}
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
+- button "Context injection lasmex-system-prompt":
   - img
   - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
+  - text: Context injection lasmex-system-prompt
 - paragraph: partial
-- status: Deep diving...
+- status: Deep diving…
 - button "2 queued messages" [disabled] [expanded]
 - list:
   - listitem:

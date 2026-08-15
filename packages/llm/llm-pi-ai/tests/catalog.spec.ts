@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { StreamChunk } from '@deepseek-ai/dsh-llm'
-import FileSettingsProvider from '@deepseek-ai/dsh-settings-file'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import * as LlmPiAi from '@deepseek-ai/dsh-llm-pi-ai'
-import { PiAiAdapter } from '@deepseek-ai/dsh-llm-pi-ai'
+import LlmRuntime, { createUserMessage } from 'lasmex-llm'
+import type { StreamChunk } from 'lasmex-llm'
+import FileSettingsProvider from 'lasmex-settings-file'
+import { settingsNamespace } from 'lasmex-settings'
+import * as LlmPiAi from 'lasmex-llm-pi-ai'
+import { PiAiAdapter } from 'lasmex-llm-pi-ai'
 import { getBuiltinModels } from '@earendil-works/pi-ai/providers/all'
 import { createModels, getSupportedThinkingLevels } from '@earendil-works/pi-ai'
 import type { Api, Model, OpenAICompletionsCompat, Provider } from '@earendil-works/pi-ai'
@@ -34,7 +34,7 @@ afterEach(async () => {
   await Promise.all(homes.splice(0).map(dir => rm(dir, { recursive: true, force: true })))
 })
 
-/** A throwaway $DSH_HOME with an empty settings document. */
+/** A throwaway $LASMEX_HOME with an empty settings document. */
 async function home(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'dsh-pi-catalog-'))
   homes.push(dir)

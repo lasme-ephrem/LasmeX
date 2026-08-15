@@ -32,3 +32,18 @@ export const en = {
   'action.edit': 'Edit goal',
   'action.clear': 'Clear goal',
 } satisfies Record<GoalKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'phase.active': 'Objectif en cours',
+  'phase.paused': 'Objectif en pause',
+  'phase.blocked': 'Objectif bloqué',
+  'objective.aria': 'Description de l’objectif',
+  'commandInput.aria': 'Saisie de commande',
+  'action.save': 'Enregistrer l’objectif',
+  'action.cancel': 'Annuler la modification',
+  'action.pause': 'Mettre l’objectif en pause',
+  'action.resume': 'Reprendre l’objectif',
+  'action.edit': 'Modifier l’objectif',
+  'action.clear': 'Effacer l’objectif',
+} satisfies Record<GoalKey, string>

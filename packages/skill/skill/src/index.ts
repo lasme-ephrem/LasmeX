@@ -3,17 +3,17 @@
  *
  * This package owns the Service Definition role of the skill capability seam.
  * Concrete
- * providers such as `@deepseek-ai/dsh-skill-filesystem` decide where skills come
+ * providers such as `lasmex-skill-filesystem` decide where skills come
  * from; this service only merges provider catalogs, resolves the winning skill
  * for a name, and exposes the winning summaries and definitions to consumers.
  *
- * @module @deepseek-ai/dsh-skill
+ * @module lasmex-skill
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import { assertNever } from '@deepseek-ai/dsh-llm'
-import { NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from '@deepseek-ai/dsh-scope'
-import type { ScopeKey, ScopeLayer } from '@deepseek-ai/dsh-scope'
+import { assertNever } from 'lasmex-llm'
+import { NamedEntries, ScopedLayers, scopeChainOf, scopeOf } from 'lasmex-scope'
+import type { ScopeKey, ScopeLayer } from 'lasmex-scope'
 import z from '@deepseek-ai/schemastery'
 import type Schema from '@deepseek-ai/schemastery'
 
@@ -36,7 +36,7 @@ export function isSkillName(name: string): boolean {
 }
 
 /** Origin bucket for a skill contribution. The value is prompt-visible metadata, not precedence by itself. */
-export type SkillSource = 'project-dsh' | 'project-agents' | 'runtime' | 'user-dsh' | 'user-agents' | 'custom' | 'bundled' | (string & {})
+export type SkillSource = 'project-lasmex' | 'project-agents' | 'runtime' | 'user-lasmex' | 'user-agents' | 'custom' | 'bundled' | (string & {})
 
 /** Optional provider-specific base used by loaded skill bodies to resolve relative resources. */
 export type SkillResourceBase =
@@ -152,7 +152,7 @@ export interface SkillInvocationSource {
   readonly form: 'instructions'
 }
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module 'lasmex-llm' {
   interface MessageSourceMap {
     /** A user-explicit skill invocation injected by the host. */
     'skill-invocation': SkillInvocationSource

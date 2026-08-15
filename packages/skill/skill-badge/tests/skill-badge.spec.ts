@@ -3,10 +3,10 @@ import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import SkillRegistry from '@deepseek-ai/dsh-skill'
-import * as SkillBadge from '@deepseek-ai/dsh-skill-badge'
+import SkillRegistry from 'lasmex-skill'
+import * as SkillBadge from 'lasmex-skill-badge'
 
-describe('dsh-skill-badge', () => {
+describe('LasmeX skill badge', () => {
   it('registers and disposes the bundled badge skill', async () => {
     const ctx = new Context()
     await ctx.plugin(SkillRegistry)
@@ -14,27 +14,27 @@ describe('dsh-skill-badge', () => {
     const resourcePath = fileURLToPath(new URL('../assets/', import.meta.url))
 
     expect(await ctx.skills.list()).toEqual([{
-      name: 'dsh-badge',
-      description: 'Add the official “powered by dsh” badge to documents, pull requests, merge requests, and other content produced with DeepSeek Harness. Use whenever creating a pull request or merge request. Also use when the user asks for a dsh badge, powered-by-dsh attribution, or a reusable dsh badge asset or snippet.',
+      name: 'lasmex-badge',
+      description: 'Add the official “powered by LasmeX” badge to documents, pull requests, merge requests, and other content produced with LasmeX. Use whenever creating a pull request or merge request. Also use when the user asks for a LasmeX badge, powered-by-LasmeX attribution, or a reusable LasmeX badge asset or snippet.',
       invocation: { modelInvocable: true, userInvocable: true },
-      provider: 'dsh-badge',
+      provider: 'lasmex-badge',
       source: 'bundled',
       resourceBase: { kind: 'directory', path: resourcePath },
     }])
-    const loaded = await ctx.skills.get('dsh-badge')
-    expect(loaded?.content).toContain('Preserve the badge\'s 121×20 dimensions')
+    const loaded = await ctx.skills.get('lasmex-badge')
+    expect(loaded?.content).toContain('Preserve the badge\'s 128×20 dimensions')
     expect(loaded?.resourceBase).toEqual({ kind: 'directory', path: resourcePath })
 
     await fiber.dispose()
     expect(await ctx.skills.list()).toEqual([])
   })
 
-  it('ships the official 726×120 PNG unchanged', async () => {
-    const image = await readFile(new URL('../assets/dsh-badge.png', import.meta.url))
-    expect(image.readUInt32BE(16)).toBe(726)
+  it('ships the official 768×120 PNG unchanged', async () => {
+    const image = await readFile(new URL('../assets/lasmex-badge.png', import.meta.url))
+    expect(image.readUInt32BE(16)).toBe(768)
     expect(image.readUInt32BE(20)).toBe(120)
     expect(createHash('sha256').update(image).digest('hex')).toBe(
-      'f2c4f5ec9cbe847c0c763545c4d839efa8485bc74203733d0a0e8259f233c653',
+      '8853660cf585a2a6c807fb68d0791ca5bae83af1f05b009ff61a3e35e7fa193e',
     )
   })
 })

@@ -21,10 +21,11 @@ import { useState, type KeyboardEvent, type MouseEvent, type ReactNode } from 'r
 import clsx from 'clsx'
 import {
   CodeBlock, DiffBlock, DisclosureRow, IconInspectOutline12, ReadBlock, SearchBlock, StateDot, TerminalBlock, WebBlock,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { WebBlockProps } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+} from 'lasmex-client-ui-primitives'
+import type { WebBlockProps } from 'lasmex-client-ui-primitives'
+import type { TranslateNS } from 'lasmex-client-ui-slots'
 import { CHAT_DIFF_MAX_LINES, type DiffCardModel } from '../models/diff-card-model.ts'
+import { diffBlockLabels, readBlockLabels, searchBlockLabels, webBlockLabels } from '../models/primitive-card-labels.ts'
 import { CHAT_READ_MAX_LINES, type ReadCardModel } from '../models/read-card-model.ts'
 import { CHAT_SEARCH_MAX_LINES, type SearchCardModel } from '../models/search-card-model.ts'
 import { terminalBlockLabels, type TerminalCardModel } from '../models/terminal-card-model.ts'
@@ -244,13 +245,18 @@ export function ToolRow({
               />
             )
             : diffBody !== null
-              ? <DiffBlock {...diffBody.card} maxLines={CHAT_DIFF_MAX_LINES} className={css.diffBody} />
+              ? <DiffBlock {...diffBody.card} maxLines={CHAT_DIFF_MAX_LINES} labels={diffBlockLabels(t)} className={css.diffBody} />
               : readBody !== null
-                ? <ReadBlock {...readBody} maxLines={CHAT_READ_MAX_LINES} className={css.readBody} />
+                ? <ReadBlock {...readBody} maxLines={CHAT_READ_MAX_LINES} labels={readBlockLabels(t)} className={css.readBody} />
                 : searchBody !== null
                   ? (
                     <>
-                      <SearchBlock {...searchBody.card} maxLines={CHAT_SEARCH_MAX_LINES} className={css.searchBody} />
+                      <SearchBlock
+                        {...searchBody.card}
+                        maxLines={CHAT_SEARCH_MAX_LINES}
+                        labels={searchBlockLabels(t)}
+                        className={css.searchBody}
+                      />
                       {/* A capped search's recovery locator lives only in the result
                           text; show it below the card so the dropped rows survive. */}
                       {searchBody.recovery !== undefined && (
@@ -259,7 +265,7 @@ export function ToolRow({
                     </>
                   )
                   : webBody !== null
-                    ? <WebBlock {...webBody} className={css.webBody} />
+                    ? <WebBlock {...webBody} labels={webBlockLabels(t)} className={css.webBody} />
                     : (
                       <>
                         {variant === 'code' && body !== null && (
@@ -271,7 +277,7 @@ export function ToolRow({
                           <div className={css.ioCard}>
                             {cardBody !== null && (
                               <div className={css.ioSection}>
-                                <span className={css.ioLabel}>IN</span>
+                                <span className={css.ioLabel}>{t('details.input')}</span>
                                 <span className={css.ioText}>{cardBody}</span>
                               </div>
                             )}
@@ -280,7 +286,7 @@ export function ToolRow({
                             )}
                             {outputText !== null && (
                               <div className={css.ioSection}>
-                                <span className={css.ioLabel}>OUT</span>
+                                <span className={css.ioLabel}>{t('details.output')}</span>
                                 <span className={css.ioText} data-error={state === 'error' || undefined}>
                                   {outputText}
                                 </span>
@@ -297,7 +303,7 @@ export function ToolRow({
               onClick={inspect}
             >
               <IconInspectOutline12 />
-              Inspect
+              {t('tool.inspectAction')}
             </button>
           )}
         </div>

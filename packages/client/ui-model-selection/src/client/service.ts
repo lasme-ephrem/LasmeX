@@ -6,7 +6,7 @@
  *
  * Per-session storage follows the client service pattern (InputTriggerService /
  * CommandUiRuntime): a lazy service-internal map whose entry is deleted by the
- * owning scope's disposer. The host `dsh-scope` ScopedLayers registry does
+ * owning scope's disposer. The host `lasmex-scope` ScopedLayers registry does
  * does not belong here: it derives scope from the host carrier mechanism
  * (object-keyed), while client scopes tag contexts with branded SessionId
  * strings, and it models global+shadow named registries — this is a
@@ -14,8 +14,8 @@
  */
 import { Service } from '@deepseek-ai/cordis'
 import type { Context } from '@deepseek-ai/cordis'
-import type { ConnectionHandle, SessionId } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SessionRuntime } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ConnectionHandle, SessionId } from 'lasmex-api-remotes/client'
+import type { SessionRuntime } from 'lasmex-client-runtime/client'
 import { ModelDirectory } from './directory.ts'
 
 declare module '@deepseek-ai/cordis' {
@@ -38,14 +38,17 @@ export class ModelDirectoryResolver extends Service {
 
   /** Localized composer-block copy; this plugin owns the string it raises. */
   private readonly blockReason: () => string
+  /** Localized failure returned when an addressed child cannot select a model. */
+  private readonly unavailableReason: () => string
 
   /**
    * @param ctx - owning root context (the service registers itself as `models`).
    * @param config - the bound translator for this plugin's own dictionary.
    */
-  constructor(ctx: Context, config: { blockReason: () => string }) {
+  constructor(ctx: Context, config: { blockReason: () => string; unavailableReason: () => string }) {
     super(ctx, 'modelDirectories')
     this.blockReason = config.blockReason
+    this.unavailableReason = config.unavailableReason
     ctx.on('connection/reset', () => {
       for (const directory of this.live.directories.values()) directory.resetConnected()
     })
@@ -78,6 +81,7 @@ export class ModelDirectoryResolver extends Service {
       connection.api.sessions,
       sessionId,
       () => sessions.subagentAddress(sessionId) === undefined,
+      this.unavailableReason,
     )
     live.directories.set(sessionId, directory)
     // The composer cannot read this plugin (the dependency runs one way), so

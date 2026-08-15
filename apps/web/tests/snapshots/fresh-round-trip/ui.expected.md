@@ -8,14 +8,15 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: "Use the bash tool to run exactly: echo WEB_E2E_OK. Then reply with the single word DONE and stop. {{clock}}"
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
+- button "Context injection lasmex-system-prompt":
   - img
   - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
+  - text: Context injection lasmex-system-prompt
 - button "Think The user wants me to run a simple bash command and reply with \"DONE\".":
   - img
   - img

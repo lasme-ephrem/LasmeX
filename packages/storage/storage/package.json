@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-storage",
-  "description": "Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for the DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-storage",
+  "description": "Storage hub (ctx.storage): named backend registry plus mounted data-form facilities for LasmeX",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/storage/storage"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,11 +27,20 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/storage/storage"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

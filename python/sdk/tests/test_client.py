@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from deepseek_harness import DeepSeekHarness, HarnessClient, HarnessConfig, Notification, SdkProtocolError
+from lasmex import LasmeX, LasmeXClient, LasmeXClientConfig, Notification, SdkProtocolError
 
 
 def test_high_level_sdk_runs_turn_and_collects_final_response(tmp_path: Path) -> None:
@@ -26,9 +26,9 @@ env_dump = os.environ["ENV_DUMP"]
 json.dump({
     "DEEPSEEK_API_KEY": os.environ.get("DEEPSEEK_API_KEY"),
     "DEEPSEEK_BASE_URL": os.environ.get("DEEPSEEK_BASE_URL"),
-    "DSH_CWD": os.environ.get("DSH_CWD"),
-    "DSH_SESSION_ROOT": os.environ.get("DSH_SESSION_ROOT"),
-    "DSH_CORDIS_CONFIG": os.environ.get("DSH_CORDIS_CONFIG"),
+    "LASMEX_CWD": os.environ.get("LASMEX_CWD"),
+    "LASMEX_SESSION_ROOT": os.environ.get("LASMEX_SESSION_ROOT"),
+    "LASMEX_CORDIS_CONFIG": os.environ.get("LASMEX_CORDIS_CONFIG"),
 }, open(env_dump, "w"))
 
 for line in sys.stdin:
@@ -91,7 +91,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(
+    with LasmeX(
         model="deepseek-v4-flash",
         max_tokens=4096,
         cwd=str(tmp_path),
@@ -113,9 +113,9 @@ for line in sys.stdin:
     dumped_env = json.loads(env_dump.read_text())
     assert dumped_env["DEEPSEEK_API_KEY"] == "env-key"
     assert dumped_env["DEEPSEEK_BASE_URL"] == "http://127.0.0.1:4321"
-    assert dumped_env["DSH_CWD"] == str(tmp_path)
-    assert dumped_env["DSH_SESSION_ROOT"] == str(tmp_path / "sessions")
-    assert dumped_env["DSH_CORDIS_CONFIG"] == str(tmp_path / "cordis.yml")
+    assert dumped_env["LASMEX_CWD"] == str(tmp_path)
+    assert dumped_env["LASMEX_SESSION_ROOT"] == str(tmp_path / "sessions")
+    assert dumped_env["LASMEX_CORDIS_CONFIG"] == str(tmp_path / "cordis.yml")
     assert json.loads(init_dump.read_text()) == {
         "cwd": str(tmp_path),
         "provider": "deepseek-official",
@@ -149,7 +149,7 @@ for line in sys.stdin:
     )
 
     seen: list[str] = []
-    with DeepSeekHarness(
+    with LasmeX(
         launch_args_override=(sys.executable, str(script)),
         cwd=str(tmp_path),
     ) as harness:
@@ -187,7 +187,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(
+    with LasmeX(
         launch_args_override=(sys.executable, str(script)),
         cwd=str(tmp_path),
     ) as harness:
@@ -212,7 +212,7 @@ import sys
 for line in sys.stdin:
     msg = json.loads(line)
     if msg.get("method") == "initialize":
-        json.dump({"process": os.getcwd(), "environment": os.environ.get("DSH_CWD"), "wire": msg["params"]["cwd"]}, open(os.environ["CAPTURE"], "w"))
+        json.dump({"process": os.getcwd(), "environment": os.environ.get("LASMEX_CWD"), "wire": msg["params"]["cwd"]}, open(os.environ["CAPTURE"], "w"))
         print(json.dumps({"jsonrpc": "2.0", "id": msg["id"], "result": {"serverInfo": {"name": "fake-runtime"}}}), flush=True)
     elif msg.get("method") == "shutdown":
         print(json.dumps({"jsonrpc": "2.0", "id": msg["id"], "result": {}}), flush=True)
@@ -221,7 +221,7 @@ for line in sys.stdin:
     )
     monkeypatch.chdir(tmp_path)
 
-    with DeepSeekHarness(
+    with LasmeX(
         cwd=".",
         runtime_cwd=".",
         launch_args_override=(sys.executable, str(script)),
@@ -262,7 +262,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(
+    with LasmeX(
         launch_args_override=(sys.executable, str(script)),
         cwd=str(tmp_path),
     ) as harness:
@@ -311,7 +311,7 @@ for line in sys.stdin:
     )
 
     seen: list[str] = []
-    with DeepSeekHarness(
+    with LasmeX(
         launch_args_override=(sys.executable, str(script)),
         cwd=str(tmp_path),
     ) as harness:
@@ -366,7 +366,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(
+    with LasmeX(
         launch_args_override=(sys.executable, str(script)),
         cwd=str(tmp_path),
     ) as harness:
@@ -401,7 +401,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(launch_args_override=(sys.executable, str(script)), cwd=str(tmp_path)) as harness:
+    with LasmeX(launch_args_override=(sys.executable, str(script)), cwd=str(tmp_path)) as harness:
         result = harness.run("one turn", session_id="main")
         assert harness.client._notifications.qsize() == 0
 
@@ -441,7 +441,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with DeepSeekHarness(launch_args_override=(sys.executable, str(script)), cwd=str(tmp_path)) as harness:
+    with LasmeX(launch_args_override=(sys.executable, str(script)), cwd=str(tmp_path)) as harness:
         first = harness.run("first turn", session_id="main")
         second = harness.run("second turn", session_id="main")
 
@@ -472,8 +472,8 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(launch_args_override=(sys.executable, str(script)))
+    with LasmeXClient(
+        LasmeXClientConfig(launch_args_override=(sys.executable, str(script)))
     ) as client:
         init = client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
         assert init.serverInfo.name == "fake-dsh"
@@ -486,7 +486,7 @@ for line in sys.stdin:
 
 
 def test_client_keeps_unmatched_notifications_available_globally_while_subscribed() -> None:
-    client = HarnessClient()
+    client = LasmeXClient()
     with client.subscribe_session_notifications("main"):
         client._handle_message({
             "jsonrpc": "2.0",
@@ -502,7 +502,7 @@ def test_client_keeps_unmatched_notifications_available_globally_while_subscribe
 
 
 def test_session_subscription_keeps_descendant_relationships_across_subscriptions() -> None:
-    client = HarnessClient()
+    client = LasmeXClient()
     with client.subscribe_session_notifications("main") as first:
         client._handle_message({
             "jsonrpc": "2.0",
@@ -529,7 +529,7 @@ def test_session_subscription_keeps_descendant_relationships_across_subscription
 
 
 def test_session_subscription_preserves_reused_child_ancestry_after_late_finish() -> None:
-    client = HarnessClient()
+    client = LasmeXClient()
     old_seen: list[Notification] = []
     new_seen: list[Notification] = []
     with (
@@ -612,7 +612,7 @@ for line in sys.stdin:
     def broken_filter(_notification: object) -> bool:
         raise RuntimeError("bad notification filter")
 
-    with HarnessClient(HarnessConfig(launch_args_override=(sys.executable, str(script)))) as client:
+    with LasmeXClient(LasmeXClientConfig(launch_args_override=(sys.executable, str(script)))) as client:
         client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
         with (
             client.subscribe_notifications(broken_filter) as broken,
@@ -649,7 +649,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with HarnessClient(HarnessConfig(launch_args_override=(sys.executable, str(script)))) as client:
+    with LasmeXClient(LasmeXClientConfig(launch_args_override=(sys.executable, str(script)))) as client:
         client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
         with pytest.raises(ValueError):
             client.session_prompt("main", [{"type": "text", "text": "fix it"}])
@@ -676,8 +676,8 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(launch_args_override=(sys.executable, str(script)))
+    with LasmeXClient(
+        LasmeXClientConfig(launch_args_override=(sys.executable, str(script)))
     ) as client:
         client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
 
@@ -710,8 +710,8 @@ for line in sys.stdin:
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(launch_args_override=(sys.executable, str(script)))
+    with LasmeXClient(
+        LasmeXClientConfig(launch_args_override=(sys.executable, str(script)))
     ) as client:
         init = client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
         assert init.serverInfo.name == "fake-dsh"
@@ -729,8 +729,8 @@ time.sleep(60)
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(
+    with LasmeXClient(
+        LasmeXClientConfig(
             launch_args_override=(sys.executable, str(script)),
             request_timeout_seconds=0.1,
         )
@@ -765,8 +765,8 @@ for line in sys.stdin:
 """.strip()
     )
 
-    client = HarnessClient(
-        HarnessConfig(
+    client = LasmeXClient(
+        LasmeXClientConfig(
             launch_args_override=(sys.executable, str(script)),
             shutdown_timeout_seconds=0.1,
         )
@@ -799,7 +799,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    client = HarnessClient(HarnessConfig(launch_args_override=(sys.executable, str(script))))
+    client = LasmeXClient(LasmeXClientConfig(launch_args_override=(sys.executable, str(script))))
     client.start()
     proc = client._proc
     assert proc is not None
@@ -812,22 +812,22 @@ for line in sys.stdin:
 
 
 def test_public_signatures_omit_unsupported_wire_parameters() -> None:
-    from deepseek_harness import DeepSeekHarnessConfig, Session
+    from lasmex import LasmeXConfig, Session
 
-    assert "session_root" not in inspect.signature(HarnessClient.initialize).parameters
-    assert "system_prompt" not in inspect.signature(HarnessClient.initialize).parameters
-    assert "profile" not in inspect.signature(HarnessClient.session_prompt).parameters
-    assert "profile" not in inspect.signature(DeepSeekHarness.run).parameters
+    assert "session_root" not in inspect.signature(LasmeXClient.initialize).parameters
+    assert "system_prompt" not in inspect.signature(LasmeXClient.initialize).parameters
+    assert "profile" not in inspect.signature(LasmeXClient.session_prompt).parameters
+    assert "profile" not in inspect.signature(LasmeX.run).parameters
     assert "profile" not in inspect.signature(Session.run).parameters
-    assert "system_prompt" not in DeepSeekHarnessConfig.__dataclass_fields__
-    assert "max_tokens" in DeepSeekHarnessConfig.__dataclass_fields__
-    assert "max_tokens" in inspect.signature(HarnessClient.initialize).parameters
-    assert "client_name" not in HarnessConfig.__dataclass_fields__
-    assert "client_version" not in HarnessConfig.__dataclass_fields__
+    assert "system_prompt" not in LasmeXConfig.__dataclass_fields__
+    assert "max_tokens" in LasmeXConfig.__dataclass_fields__
+    assert "max_tokens" in inspect.signature(LasmeXClient.initialize).parameters
+    assert "client_name" not in LasmeXClientConfig.__dataclass_fields__
+    assert "client_version" not in LasmeXClientConfig.__dataclass_fields__
 
 
 def test_client_close_is_idempotent_before_and_after_start(tmp_path: Path) -> None:
-    HarnessClient().close()
+    LasmeXClient().close()
 
     script = tmp_path / "fake_bridge.py"
     script.write_text(
@@ -845,7 +845,7 @@ for line in sys.stdin:
 """.strip()
     )
 
-    client = HarnessClient(HarnessConfig(launch_args_override=(sys.executable, str(script))))
+    client = LasmeXClient(LasmeXClientConfig(launch_args_override=(sys.executable, str(script))))
     client.start()
     client.initialize(provider="deepseek-official", cwd="/workspace", model="dsagent")
     client.close()
@@ -863,8 +863,8 @@ sys.exit(42)
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(
+    with LasmeXClient(
+        LasmeXClientConfig(
             launch_args_override=(sys.executable, str(script)),
             request_timeout_seconds=2,
         )
@@ -895,8 +895,8 @@ with open(os.environ["SEEN"], "w") as seen:
 """.strip()
     )
 
-    with HarnessClient(
-        HarnessConfig(
+    with LasmeXClient(
+        LasmeXClientConfig(
             launch_args_override=(sys.executable, str(script)),
             env={"SEEN": str(output)},
         )
@@ -922,14 +922,14 @@ def _install_fake_bundled_runtime(
 
     Returns the fake bundled default config path.
     """
-    runtime = tmp_path / "dsh-jsonrpc-agent"
+    runtime = tmp_path / "lasmex-jsonrpc-agent"
     runtime.write_text(
         """#!/usr/bin/env python3
 import json
 import os
 import sys
 
-json.dump({"DSH_CORDIS_CONFIG": os.environ.get("DSH_CORDIS_CONFIG")}, open(os.environ["ENV_DUMP"], "w"))
+json.dump({"LASMEX_CORDIS_CONFIG": os.environ.get("LASMEX_CORDIS_CONFIG")}, open(os.environ["ENV_DUMP"], "w"))
 for line in sys.stdin:
     msg = json.loads(line)
     if msg.get("method") == "initialize":
@@ -942,12 +942,12 @@ for line in sys.stdin:
     runtime.chmod(0o755)
 
     default_config = tmp_path / "default-cordis.yml"
-    module_dir = tmp_path / "deepseek_harness_runtime"
+    module_dir = tmp_path / "lasmex_runtime"
     module_dir.mkdir()
     (module_dir / "__init__.py").write_text(
         f"""
 def resolve_bundled_launch_args(mode=None):
-    return ({str(runtime)!r},)
+    return ({sys.executable!r}, {str(runtime)!r})
 
 
 def bundled_default_config_path():
@@ -956,7 +956,7 @@ def bundled_default_config_path():
     )
 
     monkeypatch.syspath_prepend(str(tmp_path))
-    monkeypatch.delitem(sys.modules, "deepseek_harness_runtime", raising=False)
+    monkeypatch.delitem(sys.modules, "lasmex_runtime", raising=False)
     return default_config
 
 
@@ -967,15 +967,15 @@ def test_client_default_launch_uses_bundled_runtime_and_injects_default_config(
     env_dump = tmp_path / "env.json"
     default_config = _install_fake_bundled_runtime(tmp_path, monkeypatch)
     if ambient_config is None:
-        monkeypatch.delenv("DSH_CORDIS_CONFIG", raising=False)
+        monkeypatch.delenv("LASMEX_CORDIS_CONFIG", raising=False)
     else:
-        monkeypatch.setenv("DSH_CORDIS_CONFIG", ambient_config)
+        monkeypatch.setenv("LASMEX_CORDIS_CONFIG", ambient_config)
 
-    with HarnessClient(HarnessConfig(env={"ENV_DUMP": str(env_dump)})) as client:
+    with LasmeXClient(LasmeXClientConfig(env={"ENV_DUMP": str(env_dump)})) as client:
         init = client.initialize(provider="deepseek-official", cwd="/workspace", model="deepseek-v4-pro")
 
     assert init.serverInfo.name == "bundled-runtime"
-    assert json.loads(env_dump.read_text())["DSH_CORDIS_CONFIG"] == str(default_config)
+    assert json.loads(env_dump.read_text())["LASMEX_CORDIS_CONFIG"] == str(default_config)
 
 
 def test_client_respects_explicit_config_over_bundled_default(
@@ -983,19 +983,19 @@ def test_client_respects_explicit_config_over_bundled_default(
 ) -> None:
     env_dump = tmp_path / "env.json"
     _install_fake_bundled_runtime(tmp_path, monkeypatch)
-    monkeypatch.delenv("DSH_CORDIS_CONFIG", raising=False)
+    monkeypatch.delenv("LASMEX_CORDIS_CONFIG", raising=False)
 
-    with HarnessClient(
-        HarnessConfig(env={"ENV_DUMP": str(env_dump), "DSH_CORDIS_CONFIG": "./explicit.yml"})
+    with LasmeXClient(
+        LasmeXClientConfig(env={"ENV_DUMP": str(env_dump), "LASMEX_CORDIS_CONFIG": "./explicit.yml"})
     ) as client:
         client.initialize(provider="deepseek-official", cwd="/workspace", model="deepseek-v4-pro")
 
-    assert json.loads(env_dump.read_text())["DSH_CORDIS_CONFIG"] == "./explicit.yml"
+    assert json.loads(env_dump.read_text())["LASMEX_CORDIS_CONFIG"] == "./explicit.yml"
 
 
 def test_client_reports_missing_bundled_runtime_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(sys.modules, "deepseek_harness_runtime", raising=False)
+    monkeypatch.delitem(sys.modules, "lasmex_runtime", raising=False)
     monkeypatch.setattr(sys, "path", [])
 
-    with pytest.raises(FileNotFoundError, match="Install deepseek-harness-runtime-bin"):
-        HarnessClient().start()
+    with pytest.raises(FileNotFoundError, match="Install lasmex-runtime-bin"):
+        LasmeXClient().start()

@@ -25,8 +25,8 @@ import {
   renderPageRegion,
   REGION_BEGIN,
   REGION_END,
-} from '@deepseek-ai/dsh-typert-generator'
-import type { CordisCatalogPolicy } from '@deepseek-ai/dsh-typert-generator'
+} from 'lasmex-typert-generator'
+import type { CordisCatalogPolicy } from 'lasmex-typert-generator'
 import { renderCordisCoreApiPages } from './cordis-core-api.ts'
 import { contextKeyMap, contextMergeFiles, eventNameList } from './cordis-walk.ts'
 import {
@@ -74,6 +74,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   invariants: 'invariants.md',
   llm: 'llm-streaming.md',
   lsp: 'lsp.md',
+  memory: 'memory.md',
   messageFeedback: 'feedback.md',
   permissionPresets: 'permission-presets.md',
   planMode: 'plan.md',
@@ -132,7 +133,7 @@ export const SERVICE_WALK_EXEMPTIONS: Record<string, string> = {
   cmdlineArgs: 'not a service: launcher-provided immutable app argument accessor — packages/boot/cmdline/README.md owns the launcher contract',
   configuredAgentIdentities: 'not a service: launcher-provided boot-context value (ConfiguredAgentIdentities | undefined) — packages/core/agent-loop/README.md owns this launcher contract',
   launcherSessionQueryPath: 'not a service: launcher-provided boot-context value (string | undefined) — packages/session-query/session-query-sqlite/README.md owns this launcher contract',
-  dshHomePath: 'not a service: boot-provided root accessor function (typeof dshHomePath | undefined) for Loader !!js config expressions — packages/boot/app-boot/README.md owns the boot contract',
+  lasmexHomePath: 'not a service: boot-provided root accessor function (typeof lasmexHomePath | undefined) for Loader !!js config expressions — packages/boot/app-boot/README.md owns the boot contract',
   launchEnvironment: 'not a service: launcher-provided root accessor value (LaunchEnvironmentSnapshot | undefined) — packages/util/launch-environment/README.md owns this launcher contract',
   connection: 'interface-typed (HostConnectionHandle); implementing class HostConnectionService is declared in rpc-host.ts — packages/client/connection/README.md owns the API',
   appShell: 'client-side interface-typed browser service — packages/client/web/README.md owns the API',
@@ -286,7 +287,7 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   ShellExecSpec: 'shell.md',
   ShellProcess: 'shell.md',
   ShellRunResult: 'shell.md',
-  DshEnvironment: 'subprocess.md',
+  LasmexEnvironment: 'subprocess.md',
   SubprocessHandle: 'subprocess.md',
   SubprocessOutcome: 'subprocess.md',
   SubprocessOutputRead: 'subprocess.md',
@@ -468,6 +469,17 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   DomainSpec: 'storage.md',
   DomainChanged: 'storage.md',
   DomainFacility: 'storage.md',
+  MemoryForgetRequest: 'memory.md',
+  MemoryId: 'memory.md',
+  MemoryLimits: 'memory.md',
+  MemoryListRequest: 'memory.md',
+  MemoryReadRequest: 'memory.md',
+  MemoryRecord: 'memory.md',
+  MemorySaveRequest: 'memory.md',
+  MemorySearchHit: 'memory.md',
+  MemorySearchRequest: 'memory.md',
+  MemorySummary: 'memory.md',
+  ProjectMemoryScope: 'memory.md',
   Workspace: 'workspace.md',
   WorkspaceId: 'workspace.md',
   WebBootGraph: 'client-modules.md',

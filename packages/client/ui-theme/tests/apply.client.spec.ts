@@ -3,12 +3,12 @@
  * projection into the row store, and HMR collapse recovery. */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { TestRemote, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { SettingsScopeBinder } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { apply, inject, SETTINGS_NS } from '@deepseek-ai/dsh-client-ui-theme/client'
-import type { AppearanceRowInjected, ThemeRuntime } from '@deepseek-ai/dsh-client-ui-theme/client'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { TestRemote, usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { SettingsScopeBinder } from 'lasmex-client-ui-settings/client'
+import { apply, inject, SETTINGS_NS } from 'lasmex-client-ui-theme/client'
+import type { AppearanceRowInjected, ThemeRuntime } from 'lasmex-client-ui-theme/client'
 import { THEME_SETTINGS_NAMESPACE, ThemeSettingsSchema } from '../src/theme-settings.ts'
 import { AppearanceRow } from '../src/client/AppearanceRow.tsx'
 import type { createAppearanceRowStore } from '../src/client/settings-store.ts'
@@ -90,7 +90,7 @@ describe('ui-theme apply', () => {
     const before = await bench()
     declareItems(before.slots)
     await before.ctx.plugin({ inject: [...inject], apply }).await()
-    expect(before.locale.bind(SETTINGS_NS)('appearance.title')).toBe('外观')
+    expect(before.locale.bind(SETTINGS_NS)('appearance.title')).toBe('Apparence')
     before.locale.setLocale('en')
     expect(before.locale.bind(SETTINGS_NS)('appearance.title')).toBe('Appearance')
     const entry = before.slots.entries(SLOT).find(e => e.component === AppearanceRow)!

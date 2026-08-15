@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-tool-subagent-report",
+  "name": "lasmex-tool-subagent-report",
   "description": "Child-scoped report tool over ctx.subagents continuations",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/subagent/tool-subagent-report"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,30 +27,39 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-system-prompt": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subagent-spawn-in-process": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tool-subagent-control": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-loop": "workspace:^",
+    "lasmex-agent-loop-testkit": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence": "workspace:^",
+    "lasmex-session-persistence-jsonl": "workspace:^",
+    "lasmex-subagent": "workspace:^",
+    "lasmex-subagent-spawn-in-process": "workspace:^",
+    "lasmex-system-prompt": "workspace:^",
+    "lasmex-tool-subagent-control": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/subagent/tool-subagent-report"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

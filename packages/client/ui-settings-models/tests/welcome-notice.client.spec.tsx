@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
 import { WelcomeNotice } from '../src/client/WelcomeNotice.tsx'
 import type { WelcomeNoticeProps } from '../src/client/WelcomeNotice.tsx'
 import { WelcomeNoticeStore } from '../src/client/welcome-store.ts'
-import { en, zh } from '../src/client/locales.ts'
+import { en, fr, zh } from '../src/client/locales.ts'
 import {
   WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_COPY, WELCOME_NOTICE_SETTINGS_NAMESPACE,
   WELCOME_NOTICE_VERSION,
@@ -61,13 +61,19 @@ function mount(version?: string, mutateImpl: () => Promise<unknown> = () => Prom
 }
 
 describe('WelcomeNotice', () => {
-  it('uses the exact owner copy in both GUI locales', () => {
+  it('uses the exact owner copy in every GUI locale', () => {
+    expect(WELCOME_NOTICE_COPY.fr).toEqual({
+      title: 'Bienvenue dans LasmeX',
+      body: 'LasmeX est un produit indépendant issu de DeepSeek Harness. Il réunit l’interface française, LasmeX Code, le tableau Mission, la mémoire par projet, les SDK et l’application desktop.\n\nNous construisons avec les développeurs un harness agentique ouvert, réutilisable, composable et contrôlé par ses utilisateurs. Vos retours, problèmes et idées sont les bienvenus.',
+      continueLabel: 'Continuer',
+    })
     expect(WELCOME_NOTICE_COPY.en).toEqual({
-      title: 'Internal Testing Notice',
-      body: "DeepSeek Harness 0.1 remains in testing for Harness developers. Many areas need further improvement, and we welcome feedback from the developer community. DeepSeek Harness's core plugins and foundational APIs will continue to evolve rapidly over the coming months.\n\nWe look forward to exploring the limits of intelligence with developers around the world, building on open-source, open, reusable, and composable infrastructure. We welcome Harness developers everywhere to join the DSH plugin ecosystem.",
+      title: 'Welcome to LasmeX',
+      body: 'LasmeX is an independent product derived from DeepSeek Harness. It includes the French interface, LasmeX Code, the Mission dashboard, project memory, the SDKs, and the desktop application.\n\nWe welcome feedback as we build an open, reusable, composable, and user-controlled agent harness with developers.',
       continueLabel: 'Continue',
     })
     expect(en.welcomeBody).toBe(WELCOME_NOTICE_COPY.en.body)
+    expect(fr.welcomeBody).toBe(WELCOME_NOTICE_COPY.fr.body)
     expect(zh.welcomeBody).toBe(WELCOME_NOTICE_COPY.zh.body)
   })
 

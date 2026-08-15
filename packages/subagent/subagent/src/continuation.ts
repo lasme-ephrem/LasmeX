@@ -18,7 +18,7 @@
  * disposed by then, and the release that wakes the parent's own settlement
  * watcher has already run. See {@link SubagentContinuationManager.notifySettlement}.
  *
- * @module @deepseek-ai/dsh-subagent
+ * @module lasmex-subagent
  */
 
 import { randomUUID } from 'node:crypto'
@@ -29,13 +29,13 @@ import type {
   AgentOptions,
   AgentSetupCommit,
   CreateAgentOptions,
-} from '@deepseek-ai/dsh-agent'
-import { boundContextSummary, createUserMessage, errorChain } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, MessageId, MessageSource } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import type { SessionPersistence } from '@deepseek-ai/dsh-session-persistence'
-import type { ToolRestriction } from '@deepseek-ai/dsh-tools'
+} from 'lasmex-agent'
+import { boundContextSummary, createUserMessage, errorChain } from 'lasmex-llm'
+import type { ContentBlock, MessageId, MessageSource } from 'lasmex-llm'
+import { SessionId } from 'lasmex-session'
+import type { SessionEvent } from 'lasmex-session'
+import type { SessionPersistence } from 'lasmex-session-persistence'
+import type { ToolRestriction } from 'lasmex-tools'
 import { foldSubagentDescriptor, snapshotSubagentDescriptor } from './descriptor.ts'
 import type { SubagentDescriptorData } from './descriptor.ts'
 import {
@@ -89,7 +89,7 @@ export interface SubagentSettledMessageSource {
   readonly senderSessionId: SessionId
 }
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module 'lasmex-llm' {
   interface MessageSourceMap {
     coordinator: CoordinatorMessageSource
     'subagent-report': SubagentReportMessageSource
@@ -1471,7 +1471,7 @@ export class SubagentContinuationManager {
     const persistence = this.ctx.get('sessionPersistence')
     if (persistence === undefined) {
       throw new SubagentError(
-        'continuable subagents require session persistence (load a dsh-session-persistence backend)',
+        'continuable subagents require session persistence (load a lasmex-session-persistence backend)',
         'PERSISTENCE_UNAVAILABLE',
       )
     }

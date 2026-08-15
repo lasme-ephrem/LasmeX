@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../../vendor/cordis" },
+    { "path": "../cli" },
+    { "path": "../../packages/boot/app-boot" },
+    { "path": "../../packages/client/connection/tsconfig.host.json" },
+    { "path": "../../packages/client/modules" }
+  ]
+}

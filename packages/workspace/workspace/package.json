@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-workspace",
-  "description": "Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for the DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-workspace",
+  "description": "Workspace entity registry (ctx.workspaceRegistry): durable workspace records with validated session attachment over the domain data form for LasmeX",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/workspace/workspace"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -37,24 +32,33 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-storage-domain": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-storage-domain": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence": "workspace:^",
+    "lasmex-storage": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-storage-domain": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-storage-domain": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence": "workspace:^",
+    "lasmex-storage": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/workspace/workspace"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

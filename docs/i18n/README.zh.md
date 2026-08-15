@@ -18,7 +18,7 @@
   用 blob hash 而不是 commit hash，这样同一个 PR 里改动的文件也能算出记录（`git hash-object foo.md`），一致性是纯内容比较。`--write` 会先把这些快照存入本地 Git 对象库再写下记录，未提交的 worktree 内容也不例外；它还会在内容寻址的 `refs/dsh/translation-pairing/snapshots/` ref 下固定每个不同的已存 blob，使垃圾回收无法让已记录的恢复指针失效。因此记录的 hash 能还原任一侧上次确认时的确切文本，所以失去同步的配对是「按被改一侧的 diff 最小化地修补另一侧」，从不整篇重译。日常工作会直接完成这份修补；用户显式调用扩展工作流时，可改由 `pnpm run gen-translation-brief <pair>` 以能安全对齐的最窄粒度汇集这次更新，并由 `--apply` 在结构校验后拼接仅涉及围栏代码块的改动（[briefed-updates Agent Note](../../.agents/notes/implemented/process/2026-07-26-briefed-minimal-translation-updates.md)）。两侧对齐后，`pnpm run verify-translation-pairing --write <pair>` 重新记录两个 hash；那份 YAML diff 就是「确认一致」这个动作本身，可以被评审，也正因如此，`--write` 要求点名你确认过的配对（`--write --all` 是显式的全语料形式）。
 
   当两个分支都包含同一配对的有效确认时，已安装的 `dsh-translation-pairing` Git 合并驱动只会在 Git 默认文本合并能分别干净合并记录所指向的英文三方 blob 与中文三方 blob，且合并后的配对仍保留必需的语言切换行和结构签名时，组合出一份新记录。中文文件必须保留指向英文的反向链接；普通撰写的英文源必须保留指向中文的链接，而清单内的生成英文源不作此要求。任何合并驱动无法验证的结构都保留为普通冲突；`pnpm run resolve-translation-pairing-conflicts` 会对已经停止的合并执行同一套遇错即保留冲突的操作，暂存每份可安全生成的配对记录，并在还有其他配对冲突时以非零状态退出。[自动配对合并 Agent Note](../../.agents/notes/implemented/process/2026-08-08-automatic-translation-pairing-merges.md) 负责记录该机制与备选方案。
-- **语言切换行。** 中文文件一律在 H1 标题后立即以 `[English](foo.md) | 中文` 链回英文。普通撰写的英文文件在同一位置以 `English | [中文](foo.zh.md)` 互链；清单内的生成英文源省略此行，以便与生成器输出逐字节一致。发布到 GitHub 以外位置的 README（例如 PyPI 项目元数据）可以改用指向同一对侧文件的规范 `https://github.com/deepseek-ai/deepseek-harness/blob/master/<repository-path>` URL，使切换行在该位置仍可访问。
+- **语言切换行。** 中文文件一律在 H1 标题后立即以 `[English](foo.md) | 中文` 链回英文。普通撰写的英文文件在同一位置以 `English | [中文](foo.zh.md)` 互链；清单内的生成英文源省略此行，以便与生成器输出逐字节一致。发布到 GitHub 以外位置的 README（例如 PyPI 项目元数据）可以改用指向同一对侧文件的规范 `https://github.com/lasme-ephrem/LasmeX/blob/master/<repository-path>` URL，使切换行在该位置仍可访问。
 - **结构与另一侧一一对应。** 标题深度与顺序、列表类型、有序列表起始编号、列表项数量、表格行列数、链接目标与逐字节一致的代码块在配对两侧一一对应；完整保持规则见 [translation-rules.md](translation-rules.md)。既有 Markdown 门禁对 `.zh.md` 文件原样生效（`verify-md-wrap`、`verify-md-links`）。
 
 ## 门禁：verify-translation-pairing
@@ -41,19 +41,20 @@
 
 ## 范围与排除
 
-**范围**：根目录 CONTRIBUTING 文档、除 vendor 源码外的全部 README，以及 `.agents/notes/**`、`docs/**` 与 `python/**` 下的全部活跃文档。匹配 README 时只看文件名且不区分大小写，因此今后新增的目录无需再修改 manifest。依赖目录、被忽略的构建产物目录以及冻结的 `.agents/notes/archived/` 目录树只在发现阶段排除，不属于持续演进的翻译源文档。
+**范围**：根目录 CONTRIBUTING 文档、除 vendor 源码外的全部 README，以及 `.agents/notes/**`、`docs/**` 与 `python/**` 下的全部活跃文档。匹配 README 时只看文件名且不区分大小写，因此今后新增的目录无需再修改 manifest。依赖目录、被忽略的构建产物目录以及冻结的 `.agents/notes/archived/` 目录树只在发现阶段排除，不属于持续演进的翻译源文档。经评审的法语网站源文件使用下文所述的显式排除规则；其无语言后缀的英文同级文件与 `.zh.md` 同级文件仍构成普通配对。
 
 有经评审的中文对侧的生成英文参考文档和图文档遵循配对规则。生成器仍是英文真源，新鲜度门禁与配对门禁各自独立强制其约束；重新生成导致英文变化后，配对会保持失去同步状态，直至经评审的中文对侧完成更新并重新记录。生成的英文源文件不含普通撰写文档所带的语言切换行，因为添加该行会使生成器新鲜度检查失败；中文对侧仍链接回英文源。生成页的中文对侧只能改写若直译便不再符合经评审译文事实的自指生成与维护说明；所有技术内容仍受普通忠实性规则约束。
 
 **排除**（永不配对，门禁拒绝为它们建 `.zh.md` 或 `.i18n.yaml`）：
 
-- [cordis-api/inherited.md](../cordis-api/inherited.md)：该生成文档没有经评审的中文对侧，因此网站的两个 locale 都投影英文源文件。
+- [cordis-api/inherited.md](../cordis-api/inherited.md)：该生成文档没有经评审的中文对侧，因此网站的三个 locale 都投影英文源文件。
 - `docs/AGENTS.md`、`.agents/notes/**/AGENTS.md` 以及指向它们的 `CLAUDE.md` 指令符号链接：agent 指令，与根 `AGENTS.md` 一样只以英文维护。
 - `docs/i18n/terminology.md` 与 [style-samples.md](style-samples.md)：二者本身即为中英对照文档。
 - [translation-prompt.md](translation-prompt.md)：自动翻译流水线的提示词模板；正文逐字进入模型请求，配对翻译会改变流水线行为。
+- 名为 `*.fr.md` 的经评审法语网站源文件：它们是独立的规范投影源，不是中英文配对的第三侧。每个此类源文件都在 [scripts/translation-pairing.manifest.json](../../scripts/translation-pairing.manifest.json) 中显式列出；它既没有 `.zh.md` 对侧文件，也没有 `.i18n.yaml` 伴随记录。`doc-sync` 会运行 `pnpm run verify-french-docs`；该门禁从 [website/docs.ts](../../website/docs.ts) 推导经过评审的法语集合，并要求每一页保持其英语源文件的标题、列表、表格、链接、围栏代码与行内代码序列。该门禁不判断正文语义，也不会把英语回退页视为经过评审的法语源文件。
 - `.agents/notes/archived/`：冻结的历史三文件配对。[`verify-archived-agent-notes`](../../scripts/verify-archived-agent-notes.ts) 校验其完整性和内容封存记录；翻译维护绝不能重写这些文件。
 
-**统一要求**：当前及今后纳入范围的每篇文档，合并时都必须构成完整的双语配对。[scripts/translation-pairing.manifest.json](../../scripts/translation-pairing.manifest.json) 只包含显式排除项；不存在逐文件推进清单、日期分界或 README 专用政策类别。
+**统一要求**：当前及今后纳入中英文配对范围的每篇文档，合并时都必须构成完整的双语配对。[scripts/translation-pairing.manifest.json](../../scripts/translation-pairing.manifest.json) 只包含显式排除项；不存在逐文件推进清单、日期分界或 README 专用政策类别。
 
 ## 分工
 

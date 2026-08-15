@@ -1,9 +1,9 @@
 /**
  * Strict Schedule decoding, replay, time validation, and framing.
- * @module @deepseek-ai/dsh-schedule
+ * @module lasmex-schedule
  */
 
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from 'lasmex-session'
 import type {
   AfterScheduleRecord,
   AtInput,

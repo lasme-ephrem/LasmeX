@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-session-log-export
+# lasmex-session-log-export
 
 [English](README.md) | 中文
 
-Web Session 日志下载控制，使用 `dsh-host-apiproxy` 拥有的 Host 流式 ZIP 端点。Host 半包注册 `/export`；浏览器半包在 Session Header 中提供 111×32 的 `Session log` 操作，以及一个供该按钮与斜杠命令共用的下载控制器和弹窗。ZIP 生成、原始 JSONL/zstd 读取、子 Session、附件、背压和 HTTP 错误语义仍由 [ApiProxy 下载实现](../../host/apiproxy/README.md)负责。
+Web Session 日志下载控制，使用 `lasmex-host-apiproxy` 拥有的 Host 流式 ZIP 端点。Host 半包注册 `/export`；浏览器半包在 Session Header 中提供 111×32 的 `Session log` 操作，以及一个供该按钮与斜杠命令共用的下载控制器和弹窗。ZIP 生成、原始 JSONL/zstd 读取、子 Session、附件、背压和 HTTP 错误语义仍由 [ApiProxy 下载实现](../../host/apiproxy/README.md)负责。
 
 ## 命令约定
 
@@ -15,16 +15,16 @@ Web Session 日志下载控制，使用 `dsh-host-apiproxy` 拥有的 Host 流�
 
 Host 下载端点会在 `readRaw` 前 flush 活动的根 Session，因此斜杠命令触发的 ZIP 会包含启动下载的 `command/run` 与 `command/done` 事件对。冷持久化 Session 不需要 flush。
 
-弹窗报告准备中、开始下载或失败。关闭弹窗不会取消正在进行的下载；该操作随后完成时也不会重新打开弹窗。每个 Session 同时只允许一项下载，重复操作会共用该任务。
+弹窗报告准备中、开始下载或失败。关闭弹窗不会取消正在进行的下载；该操作随后完成时也不会重新打开弹窗。每个 Session 同时只允许一项下载，重复操作会共用该任务。浏览器与 Host 使用相同的 `lasmex-session-<safe-id>.zip` 文件名。
 
 ## 组合
 
 ```yaml
 - id: session-log-download
-  name: '@deepseek-ai/dsh-session-log-export'
+  name: 'lasmex-session-log-export'
 ```
 
-Web bundle 将本包与 `dsh-host-apiproxy`、`dsh-commands`、`dsh-client-ui-commands` 和 `dsh-client-ui-conversation` 一起挂载。本包把按钮和弹窗贡献到最右侧的 `conversation.session.header.utilities` 列表，与标题旁 `conversation.session.header.actions` 中的模式、Subagent 和 Task 配置项相互独立；Trajectory 不包含导出入口。
+Web bundle 将本包与 `lasmex-host-apiproxy`、`lasmex-commands`、`lasmex-client-ui-commands` 和 `lasmex-client-ui-conversation` 一起挂载。本包把按钮和弹窗贡献到最右侧的 `conversation.session.header.utilities` 列表，与标题旁 `conversation.session.header.actions` 中的模式、Subagent 和 Task 配置项相互独立；Trajectory 不包含导出入口。
 
 ## 模型体验
 

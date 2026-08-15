@@ -9,7 +9,7 @@ English | [中文](2026-07-31-fail-loud-releases-the-terminal.zh.md)
 A `dsh` launch whose config failed validation printed its diagnostic and returned the user to a broken shell. Typing was invisible, and the next command was mangled by stray text:
 
 ```
-dsh: fatal load failure: ValidationError: invalid config:
+lasmex: fatal load failure: ValidationError: invalid config:
   - $.providers expected object but got [object Object] (at providers)
 $ 1;2;4cecho hello
 zsh: command not found: 4cecho
@@ -54,6 +54,6 @@ The guarantee belongs to whichever bin owns the terminal: a surface that grabs t
 
 `packages/boot/app-boot/tests/app-boot.spec.ts` covers the release contract: the hook is awaited before the exit commits, a rejecting hook still exits 1, a never-settling hook exits after `FAIL_LOUD_RELEASE_TIMEOUT_MS`, and a burst of rejections reports only the first while the release still completes.
 
-Those fake-process tests cannot observe the two failure modes that matter most — process exit code with a real event loop, and terminal state after exit — so the regression lives in `apps/cli/tests/tui-keyless-smoke.e2e.ts`. It boots the shipped tree in a real PTY over `fixtures/tui-invalid-provider.cordis.yml` (a list-shaped `providers`, the mistake users actually make), expects exit 1, and asserts the captured bytes contain both the labelled boot rejection (`dsh: plugin tree failed to load:`) and `ESC[?2004l`. The same case pins the boot path end to end: it caught the [HMR initial-scan boot deadlock](2026-08-03-hmr-initial-scan-boot-deadlock.md) that silently exited 13 with the terminal stranded.
+Those fake-process tests cannot observe the two failure modes that matter most — process exit code with a real event loop, and terminal state after exit — so the regression lives in `apps/cli/tests/tui-keyless-smoke.e2e.ts`. It boots the shipped tree in a real PTY over `fixtures/tui-invalid-provider.cordis.yml` (a list-shaped `providers`, the mistake users actually make), expects exit 1, and asserts the captured bytes contain both the labelled boot rejection (`lasmex: plugin tree failed to load:`) and `ESC[?2004l`. The same case pins the boot path end to end: it caught the [HMR initial-scan boot deadlock](2026-08-03-hmr-initial-scan-boot-deadlock.md) that silently exited 13 with the terminal stranded.
 
 The `/exit` path keeps its existing assertion that the same reset appears on a clean exit.

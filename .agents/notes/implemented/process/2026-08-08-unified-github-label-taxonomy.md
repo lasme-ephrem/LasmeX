@@ -4,6 +4,8 @@ Status: implemented
 
 English | [中文](2026-08-08-unified-github-label-taxonomy.zh.md)
 
+> **Superseded in part.** LasmeX's personal repository cannot use organization-owned native Issue Types. [Repository-label Issue lifecycle](2026-08-14-personal-repository-issue-label-lifecycle.md) now owns Issue `type/*`, `status/*`, and priority labels. The pull-request `kind/*` and `area/*` taxonomy below remains current.
+
 ## Problem
 
 Pull request labels answer two independent questions: what kind of change the work makes and which durable repository domains it materially affects. Mixing those dimensions or retaining synonymous plain and namespaced labels makes queries ambiguous, while a closed area inventory forces new domains into inaccurate categories.

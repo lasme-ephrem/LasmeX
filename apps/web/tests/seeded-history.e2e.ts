@@ -15,11 +15,11 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, Message } from '@deepseek-ai/dsh-llm'
-import { deriveEventMessage, SessionId } from '@deepseek-ai/dsh-session'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import type { TokenMeter } from '@deepseek-ai/dsh-token-meter'
+import { createUserMessage } from 'lasmex-llm'
+import type { ContentBlock, Message } from 'lasmex-llm'
+import { deriveEventMessage, SessionId } from 'lasmex-session'
+import type { SessionEvent } from 'lasmex-session'
+import type { TokenMeter } from 'lasmex-token-meter'
 import { join } from 'node:path'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
@@ -442,8 +442,8 @@ describe('web e2e: seeded history renders through cold resume', () => {
 
   it.skipIf(MODE === 'record')('reports full feedback correlation ids in an expandable two-line row', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-seeded-feedback-row'))
-    const previousDshHome = process.env.DSH_HOME
-    process.env.DSH_HOME = scaffold.harnessHome
+    const previousLasmexHome = process.env.LASMEX_HOME
+    process.env.LASMEX_HOME = scaffold.harnessHome
     try {
       const input = page.locator('textarea').first()
       await input.fill('/feedback the diff view is unreadable')
@@ -473,8 +473,8 @@ describe('web e2e: seeded history renders through cold resume', () => {
         .split(userId).join('{{userId}}')
       await compareOrRefreshGolden(FEEDBACK_ROW_EXPECTED, snapshot, MODE)
     } finally {
-      if (previousDshHome === undefined) delete process.env.DSH_HOME
-      else process.env.DSH_HOME = previousDshHome
+      if (previousLasmexHome === undefined) delete process.env.LASMEX_HOME
+      else process.env.LASMEX_HOME = previousLasmexHome
     }
   }, 60_000)
 

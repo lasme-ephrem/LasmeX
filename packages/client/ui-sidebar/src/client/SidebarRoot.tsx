@@ -18,10 +18,10 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  BrandWordmark, FishLogo,
+  BrandWordmark, LasmexMark,
   IconNewChatOutline16, IconPanelLeftOutline16,
   Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-ui-primitives'
 import type { SidebarRootComponentProps } from './contract/slots.ts'
 import css from './SidebarRoot.module.css'
 
@@ -140,7 +140,7 @@ export function SidebarRoot({
             <BrandWordmark />
           </button>
         )}
-        {/* Rail resting state is the whale mark; hovering swaps in the panel
+        {/* Rail resting state is the LasmeX mark; hovering swaps in the panel
             icon (the expand affordance, figma sidebar-hover flow). */}
         <Tooltip label={collapsed ? t('toggle.open') : t('toggle.collapse')} delayMs={500}>
           <button
@@ -149,7 +149,7 @@ export function SidebarRoot({
             aria-label={collapsed ? t('toggle.open') : t('toggle.collapse')}
             onClick={() => { toggleSidebar() }}
           >
-            {!wide && <FishLogo className={css.railFish} size={24} />}
+            {!wide && <LasmexMark className={css.railFish} size={24} />}
             {/* Rail icons render at 18 (figma rail spec); expanded keeps the glyph-native sizes. */}
             <IconPanelLeftOutline16 className={css.panelIcon} size={wide ? 16 : 18} />
           </button>

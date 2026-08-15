@@ -10,16 +10,16 @@ import {
   FileNotFoundError,
   SandboxNotFoundError,
   quoteE2BShellArg,
-} from '@deepseek-ai/dsh-e2b'
-import type { CommandHandle, CommandResult, Sandbox } from '@deepseek-ai/dsh-e2b'
+} from 'lasmex-e2b'
+import type { CommandHandle, CommandResult, Sandbox } from 'lasmex-e2b'
 import type {
   SubprocessOutcome,
   SubprocessTerminalForeground,
   SubprocessTerminalHandle,
   SubprocessTerminalSignal,
   SubprocessTerminalSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
-import type E2BRuntime from '@deepseek-ai/dsh-e2b'
+} from 'lasmex-subprocess'
+import type E2BRuntime from 'lasmex-e2b'
 import {
   bootstrapEnvironment,
   readRemoteEnvironment,
@@ -469,7 +469,7 @@ export async function spawnE2BTerminal(
     argv: posix.join(stateDir, 'argv'),
     outputMarker: posix.join(stateDir, 'output-marker'),
   }
-  const outputMarker = Buffer.from(`dsh-e2b-bootstrap:${randomUUID()}`)
+  const outputMarker = Buffer.from(`lasmex-e2b-bootstrap:${randomUUID()}`)
   const output = new PassThrough()
   const outputFilter = new BootstrapOutputFilter(outputMarker, output)
   let handle: CommandHandle | undefined

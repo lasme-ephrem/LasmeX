@@ -2,11 +2,11 @@
 
 [English](README.md) | 中文
 
-npm scope 为 `@deepseek-ai/dsh-*`；Cordis `Service` 子类和函数插件通过 `ctx.effect()`、`ctx.on()` 或 `ctx.waterfall()` 注册。规则见[包](AGENTS.md)与[根规则](../AGENTS.md#conventions)。
+npm scope 为 `lasmex-*`；Cordis `Service` 子类和函数插件通过 `ctx.effect()`、`ctx.on()` 或 `ctx.waterfall()` 注册。规则见[包](AGENTS.md)与[根规则](../AGENTS.md#conventions)。
 
 ## 层级结构
 
-包按组置于 `packages/<group>/<pkg>/`；包名仍为 `@deepseek-ai/dsh-<pkg>`。**组 README 负责包／ctx 键映射。**
+包按组置于 `packages/<group>/<pkg>/`；包名仍为 `lasmex-<pkg>`。**组 README 负责包／ctx 键映射。**
 
 | 组 | 职责 | 发布预期 |
 |---|---|---|
@@ -39,7 +39,7 @@ npm scope 为 `@deepseek-ai/dsh-*`；Cordis `Service` 子类和函数插件通�
 | [`plan/`](plan/README.md) | Plan 协作状态，提供直接进入命令与经评审的退出 | 产品：稳定 API |
 | [`preset/`](preset/README.md) | 由 preset `cordis.yml` 按会话组装 agent | 产品：稳定 API |
 | [`guard/`](guard/README.md) | 循环卫生守卫：建议性重复调用提醒 + `tools/execute` 截止时间强制执行器 | 产品：稳定 API |
-| [`bundle/`](bundle/README.md) | 可安装的 `dsh --profile` 补丁层 | 产品：稳定 API |
+| [`bundle/`](bundle/README.md) | 可安装的 `lasmex --profile` 补丁层 | 产品：稳定 API |
 | [`extensions/`](extensions/README.md) | agent 运行时自修改：实时插件／服务检查和模型所写插件挂载／卸载（[设计](../.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md)） | 产品：稳定 API |
 | [`hooks/`](hooks/README.md) | 钩子桥接 + 共享的 Claude Code／Codex 线协议库 | 产品：稳定 API |
 | [`session/`](session/README.md) | 持久会话数据平面：持久化 seam + JSONL/SQLite 后端、投影 seam、基于日志的标题、会话上报 | 产品：稳定 API |
@@ -47,6 +47,7 @@ npm scope 为 `@deepseek-ai/dsh-*`；Cordis `Service` 子类和函数插件通�
 | [`settings/`](settings/README.md) | 用户设置 seam + 基于文件的提供方 | 产品：稳定 API |
 | [`credentials/`](credentials/README.md) | 凭据引用 seam + 环境变量优先于 `.env` 的提供方 | 产品：稳定 API |
 | [`storage/`](storage/README.md) | 非会话存储中枢 + 后端 + 领域形式 | 产品：稳定 API |
+| [`memory/`](memory/README.md) | 项目记忆 seam：Service Definition、持久 storage-domain provider 与审批感知工具 | 产品：稳定 API |
 | [`workspace/`](workspace/README.md) | Workspace 实体 | 产品：稳定 API |
 | [`sdk/`](sdk/README.md) | 进程外运行时 SDK：JSON-RPC 协议、TypeScript 客户端和服务器插件 | 产品：稳定 API |
 | [`acp/`](acp/README.md) | 仅面向自动化的 ACP（Agent Client Protocol）服务器 | 产品：稳定 API |
@@ -64,6 +65,6 @@ npm scope 为 `@deepseek-ai/dsh-*`；Cordis `Service` 子类和函数插件通�
 
 依赖图由工具生成：[docs/module-graph.md](../docs/module-graph.md)（`pnpm run gen-module-graph`，CI 中有新鲜度门禁）。
 
-**扩展插件依赖 Service Definition，绝不依赖具体提供方。** `dsh-agent-loop` 可替换；UI、钩子和工具插件使用 `dsh-agent`。包括 `dsh-agent-spine-demo` 在内的组合包可以依赖主干插件。能力会将需要独立演进的 Service Definition／Service Provider／Consumer 角色分离；详见[能力 seam](../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)。
+**扩展插件依赖 Service Definition，绝不依赖具体提供方。** `lasmex-agent-loop` 可替换；UI、钩子和工具插件使用 `lasmex-agent`。包括 `lasmex-agent-spine-demo` 在内的组合包可以依赖主干插件。能力会将需要独立演进的 Service Definition／Service Provider／Consumer 角色分离；详见[能力 seam](../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)。
 
 包 README 覆盖用途、API、扩展点和[模型体验](../docs/cookbook/adding-a-package.md#4-write-the-package-readme)；列入模型无关[省略允许清单](../scripts/verify-package-readme-model-experience.ts)的包除外。它们还要包含 `## Known Limitations and Deferred Work`，或列入其[允许清单](../scripts/verify-package-readme-limitations.ts)。

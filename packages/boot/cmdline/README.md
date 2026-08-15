@@ -1,14 +1,14 @@
-# `@deepseek-ai/dsh-cmdline`
+# lasmex-cmdline
 
 English | [中文](README.zh.md)
 
-The command line a dsh launcher hands to the app it boots. The launcher parses only its own flags (`--profile`, `--patch`, the config dumps) and hands **everything after them** to the tree verbatim, so an app owns its flag family, its `--help` text, and its parse errors instead of the launcher knowing them.
+The command line a lasmex launcher hands to the app it boots. The launcher parses only its own flags (`--profile`, `--patch`, the config dumps) and hands **everything after them** to the tree verbatim, so an app owns its flag family, its `--help` text, and its parse errors instead of the launcher knowing them.
 
 ## The launcher values
 
 A launcher calls `provideCmdline(ctx, host)` before any tree entry mounts, which provides:
 
-- `ctx.cmdlineArgs` — the invocation's inner arguments. `get()` is the whole interface, and it returns a snapshot: `dsh --profile tui --resume abc` yields `['--resume', 'abc']`.
+- `ctx.cmdlineArgs` — the invocation's inner arguments. `get()` is the whole interface, and it returns a snapshot: `lasmex --profile tui --resume abc` yields `['--resume', 'abc']`.
 - `ctx.appExit` — a bounded process-exit request, wired to the launcher's shutdown controller.
 
 An embedding host with no command line provides an empty list; that is the honest answer, not a missing value.
@@ -32,21 +32,21 @@ Its Loader row carries no launcher marker or special kind:
 
 ```yaml
 - id: web-startup
-  name: '@deepseek-ai/dsh-web-app/startup'
+  name: 'lasmex-web-app/startup'
 ```
 
 Every row configured from those values uses ordinary service injection and direct lazy config access:
 
 ```yaml
 - id: webserver
-  name: '@deepseek-ai/dsh-host-webserver'
+  name: 'lasmex-host-webserver'
   inject: [webStartup]
   config:
     host: !!js ctx.webStartup.host ?? '127.0.0.1'
     port: !!js ctx.webStartup.port ?? 3080
 ```
 
-`parseCmdline` refuses at load a program in which no command declares an action, routes every command's exit and output through the launcher (commander copies those settings into subcommands only at registration), and parses the immutable arguments; commander runs the invoked command's synchronous action on success. An action rejects an invalid invocation with `program.error(...)` — before publishing, since statements ahead of the rejection have already run. On `--help`, `--version`, a parse error, or that rejection, the helper writes commander's text and requests exit; the provider publishes nothing, so dependent rows never activate.
+`configureFrenchCommand(program)` localizes Commander's shared help headings and error prefix; each app still owns its descriptions and validation messages. `parseCmdline` refuses at load a program in which no command declares an action, routes every command's exit and output through the launcher (commander copies those settings into subcommands only at registration), and parses the immutable arguments; commander runs the invoked command's synchronous action on success. An action rejects an invalid invocation with `program.error(...)` — before publishing, since statements ahead of the rejection have already run. On `--help`, `--version`, a parse error, or that rejection, the helper writes commander's text and requests exit; the provider publishes nothing, so dependent rows never activate.
 
 ### How injection orders config
 

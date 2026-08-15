@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-code-runtime",
-  "description": "Abstract code-execution seam (ctx.codeRuntime) for the DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-code-runtime",
+  "description": "Abstract code-execution seam (ctx.codeRuntime) for LasmeX",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/code-runtime/code-runtime"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,11 +27,20 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/code-runtime/code-runtime"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

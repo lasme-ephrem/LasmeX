@@ -1,0 +1,9 @@
+/.desktop-stage/
+/.desktop-app.asar
+/.desktop-app.asar.unpacked/
+/.forge-stage/
+/.forge-shell/
+/.forge-app.asar
+/.forge-app.asar.unpacked/
+/out/
+/renderer/

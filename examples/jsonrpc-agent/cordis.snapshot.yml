@@ -3,7 +3,7 @@
 # key or network; every other entry remains shared. The replay provider
 # catalog claims the `deepseek-official` provider so the SDK server's `initialize`
 # finds it owned and never mounts the real-adapter fallback. The SDK snapshot
-# suite passes this path explicitly through `DSH_CORDIS_CONFIG` (the
+# suite passes this path explicitly through `LASMEX_CORDIS_CONFIG` (the
 # jsonrpc-demo bin performs no DSH_SNAPSHOT config swap of its own), and
 # `llm-replay` reads `DSH_SNAPSHOT_FILE` / `DSH_SNAPSHOT_CHILD_FILES` from the
 # harness. Stdout remains reserved for JSON-RPC frames.
@@ -15,11 +15,11 @@
       # `name` asserts the target: a mismatch skips the patch and warns only
       # when a logger exists.
       - id: llm-deepseek
-        name: '@deepseek-ai/dsh-llm-deepseek'
+        name: 'lasmex-llm-deepseek'
         disabled: true
       - insert:
           - id: llm-replay
-            name: '@deepseek-ai/dsh-llm-replay'
+            name: 'lasmex-llm-replay'
             config:
               providers:
                 - id: deepseek-official

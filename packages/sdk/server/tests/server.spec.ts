@@ -1,4 +1,4 @@
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from 'lasmex-llm'
 import { createServer } from 'node:http'
 import type { IncomingMessage, Server, ServerResponse } from 'node:http'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -6,14 +6,14 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry, { type Agent, type AgentHandle } from '@deepseek-ai/dsh-agent'
+import AgentRegistry, { type Agent, type AgentHandle } from 'lasmex-agent'
 
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import * as agentCore from '@deepseek-ai/dsh-agent-spine-demo'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
-import SubagentRuntime, { type SubagentResult, type SubagentRunEndInfo } from '@deepseek-ai/dsh-subagent'
-import type { JsonRpcTransportPeer } from '@deepseek-ai/dsh-sdk-protocol'
+import SessionStore, { SessionId } from 'lasmex-session'
+import * as agentCore from 'lasmex-agent-spine-demo'
+import JsonlSessionPersistence from 'lasmex-session-persistence-jsonl'
+import * as LlmDeepSeek from 'lasmex-llm-deepseek'
+import SubagentRuntime, { type SubagentResult, type SubagentRunEndInfo } from 'lasmex-subagent'
+import type { JsonRpcTransportPeer } from 'lasmex-sdk-protocol'
 import { HarnessSdkJsonRpcServer } from '../src/index.ts'
 
 class FakeTransport implements JsonRpcTransportPeer {
@@ -125,7 +125,7 @@ describe('HarnessSdkJsonRpcServer', () => {
         model: 'dsagent-model',
         maxTokens: 321,
       }) as { serverInfo: { name: string } }
-      expect(init.serverInfo.name).toBe('deepseek-harness-sdk-runtime')
+      expect(init.serverInfo.name).toBe('lasmex-sdk-runtime')
 
       const receipt = await server.handleRequest('session/prompt', {
         sessionId: 'main',
@@ -859,7 +859,7 @@ describe('HarnessSdkJsonRpcServer', () => {
 
       await expect(server.handleRequest('does/not/exist', {}))
         .rejects
-        .toThrow('unknown DeepSeek Harness SDK runtime method: does/not/exist')
+        .toThrow('unknown LasmeX SDK runtime method: does/not/exist')
 
       await server.shutdown()
     } finally {

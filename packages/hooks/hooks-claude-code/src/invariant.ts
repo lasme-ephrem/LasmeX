@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-hooks-claude-code`.
- * @module @deepseek-ai/dsh-hooks-claude-code/invariant
+ * Package-owned invariant companion for `lasmex-hooks-claude-code`.
+ * @module lasmex-hooks-claude-code/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-hooks-claude-code'
+const PACKAGE_NAME = 'lasmex-hooks-claude-code'
 
 /** Cordis companion plugin name. */
 export const name = 'hooks-claude-code-invariant'

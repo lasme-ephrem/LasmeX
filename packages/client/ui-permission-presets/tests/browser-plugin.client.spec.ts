@@ -10,11 +10,11 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { SlotRegistry, type SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import type { CommandDecoration } from '@deepseek-ai/dsh-client-ui-commands/client'
-import type { PermissionSelect } from '@deepseek-ai/dsh-permission-presets/client'
+import { SlotRegistry, type SessionId } from 'lasmex-client-runtime/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { TestRemote } from 'lasmex-client-test-runtime'
+import type { CommandDecoration } from 'lasmex-client-ui-commands/client'
+import type { PermissionSelect } from 'lasmex-permission-presets/client'
 import {
   PermissionRow, type PermissionRowInjected,
 } from '../src/client/PermissionRow.tsx'
@@ -32,7 +32,10 @@ const SELECT: PermissionSelect = {
   currentValue: 'workspace-write',
 }
 
-async function bench() {
+async function bench(
+  beforeMount?: (locale: LocaleRuntime) => void,
+  awaitMount = true,
+) {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry)
   const locale = new LocaleRuntime(ctx)
@@ -85,10 +88,11 @@ async function bench() {
   ctx.provide('sessions', {
     binding: (id: SessionId) => (values.has(id) ? { sessionId: id, session: session(id) } : undefined),
   })
+  beforeMount?.(locale)
   const fiber = ctx.plugin({ inject: [...inject], apply })
-  await fiber.await()
+  if (awaitMount) await fiber.await()
   return {
-    ctx, fiber, values, commands,
+    ctx, fiber, locale, values, commands,
     setResult: (r: { ok: boolean; matched?: boolean }) => { commandResult = r },
     decoration: () => decoration,
     permissionRow: () => ctx.slots.entries('settings.general.item')
@@ -97,6 +101,28 @@ async function bench() {
 }
 
 describe('ui-permission browser plugin', () => {
+  it('rolls back earlier dictionaries when a later locale is already owned', async () => {
+    let disposeRival: (() => void) | undefined
+    const rejections: unknown[] = []
+    const onUnhandled = (reason: unknown): void => { rejections.push(reason) }
+    process.on('unhandledRejection', onUnhandled)
+    try {
+      const b = await bench((locale) => {
+        disposeRival = locale.register('permission.access', 'zh', { 'confirm.title': 'rival' })
+      }, false)
+      await expect(b.fiber.await()).rejects.toThrow(/already has locale/)
+
+      disposeRival?.()
+      const disposeFrench = b.locale.register('permission.access', 'fr', { 'confirm.title': 'libre' })
+      disposeFrench()
+      await b.ctx.plugin({ inject: [...inject], apply }).await()
+      expect(b.locale.bind('permission.access' as string)('confirm.title')).toBe('Enable Full access?')
+    } finally {
+      await new Promise(resolve => setTimeout(resolve, 0))
+      process.off('unhandledRejection', onUnhandled)
+    }
+  })
+
   it('hangs the /permission popup decoration on the host command', async () => {
     const b = await bench()
     const c = b.decoration()!
@@ -125,7 +151,8 @@ describe('ui-permission browser plugin', () => {
     b.values.set(sid('s1'), SELECT)
     const again = await c.ui.options(proj, new AbortController().signal)
     expect(again.find(option => option.id === 'workspace-write')?.active).toBe(true)
-    expect(again.find(option => option.id === 'read-only')?.detail).toBe('Reads only.')
+    expect(again.find(option => option.id === 'read-only')?.detail)
+      .toBe('Read and inspect only; actions requiring broader access ask for approval.')
     // Kebab-case names title-case; non-kebab host-configured names pass through.
     expect(again.map(option => option.label)).toEqual(['Read Only', 'Workspace Write', 'Full access'])
     expect(again.find(option => option.id === 'danger-full-access')?.confirmation).toEqual({
@@ -143,6 +170,25 @@ describe('ui-permission browser plugin', () => {
       .toThrow(/not available on this host/)
   })
 
+  it('localizes shipped preset names, impacts, and the risk gate in French', async () => {
+    const b = await bench((locale) => { locale.setLocale('fr') })
+    const c = b.decoration()!
+    const session = { sessionId: sid('s1') }
+    b.values.set(sid('s1'), SELECT)
+    const options = await c.ui.options(session, new AbortController().signal)
+    expect(options.map(option => option.label)).toEqual([
+      'Lecture seule', 'Écriture dans l’espace de travail', 'Accès complet',
+    ])
+    expect(options.find(option => option.id === 'workspace-write')?.detail)
+      .toBe('Modifier l’espace de travail et les dossiers temporaires autorisés ; les actions plus larges requièrent une autorisation.')
+    expect(options.find(option => option.id === 'danger-full-access')?.confirmation).toMatchObject({
+      title: 'Activer l’accès complet ?',
+      confirmLabel: 'Activer l’accès complet',
+    })
+    expect(() => c.ui.options({ sessionId: sid('ghost') }, new AbortController().signal))
+      .toThrow(/pas disponibles sur cet hôte/)
+  })
+
   it('a pick submits the /permission line; rejection and unmatched throw', async () => {
     const b = await bench()
     const c = b.decoration()!
@@ -151,7 +197,7 @@ describe('ui-permission browser plugin', () => {
     await c.ui.onSelect({ id: 'danger-full-access', label: 'danger-full-access' }, proj)
     expect(b.commands).toEqual(['/permission danger-full-access'])
     b.setResult({ ok: false })
-    await expect(c.ui.onSelect({ id: 'read-only', label: 'read-only' }, proj)).rejects.toThrow(/permission switch failed/)
+    await expect(c.ui.onSelect({ id: 'read-only', label: 'read-only' }, proj)).rejects.toThrow(/Permission switch failed/)
     b.setResult({ ok: true, matched: false })
     await expect(c.ui.onSelect({ id: 'read-only', label: 'read-only' }, proj)).rejects.toThrow(/no \/permission command/)
     // An unmaterialized session throws before any submit.

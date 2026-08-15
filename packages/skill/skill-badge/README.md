@@ -1,16 +1,16 @@
-# @deepseek-ai/dsh-skill-badge
+# lasmex-skill-badge
 
 English | [中文](README.zh.md)
 
-Optional bundled skill provider that contributes `dsh-badge` to `ctx.skills`. The skill supplies the official “powered by dsh” Markdown snippets and the packaged PNG for systems that cannot import a remote image reliably.
+Optional bundled skill provider that contributes `lasmex-badge` to `ctx.skills`. The skill supplies the official “powered by LasmeX” Markdown snippet and the packaged PNG for systems that cannot import a remote image reliably.
 
 Mount the plugin to enable the provider. It has no configuration. The shipped CLI composition includes the plugin as `disabled: true`; users must explicitly enable its `skill-badge` row before the skill enters a catalog.
 
-The provider exposes its packaged `assets/` directory as the skill resource base. `dsh-badge.png` is the 726×120 source asset, and consumers render it at 121×20.
+The provider exposes its packaged `assets/` directory as the skill resource base. `lasmex-badge.png` is the 768×120 source asset, and consumers render it at 128×20.
 
 ## Model Experience
 
-Indirectly, through `@deepseek-ai/dsh-tool-skill`, which renders the catalog entry and selected skill body.
+Indirectly, through `lasmex-tool-skill`, which renders the catalog entry and selected skill body.
 
 #### KV Cache effect
 

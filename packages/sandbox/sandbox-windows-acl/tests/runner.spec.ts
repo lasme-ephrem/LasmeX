@@ -1,6 +1,6 @@
 /**
  * End-to-end runner tests: spawn the REAL runner entry through tsx (exactly
- * the argv shape dsh-sandbox-local's confine() builds), with piped stdio
+ * the argv shape lasmex-sandbox-local's confine() builds), with piped stdio
  * inherited through the runner into the confined child — the same chain a
  * production confined execution walks.
  */
@@ -12,7 +12,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { resolvePwshPath } from '@deepseek-ai/dsh-pwsh-local'
+import { resolvePwshPath } from 'lasmex-pwsh-local'
 import { AclWriteGrant, tempWriteSid, workspaceWriteSid } from '../src/index.ts'
 
 const isWin32 = process.platform === 'win32'

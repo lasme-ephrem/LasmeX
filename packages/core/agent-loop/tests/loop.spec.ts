@@ -1,26 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage, CallId, LlmError, StreamChunk  } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId, TurnEndReason } from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import LlmRuntime, { createUserMessage, CallId, LlmError, StreamChunk  } from 'lasmex-llm'
+import SessionStore, { SessionId, TurnEndReason } from 'lasmex-session'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime, { defineContentToolFixture } from 'lasmex-tools'
+import AgentRegistry, { type Agent } from 'lasmex-agent'
 
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
+import AgentLoop from 'lasmex-agent-loop'
 import { MockAdapter, maxTokensResponse, textResponse, toolCallResponse } from './mock-adapter.ts'
 
 function driverDone(agent: Agent): Promise<void> {
   return (agent as Agent & { done: Promise<void> }).done
 }
 
-async function harness(adapter: MockAdapter, persona = '') {
+async function harness(adapter: MockAdapter, persona = '', maxStepsPerTurn?: number) {
   const ctx = new Context()
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(SessionStore)
   await ctx.plugin(SystemPrompt, { persona })
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(AgentRegistry)
-  await ctx.plugin(AgentLoop, { agents: [] })
+  await ctx.plugin(AgentLoop, { agents: [], ...maxStepsPerTurn === undefined ? {} : { maxStepsPerTurn } })
   ctx.llm.registerAdapter(['mock'], adapter)
   return ctx
 }
@@ -217,19 +217,53 @@ describe('agent loop', () => {
     // two model calls happened (tool-call step, then final step)
     expect(adapter.requests).toHaveLength(2)
 
-    // the second request's derived history contains the tool result
+    // The second request keeps the tool history and ends with a logged copy of
+    // the direct instruction, so result-only continuations retain user intent.
     const secondMessages = adapter.requests[1]!.messages
+    expect(secondMessages.map(message => message.source.kind)).toEqual([
+      'user',
+      'model',
+      'tool',
+      'plugin',
+    ])
     const toolResultMessage = secondMessages.find(m =>
       m.content.some(b => b.type === 'tool-result'))
     expect(toolResultMessage).toBeDefined()
     const block = toolResultMessage!.content.find(b => b.type === 'tool-result')!
     expect(block).toMatchObject({ toolCallId: 'c1', isError: false })
     expect((block).content).toEqual([{ type: 'text', text: 'echo: ping' }])
+    const continuation = secondMessages.at(-1)
+    expect(continuation?.source).toEqual({
+      kind: 'plugin', plugin: 'agent-loop', form: 'notice', summary: 'Continue after tool result',
+    })
+    expect(continuation?.content).toHaveLength(1)
+    const notice = continuation?.content[0]
+    if (notice?.type !== 'text') throw new Error('continuation notice is not text')
+    expect(notice.text).toContain('Completed tool calls: echo.')
 
     // session log records call + result
     const types = agent.session.events.map(e => e.type)
     expect(types).toContain('tool/call')
     expect(types).toContain('tool/result')
+    expect(agent.session.events.filter(event => event.type === 'user/message')).toHaveLength(2)
+  })
+
+  it('stops a tool loop at the configured per-turn step cap', async () => {
+    const repeat = () => toolCallResponse('again', 'echo', {})
+    const adapter = new MockAdapter([repeat(), repeat(), repeat()])
+    const ctx = await harness(adapter, '', 2)
+    ctx.tools.register(defineContentToolFixture({
+      name: 'echo', description: 'echo', parameters: {}, async execute() { return [] },
+    }))
+    const agent = ctx.agentLoop.create(SessionId('step-cap'), { provider: 'mock', model: 'mock' })
+
+    send(agent, 'keep calling')
+    await waitForIdle(ctx, agent)
+
+    expect(adapter.requests).toHaveLength(2)
+    expect(agent.session.events.findLast(event => event.type === 'turn/end')).toMatchObject({
+      data: { reason: { kind: 'error', error: { code: 'MAX_STEPS' } } },
+    })
   })
 
   it('renders harness identity, then the persona, then tool guidance — with {{variables}} resolved', async () => {
@@ -252,7 +286,7 @@ describe('agent loop', () => {
     await waitForIdle(ctx, agent)
 
     const request = adapter.requests[0]
-    expect(request!.system).toBe('You are an AI agent powered by DeepSeek Harness.\n\nYou are a test agent on mock.\n\nUse the noop tool wisely.')
+    expect(request!.system).toBe('You are an AI agent powered by LasmeX.\n\nYou are a test agent on mock.\n\nUse the noop tool wisely.')
     expect(request!.tools?.map(t => t.name)).toEqual(['noop'])
   })
 
@@ -269,7 +303,7 @@ describe('agent loop', () => {
     send(agent, 'hi')
     await waitForIdle(ctx, agent)
 
-    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by DeepSeek Harness.\n\nWorking in /work/space.')
+    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by LasmeX.\n\nWorking in /work/space.')
   })
 
   it('contains a strict-variable render failure: the turn errors, the loop keeps serving turns', async () => {
@@ -305,7 +339,7 @@ describe('agent loop', () => {
     await waitForIdle(ctx, agent)
 
     expect(adapter.requests).toHaveLength(1)
-    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by DeepSeek Harness.\n\nIn /rescued.')
+    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by LasmeX.\n\nIn /rescued.')
     const turnEnds = agent.session.events.filter(e => e.type === 'turn/end')
     expect(turnEnds).toHaveLength(2)
     expect(turnEnds[1]?.type === 'turn/end' && turnEnds[1].data.reason.kind).toBe('completed')
@@ -335,7 +369,7 @@ describe('agent loop', () => {
 
     expect(adapter.requests).toHaveLength(1)
     expect(adapter.requests[0]!.model).toBe('mock')
-    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by DeepSeek Harness.\n\nYou run on mock.')
+    expect(adapter.requests[0]!.system).toBe('You are an AI agent powered by LasmeX.\n\nYou run on mock.')
   })
 
   it('omits the system field when system-prompt/assemble short-circuits with an empty assembly', async () => {
@@ -369,7 +403,7 @@ describe('agent loop', () => {
     const contextEvents = () => agent.session.events.flatMap(event =>
       event.type === 'user/message'
         && event.data.source.kind === 'plugin'
-        && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt'
+        && event.data.source.plugin === 'lasmex-system-prompt'
         ? [event]
         : [])
 
@@ -421,7 +455,7 @@ describe('agent loop', () => {
     const contextEvent = agent.session.events.find(event =>
       event.type === 'user/message'
       && event.data.source.kind === 'plugin'
-      && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt')
+      && event.data.source.plugin === 'lasmex-system-prompt')
     if (contextEvent?.type !== 'user/message') throw new Error('first turn did not materialize runtime context')
     agent.session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'compacted summary' }],
@@ -436,13 +470,13 @@ describe('agent loop', () => {
     const runtimeContexts = agent.session.events.flatMap(event =>
       event.type === 'user/message'
         && event.data.source.kind === 'plugin'
-        && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt'
+        && event.data.source.plugin === 'lasmex-system-prompt'
         ? [event]
         : [])
     expect(runtimeContexts).toHaveLength(2)
     expect(adapter.requests[1]?.messages.some(message =>
       message.source.kind === 'plugin'
-      && message.source.plugin === '@deepseek-ai/dsh-system-prompt')).toBe(true)
+      && message.source.plugin === 'lasmex-system-prompt')).toBe(true)
   })
 
   it('clears compacted runtime context after the active set becomes empty', async () => {
@@ -456,7 +490,7 @@ describe('agent loop', () => {
     const contextEvent = agent.session.events.find(event =>
       event.type === 'user/message'
       && event.data.source.kind === 'plugin'
-      && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt')
+      && event.data.source.plugin === 'lasmex-system-prompt')
     if (contextEvent?.type !== 'user/message') throw new Error('first turn did not materialize runtime context')
     agent.session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'summary retaining old mode: read-only' }],
@@ -471,7 +505,7 @@ describe('agent loop', () => {
     await waitForIdle(ctx, agent)
     const clearing = adapter.requests[1]?.messages.find(message =>
       message.source.kind === 'plugin'
-      && message.source.plugin === '@deepseek-ai/dsh-system-prompt')
+      && message.source.plugin === 'lasmex-system-prompt')
     expect(clearing?.content).toEqual([{
       type: 'text',
       text: 'Current runtime context: none. Earlier runtime-context snapshots no longer apply.',
@@ -498,7 +532,7 @@ describe('agent loop', () => {
     await waitForIdle(ctx, agent)
     expect(adapter.requests[0]?.messages.some(message =>
       message.source.kind === 'plugin'
-      && message.source.plugin === '@deepseek-ai/dsh-system-prompt')).toBe(false)
+      && message.source.plugin === 'lasmex-system-prompt')).toBe(false)
   })
 
   it('replaces a malformed retained runtime-context message with the current complete snapshot', async () => {
@@ -508,7 +542,7 @@ describe('agent loop', () => {
     const agent = ctx.agentLoop.create(SessionId('a-runtime-context-malformed'), { provider: 'mock', model: 'mock' })
     agent.session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'broken' }, { type: 'text', text: 'snapshot' }],
-      source: { kind: 'plugin', plugin: '@deepseek-ai/dsh-system-prompt' },
+      source: { kind: 'plugin', plugin: 'lasmex-system-prompt' },
     }), { surfaceOp: 'append' })
 
     send(agent, 'repair context')
@@ -516,7 +550,7 @@ describe('agent loop', () => {
     const runtimeContexts = agent.session.events.flatMap(event =>
       event.type === 'user/message'
         && event.data.source.kind === 'plugin'
-        && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt'
+        && event.data.source.plugin === 'lasmex-system-prompt'
         ? [event]
         : [])
     expect(runtimeContexts).toHaveLength(2)
@@ -552,6 +586,8 @@ describe('agent loop', () => {
       textResponse('addressed the steering'),
     ])
     const ctx = await harness(adapter)
+    let mode = 'before-tool'
+    ctx.systemPrompt.context({ name: 'test:mode', order: 0, text: () => `Mode: ${mode}.` })
 
     const agent = ctx.agentLoop.create(SessionId('a1'), { provider: 'mock', model: 'mock' })
     ctx.tools.register(defineContentToolFixture({
@@ -559,7 +595,8 @@ describe('agent loop', () => {
       description: '',
       parameters: {},
       async execute() {
-        // steer while the turn is running (during tool execution)
+        mode = 'after-tool'
+        // Steer while the turn is running so the next batch also receives a changed runtime snapshot.
         agent.steer(createUserMessage({ content: [{ type: 'text', text: 'change of plans' }], source: { kind: 'user' } }))
         return [{ type: 'text', text: 'tool done' }]
       },
@@ -582,6 +619,11 @@ describe('agent loop', () => {
     const secondRequest = adapter.requests[1]
     const flat = JSON.stringify(secondRequest!.messages)
     expect(flat).toContain('change of plans')
+    expect(secondRequest!.messages.slice(-2).map(message => message.source)).toEqual([
+      expect.objectContaining({ kind: 'plugin', plugin: 'lasmex-system-prompt' }),
+      { kind: 'user' },
+    ])
+    expect(secondRequest!.messages.at(-1)?.content).toEqual([{ type: 'text', text: 'change of plans' }])
   })
 
   it('starts idle steering synchronously and enters later steering at the next step', async () => {
@@ -716,7 +758,8 @@ describe('agent loop', () => {
     const turnStarts = agent.session.events.filter(e => e.type === 'turn/start')
     expect(turnStarts).toHaveLength(1)
     const result = agent.session.events.find(e => e.type === 'tool/result')!
-    const contexts = agent.session.events.filter(e => e.type === 'user/message' && e.data.source.kind === 'plugin')
+    const contexts = agent.session.events.filter(e =>
+      e.type === 'user/message' && e.data.source.kind === 'plugin' && e.data.source.plugin === 'x')
     expect(contexts).toHaveLength(2)
     expect(result.seq).toBeLessThan(contexts[0]!.seq)
     expect(contexts.flatMap(event => event.type === 'user/message' ? event.data.content : []))
@@ -760,7 +803,10 @@ describe('agent loop', () => {
     send(agent, 'go')
     await waitForIdle(ctx, agent)
 
-    expect(agent.session.events.some(event => event.type === 'user/message' && event.data.source.kind === 'plugin')).toBe(false)
+    expect(agent.session.events.some(event =>
+      event.type === 'user/message'
+      && event.data.source.kind === 'plugin'
+      && event.data.source.plugin === 'test')).toBe(false)
   })
 
   it('agent/turn-stopping can steer another step (/loop pattern)', async () => {

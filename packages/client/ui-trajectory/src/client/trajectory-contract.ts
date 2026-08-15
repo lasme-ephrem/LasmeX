@@ -2,7 +2,10 @@ import type {
   AssistantMessageNode, ConversationLocation, ConversationNode,
   ConversationPromptSnapshot, ConversationViewNode, PartialAssistant,
   RequestPromptChange, RequestView, RunningToolCall, ToolCallBlock,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
+
+/** Stable derived error code for a compaction stopped by a later session boundary. */
+export const COMPACTION_INTERRUPTED_ERROR = 'trajectory.compaction_interrupted'
 
 /** Request-header facts retained by the Trajectory target. */
 export interface TrajectoryRequestHeaderState {
@@ -67,7 +70,7 @@ export interface TrajectorySnapshot {
   readonly runningCalls: readonly RunningToolCall[]
 }
 
-declare module '@deepseek-ai/dsh-client-runtime/client' {
+declare module 'lasmex-client-runtime/client' {
   interface ConversationViewSnapshotMap {
     /** Independently assembled data consumed by the Trajectory view. */
     trajectory: TrajectorySnapshot

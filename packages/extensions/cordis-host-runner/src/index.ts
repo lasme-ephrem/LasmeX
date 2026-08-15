@@ -1,16 +1,16 @@
 /**
  * Dynamic Cordis Plugin service: immutable package definitions, one active run
  * per Plugin, human-approved Client activation, and Host/Client invocation.
- * @module @deepseek-ai/dsh-cordis-host-runner
+ * @module lasmex-cordis-host-runner
  */
 
 import { Context } from '@deepseek-ai/cordis'
 import type { Fiber } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { JsonValue } from '@deepseek-ai/dsh-session/types'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import type { Agent } from 'lasmex-agent'
+import { createUserMessage } from 'lasmex-llm'
+import type { JsonValue } from 'lasmex-session/types'
+import { TypertRemoteService, Remote } from 'lasmex-typert-protocol'
 import { isPlugin, normalizeHandler } from './guard.ts'
 import { CordisInspectRegistryService } from './inspect-registry.ts'
 import { missingServices, startHostHalf } from './lifecycle.ts'
@@ -1245,7 +1245,7 @@ function missingFor(ctx: Context, run: DynamicCordisRun): string[] {
 }
 
 function missingPluginMessage(id: CordisDynamicPluginId): string {
-  return `no dynamic plugin "${id}" in this process — it may have been removed or lost on DSH restart`
+  return `no dynamic plugin "${id}" in this process — it may have been removed or lost on LasmeX restart`
 }
 
 function errorDetails(error: unknown): CordisErrorDetails {

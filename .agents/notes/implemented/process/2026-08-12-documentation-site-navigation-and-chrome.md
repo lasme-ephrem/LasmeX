@@ -10,19 +10,25 @@ The reference sidebar rendered its 43 subsystem pages first, ahead of every othe
 
 The navigation bar named `/guide/` while the manifest published the guide's first page at `guide/quickstart.md`, so that item served a 404: written-down navigation targets drift from the routes the manifest publishes.
 
-Separately, every canonical page carries lines written for its GitHub reader — a language switcher under the heading, and for some, a repository badge — which the site projected verbatim even though its navigation bar already offers both.
+Separately, every canonical page carries lines written for its GitHub reader — a language switcher under the heading, and for some, a repository badge — which the site projected verbatim even though its navigation bar already offers locale and repository navigation.
 
 ## Decision
 
-[website/docs.ts](../../../../website/docs.ts) owns section placement. `sections` declares the groups per locale, and `sectionSpec(locale, label)` returns a group's position and collapse behavior, throwing when a locale declares no placement for a label. A group absent from the declaration now fails the build instead of sorting silently to the top. Placement is per locale because the two sidebars name their groups independently, and a label both use — `SDK` — cannot hold one rank against `入门` and against `Guide` at once.
+[website/docs.ts](../../../../website/docs.ts) owns section placement. `sections` declares the groups per locale, and `sectionSpec(locale, label)` returns a group's position and collapse behavior, throwing when a locale declares no placement for a label. A group absent from the declaration fails the build instead of sorting silently to the top. Placement is per locale because the French, English, and Chinese sidebars name their groups independently, and a shared label such as `SDK` cannot hold one rank against three different group sequences.
+
+The root route is French, `/en/` is English, and `/zh/` is Chinese. `pairedPages()` projects each English/Chinese source pair into all three route trees: French routes carry reviewed French navigation and use reviewed French prose when it exists, English routes use the English source, and Chinese routes use the Chinese sibling. A French route backed by English prose renders a visible French notice that identifies the page as technical English content and points readers to the French interface and user guides. The root home maps the reviewed French [LASMEX.md](../../../../LASMEX.md) source directly. This keeps canonical Markdown in its owning repository tier without copying fallback content.
+
+The reviewed French allowlist also defines the input to `verify-french-docs`, an executed `doc-sync` gate. It rejects an unpublished `.fr.md` file, a missing English source, and any divergence in heading, list, table, link, fenced-code, or inline-code order. Editorial review remains responsible for meaning and natural French; the gate protects the technical frame that translation must not change.
 
 Subsystem pages are grouped by concern — overview, core and scopes, sessions and persistence, model and context, execution and tools, policy and interaction, platform and access — and the six topical groups render collapsed until one holds the page being read. The groups sort last within the reference sidebar: expanded, they outnumber every other group combined, so anything placed after them is reachable only by scrolling past the whole list. Page `order` derives from array position rather than a hand-written number.
 
 `landingLink(locale, collection)` derives each navigation item's target from `orderedPages`, the same ordering the sidebar renders, so an item always opens its collection's first published page.
 
-`projectedPageContent` in [scripts/project-doc-site.ts](../../../../scripts/project-doc-site.ts) drops the language-switcher line and the repository badge. The switcher match is confined to the first eight lines so a tutorial that shows the convention still renders its example.
+`projectedPageContent` in [scripts/project-doc-site.ts](../../../../scripts/project-doc-site.ts) drops the language-switcher line and the repository badge. The switcher match is confined to the first eight lines so a tutorial that shows the convention still renders its example. Source-level English/Chinese counterpart links route to `/en/` and `/zh/`; VitePress owns navigation into the French root.
 
-The navigation-bar title is the DeepSeek wordmark inlined into `siteTitle`, which VitePress renders as HTML. Inlining is what lets the mark's `currentColor` fills follow the active theme; `themeConfig.logo` renders an `<img>`, which freezes the mark at the colors its file declares and would need one asset per theme. The sidebar scrollbar rests invisible and appears while scrolling, marked by a `data-` attribute rather than a class because Vue rewrites `class` wholesale when it patches the element.
+The navigation-bar title is the LasmeX wordmark inlined into `siteTitle`, which VitePress renders as HTML. Inlining lets the mark's `currentColor` fills follow the active theme; `themeConfig.logo` renders an `<img>`, which freezes the mark at the colors its file declares and would need one asset per theme. The sidebar scrollbar rests invisible and appears while scrolling, marked by a `data-` attribute rather than a class because Vue rewrites `class` wholesale when it patches the element.
+
+The site links to the LasmeX repository only as an explicitly labeled upstream. Edit links stay disabled until a real LasmeX fork origin exists, so readers are not directed to edit the upstream under the LasmeX identity.
 
 ## Alternatives considered
 
@@ -34,8 +40,8 @@ The navigation-bar title is the DeepSeek wordmark inlined into `siteTitle`, whic
 
 ## Consequences
 
-The reference sidebar measures 1452px with every subsystem group collapsed, against 2478px before, and the architecture page is its first entry. Section placement and collapse are declared in one manifest instead of split between the manifest and the config, and `scripts/project-doc-site.spec.ts` pins three invariants: every sidebar-owning page resolves a placement, an undeclared section is refused, and no two pages share an `order` within a section.
+The Chinese reference sidebar measures 1452px with every subsystem group collapsed, against 2478px before, and the architecture page is its first entry. Section placement and collapse are declared in one manifest instead of split between the manifest and the config. `scripts/project-doc-site.spec.ts` pins route parity across three locales, source-language selection, navigation targets, section placement, and unique `order` values within each section. `verify-french-docs` prevents a reviewed French route from silently translating commands, identifiers, or links while the remaining root routes continue to declare their English content explicitly.
 
 Canonical Markdown is unchanged by the chrome stripping — the switcher and badge still serve GitHub readers. The cost is that the projector now knows two presentation conventions of the source corpus, which a page written with a different switcher wording would not match.
 
-The wordmark is a second copy of a mark that also lives in `apps/web/public/favicon.svg` and `packages/client/ui-primitives/src/FishLogo.tsx`, each carrying its own presentation. A change to the DeepSeek wordmark reaches the documentation site only by updating this copy.
+The wordmark is a second copy of a mark that also lives in `apps/web/public/favicon.svg` and `packages/client/ui-primitives/src/LasmexMark.tsx`, each carrying its own presentation. A change to the product wordmark reaches the documentation site only by updating this copy.

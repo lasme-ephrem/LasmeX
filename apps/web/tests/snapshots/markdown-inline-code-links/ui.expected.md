@@ -6,6 +6,7 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: Show the local preview URL. {{clock}}
 - button "Copy":

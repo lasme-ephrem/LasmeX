@@ -6,14 +6,15 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: Load the snapshot-skill skill with the skill tool, then reply DONE. {{date}} {{clock}}
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
+- button "Context injection lasmex-system-prompt":
   - img
   - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
+  - text: Context injection lasmex-system-prompt
 - button "Context injection skill-catalog":
   - img
   - img
@@ -25,7 +26,7 @@
 - button "Skill snapshot-skill" [expanded]:
   - img
   - text: Skill snapshot-skill
-- region "Instructions": "Instructions <skill_content name=\"snapshot-skill\"> <skill_resources> Base directory for this skill: {{cwd}}/.dsh/skills/snapshot-skill Resolve relative paths mentioned by this skill against the base directory before using them. Load referenced resources only as needed. </skill_resources> <skill_instructions> Follow these snapshot-only instructions. Resolve referenced resources relative to this skill directory. </skill_instructions> </skill_content>"
+- region "Instructions": "Instructions <skill_content name=\"snapshot-skill\"> <skill_resources> Base directory for this skill: {{cwd}}/.lasmex/skills/snapshot-skill Resolve relative paths mentioned by this skill against the base directory before using them. Load referenced resources only as needed. </skill_resources> <skill_instructions> Follow these snapshot-only instructions. Resolve referenced resources relative to this skill directory. </skill_instructions> </skill_content>"
 - button "Inspect"
 - button "Think The skill is loaded.":
   - img

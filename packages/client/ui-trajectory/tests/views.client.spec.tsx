@@ -11,43 +11,50 @@ import { Context } from '@deepseek-ai/cordis'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createElement, type ComponentProps, type FC, type ReactNode } from 'react'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
+import { resolveSlotLabel } from 'lasmex-client-ui-slots'
 import {
   ConversationEventRegistry, ConversationViewRegistry, createSnapshotStore,
   EMPTY_CHAT_SNAPSHOT,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
 import type {
   ConversationSnapshot, RequestView,
   SessionId, SessionListState, SnapshotStore, WorkspaceListState,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { ConvViewProps, ViewTab } from '@deepseek-ai/dsh-client-ui-conversation/client'
+} from 'lasmex-client-runtime/client'
+import type { ConvViewProps, ViewTab } from 'lasmex-client-ui-conversation/client'
 import {
   ConversationSession, ConversationSessionHeader,
   type ConversationSessionHeaderProps, type ConversationSessionProps,
-} from '@deepseek-ai/dsh-client-ui-conversation/src/client/skeleton/ConversationSession.tsx'
-import { createChatStore } from '@deepseek-ai/dsh-client-ui-conversation/src/client/stores.ts'
-import { zh as conversationZh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
-import { apply as localeApply, inject as localeInject } from '@deepseek-ai/dsh-client-locale/client'
-import { stubSettingsScope } from '@deepseek-ai/dsh-client-test-runtime'
-import type { LocaleKeysOf } from '@deepseek-ai/dsh-client-ui-slots'
-import { zh, type TrajectoryKey } from '../src/client/locales.ts'
-import { apply, inject } from '@deepseek-ai/dsh-client-ui-trajectory/client'
-import { apply as nodeApply } from '@deepseek-ai/dsh-client-ui-trajectory'
+} from 'lasmex-client-ui-conversation/src/client/skeleton/ConversationSession.tsx'
+import { createChatStore } from 'lasmex-client-ui-conversation/src/client/stores.ts'
+import { zh as conversationZh } from 'lasmex-client-ui-conversation/src/client/locales.ts'
+import { apply as localeApply, inject as localeInject } from 'lasmex-client-locale/client'
+import { stubSettingsScope } from 'lasmex-client-test-runtime'
+import type { LocaleKeysOf } from 'lasmex-client-ui-slots'
+import { apply, inject } from 'lasmex-client-ui-trajectory/client'
+import { apply as nodeApply } from 'lasmex-client-ui-trajectory'
 import type { TrajectoryTurnModel } from '../src/client/layout.ts'
-import { TrajectoryTimeline } from '../src/client/TrajectoryTimeline.tsx'
+import {
+  TrajectoryTimeline as TrajectoryTimelineImpl,
+  type TrajectoryTimelineProps,
+} from '../src/client/TrajectoryTimeline.tsx'
 import {
   TrajectoryView, type TrajectoryViewInjected,
 } from '../src/client/TrajectoryView.tsx'
 import { createTrajectoryDurationStore } from '../src/client/duration-store.ts'
 import type { TrajectorySnapshot } from '../src/client/trajectory-contract.ts'
 import { deriveTrajectoryTimeline } from '../src/client/timeline.ts'
+import { tEn, tZh } from './locale.client.ts'
 
 const SID = 's1' as SessionId
 const sessionSnapshots = new WeakMap<SlotRegistry, SnapshotStore<ConversationSnapshot>>()
 const tConversation: ConversationSessionHeaderProps['t'] =
   key => (conversationZh as Record<string, string>)[key] ?? key
+
+function TrajectoryTimeline(props: Omit<TrajectoryTimelineProps, 't'>) {
+  return <TrajectoryTimelineImpl {...props} t={tEn} />
+}
 
 afterEach(cleanup)
 // The chat store persists under its declared key; clear so one case's active
@@ -167,7 +174,7 @@ function standaloneProps(
     useWorkspaces: emptyWorkspaces(),
     useProjection: (() => undefined) as never,
     // The locale seat the outlet would inject for the declared namespace.
-    t: (key: LocaleKeysOf<'trajectory'>) => zh[key as TrajectoryKey] ?? key,
+    t: tZh,
   } as unknown as ConvViewProps & { t: (key: LocaleKeysOf<'trajectory'>) => string }
 }
 
@@ -202,7 +209,9 @@ async function bench(snapshot = historySnapshot(NODES)) {
   ctx.provide('connection', { api: { settings: {} }, isLoopback: false } as never)
   ctx.provide('remote', { $on: () => () => {} } as never)
   ctx.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
-  ctx.plugin({ inject: [...localeInject], apply: localeApply })
+  await ctx.plugin({ inject: [...localeInject], apply: localeApply }).await()
+  // These trajectory interaction specs keep their established English tab labels.
+  ctx.locale.setLocale('en')
   const fiber = ctx.plugin({ inject: [...inject], apply })
   await fiber.await()
   return { ctx, slots, fiber, loadOlder, sessionStore }
@@ -248,7 +257,7 @@ function mount(slots: SlotRegistry, nodes: ConversationSnapshot['nodes'] = NODES
           loadOlder: trajectory.loadOlder,
           setActualDuration: trajectory.setActualDuration,
           useDuration: bindSnapshotSelector(trajectory.hooks.duration),
-          t: (key: TrajectoryKey) => zh[key],
+          t: tEn,
         }
       })()
       : injected
@@ -335,8 +344,8 @@ describe('plugin registration', () => {
     expect(second.hooks.duration).toBe(first.hooks.duration)
     first.setActualDuration(true)
     expect(second.hooks.duration.getSnapshot()).toBe(true)
-    expect(localStorage.getItem('dsh.trajectory.duration')).toBe('true')
-    expect(localStorage.getItem(`dsh.trajectory.duration.${SID}`)).toBeNull()
+    expect(localStorage.getItem('lasmex.trajectory.duration')).toBe('true')
+    expect(localStorage.getItem(`lasmex.trajectory.duration.${SID}`)).toBeNull()
   })
 
   it('reports whether loading older history changed the Trajectory snapshot', async () => {
@@ -368,13 +377,13 @@ describe('tab switching in ConversationRoot', () => {
     expect(screen.queryByText(/turns ·/)).toBeNull()
     expect(view.container.querySelectorAll('tr[data-turn-start="true"]')).toHaveLength(2)
     expect(screen.queryByRole('columnheader')).toBeNull()
-    expect(screen.getByRole('toolbar', { name: '轨迹工具栏' })).toBeTruthy()
+    expect(screen.getByRole('toolbar', { name: 'Trajectory toolbar' })).toBeTruthy()
     expect(screen.getByRole('region', { name: 'Trajectory timeline' })).toBeTruthy()
     expect(view.container.querySelector('[data-conversation-composer-overlay]')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Collapse turns' }))
     expect(view.container.querySelector('[data-collapsed-summary="turn"]')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Expand turns' }))
-    expect(screen.getByRole('row', { name: /USER/ })).toBeTruthy()
+    expect(screen.getByRole('row', { name: /User/ })).toBeTruthy()
     expect(screen.queryByTestId('chat-body')).toBeNull()
     expect(b.loadOlder).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('tab', { name: 'Chat' }))
@@ -386,6 +395,8 @@ describe('tab switching in ConversationRoot', () => {
     const labelOf = () => tabsOf(b.slots).find(tab => tab.id === 'trajectory')?.label
     expect(labelOf()).toBe('Trajectory')
     const locale = b.ctx.get('locale') as { setLocale(id: string): void }
+    locale.setLocale('fr')
+    expect(labelOf()).toBe('Trajectoire')
     locale.setLocale('zh')
     expect(labelOf()).toBe('轨迹')
     locale.setLocale('en')
@@ -397,7 +408,7 @@ describe('tab switching in ConversationRoot', () => {
     mount(b.slots)
     fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
 
-    fireEvent.keyDown(screen.getByRole('row', { name: /TOOL/ }), { key: 'Enter' })
+    fireEvent.keyDown(screen.getByRole('row', { name: /Tool/ }), { key: 'Enter' })
     expect(screen.getByRole('complementary', { name: 'Event details' })).toBeTruthy()
     expect(screen.getByText('Turn 1 · Step 1')).toBeTruthy()
     expect(screen.getByText('Completed')).toBeTruthy()
@@ -519,22 +530,22 @@ describe('tab switching in ConversationRoot', () => {
     fireEvent.pointerMove(plot, { clientX: 95, pointerId: 1 })
     fireEvent.pointerUp(plot, { clientX: 95, pointerId: 1 })
 
-    expect(screen.getByRole('row', { name: /USER/ }).getAttribute('data-timeline-focus'))
+    expect(screen.getByRole('row', { name: /User/ }).getAttribute('data-timeline-focus'))
       .toBe('outside')
 
     const tablePane = screen.getByRole('table').parentElement
     expect(tablePane).not.toBeNull()
     fireEvent.click(tablePane as HTMLElement)
-    expect(screen.getByRole('row', { name: /USER/ }).getAttribute('data-timeline-focus'))
+    expect(screen.getByRole('row', { name: /User/ }).getAttribute('data-timeline-focus'))
       .toBeNull()
 
     fireEvent.pointerDown(plot, { button: 0, clientX: 55, pointerId: 2 })
     fireEvent.pointerMove(plot, { clientX: 95, pointerId: 2 })
     fireEvent.pointerUp(plot, { clientX: 95, pointerId: 2 })
-    expect(screen.getByRole('row', { name: /USER/ }).getAttribute('data-timeline-focus'))
+    expect(screen.getByRole('row', { name: /User/ }).getAttribute('data-timeline-focus'))
       .toBe('outside')
     fireEvent.contextMenu(plot)
-    expect(screen.getByRole('row', { name: /USER/ }).getAttribute('data-timeline-focus'))
+    expect(screen.getByRole('row', { name: /User/ }).getAttribute('data-timeline-focus'))
       .toBe('outside')
   })
 
@@ -580,7 +591,7 @@ describe('tab switching in ConversationRoot', () => {
     const b = await bench(historySnapshot([]))
     mount(b.slots)
     fireEvent.click(screen.getByRole('tab', { name: 'Trajectory' }))
-    expect(screen.getByRole('toolbar', { name: '轨迹工具栏' })).toBeTruthy()
+    expect(screen.getByRole('toolbar', { name: 'Trajectory toolbar' })).toBeTruthy()
     expect(screen.getByText('No timing data')).toBeTruthy()
     expect(screen.getByRole<HTMLButtonElement>('button', {
       name: 'Collapse turns',
@@ -694,7 +705,7 @@ describe('timeline projection', () => {
       .toContain('Click to load earlier history')
     fireEvent.click(boundary)
     expect(onLoadEarlier).toHaveBeenCalledOnce()
-    expect(screen.getByLabelText('Loading earlier history')).toBeTruthy()
+    expect(screen.getByLabelText(/Loading earlier history/)).toBeTruthy()
 
     view.rerender(
       <TrajectoryTimeline
@@ -1148,11 +1159,11 @@ describe('TrajectoryView state', () => {
         setActualDuration={(value) => { firstDuration.set(value) }}
       />,
     )
-    const duration = screen.getByRole('button', { name: 'Use actual duration' })
+    const duration = screen.getByRole('button', { name: '使用实际时长' })
 
     expect(duration.getAttribute('aria-pressed')).toBe('false')
     fireEvent.click(duration)
-    expect(localStorage.getItem('dsh.trajectory.duration')).toBe('true')
+    expect(localStorage.getItem('lasmex.trajectory.duration')).toBe('true')
     first.unmount()
 
     const restoredDuration = createTrajectoryDurationStore()
@@ -1163,7 +1174,7 @@ describe('TrajectoryView state', () => {
         setActualDuration={(value) => { restoredDuration.set(value) }}
       />,
     )
-    expect(screen.getByRole('button', { name: 'Use actual duration' }).getAttribute('aria-pressed'))
+    expect(screen.getByRole('button', { name: '使用实际时长' }).getAttribute('aria-pressed'))
       .toBe('true')
   })
 

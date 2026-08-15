@@ -1,10 +1,10 @@
-/** Package-owned permission-preset event invariants. @module @deepseek-ai/dsh-permission-presets/invariant */
+/** Package-owned permission-preset event invariants. @module lasmex-permission-presets/invariant */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Session, SessionEvent } from 'lasmex-session'
+import type { InvariantFailure, InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-permission-presets'
+const PACKAGE_NAME = 'lasmex-permission-presets'
 
 /** Cordis companion plugin name. */
 export const name = 'permission-presets-invariant'

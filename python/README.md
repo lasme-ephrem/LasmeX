@@ -1,15 +1,15 @@
-# DeepSeek Harness Python SDK
+# LasmeX Python SDK
 
 English | [中文](README.zh.md)
 
-Python packages for driving DeepSeek Harness as a subprocess. The client SDK communicates with the bundled runtime over newline-delimited JSON-RPC on stdio.
+Python packages for driving LasmeX as a subprocess. The client SDK communicates with the bundled runtime over newline-delimited JSON-RPC on stdio.
 
 ## Packages
 
 | Directory | Dist / module | Role |
 |---|---|---|
-| [sdk](sdk/README.md) | `deepseek-harness-sdk` / `deepseek_harness` | High-level turns API and lower-level JSON-RPC client |
-| [sdk-runtime](sdk-runtime/README.md) | `deepseek-harness-runtime-bin` / `deepseek_harness_runtime` | Bundled runtime binaries and default agent configuration |
+| [sdk](sdk/README.md) | `lasmex-sdk` / `lasmex` | High-level turns API and lower-level JSON-RPC client |
+| [sdk-runtime](sdk-runtime/README.md) | `lasmex-runtime-bin` / `lasmex_runtime` | Bundled runtime binaries and default agent configuration |
 
 ## Behavior
 

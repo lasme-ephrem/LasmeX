@@ -1,8 +1,8 @@
 /**
- * The common-namespace dictionary pair. zh is the source of truth for the
- * key set (Chinese-first repo convention); en is checked complete against it
- * — a missing or extra en key is a compile error.
+ * Common-namespace dictionaries. zh remains the key-set source of truth;
+ * every shipped locale is checked complete against it.
  */
 export { zh } from './zh.ts'
 export { en } from './en.ts'
+export { fr } from './fr.ts'
 export type { CommonKey } from './zh.ts'

@@ -10,7 +10,7 @@ The [Cordis tutorial](../../../../docs/cordis-tutorial/index.md) uses an officia
 
 ## Decision
 
-`@deepseek-ai/dsh-skill-badge` is a native Cordis plugin that registers one immutable bundled provider on `ctx.skills`. The provider owns the `dsh-badge` summary, instruction body, and PNG resource base; `dsh-tool-skill` remains the sole owner of model-facing catalog and loader rendering.
+`lasmex-skill-badge` is a native Cordis plugin that registers one immutable bundled provider on `ctx.skills`. The provider owns the `dsh-badge` summary, instruction body, and PNG resource base; `lasmex-tool-skill` remains the sole owner of model-facing catalog and loader rendering.
 
 The shipped CLI composition declares `skill-badge` as disabled. Enabling that existing row is the explicit opt-in; disabled installations advertise no badge skill and gain no model-visible content.
 
@@ -18,8 +18,8 @@ The provider uses the bundled rank after project, custom, and user filesystem so
 
 ## Alternatives considered
 
-**Mount packaged files through `dsh-skill-filesystem`.** Rejected because filesystem discovery, parsing, and watching add lifecycle machinery that an immutable single-skill provider does not need.
+**Mount packaged files through `lasmex-skill-filesystem`.** Rejected because filesystem discovery, parsing, and watching add lifecycle machinery that an immutable single-skill provider does not need.
 
 ## Consequences
 
-The badge instructions and source PNG are versioned with DSH and resolve through a packaged directory resource base. The provider has no configuration surface. Package tests pin provider lifecycle and the official PNG bytes, while a keyless assembled-application snapshot pins the enabled catalog and loaded skill body.
+The badge instructions and source PNG are versioned with LasmeX and resolve through a packaged directory resource base. The provider has no configuration surface. Package tests pin provider lifecycle and the official PNG bytes, while a keyless assembled-application snapshot pins the enabled catalog and loaded skill body.

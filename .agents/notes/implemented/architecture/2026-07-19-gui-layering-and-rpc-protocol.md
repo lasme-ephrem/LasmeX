@@ -10,12 +10,12 @@ English | [中文](2026-07-19-gui-layering-and-rpc-protocol.zh.md)
 
 We need a UI integration layer. Beyond the existing ACP/stdio baseline, more product clients are coming — Web (server), Electron, and others. We call them Clients and want the following capabilities:
 
-- One `dsh` process supporting both `dsh web` (serve) and `dsh --profile headless` (headless) — one process, two modes (a design reservation)
-- Launching inside Electron with the same Web technologies as `dsh web`
+- One `lasmex` process supporting both `lasmex web` (serve) and `lasmex --profile headless` (headless) — one process, two modes (a design reservation)
+- Launching inside Electron with the same Web technologies as `lasmex web`
 
 That demands a stable layered responsibility model in the engineering codebase, so future clients plug in cleanly.
 
-At the same time the physical channels differ per consumer (browser HTTP/WebSocket, in-process fetch/SSE, IPC later), so we also need a channel-independent message model and a single contract source of truth — "adding a method" and "swapping a carrier" must not entangle each other, and every message on the wire must be type-validatable, observable, and reconcilable.
+At the same time the physical channels differ per consumer (browser HTTP/WebSocket, in-process fetch/SSE, and Electron custom-scheme Fetch/SSE), so we also need a channel-independent message model and a single contract source of truth — "adding a method" and "swapping a carrier" must not entangle each other, and every message on the wire must be type-validatable, observable, and reconcilable.
 
 ## Decision
 
@@ -27,20 +27,20 @@ Directories layer as follows:
     - the unified backend protocol (fetch, HTTP, streaming interfaces…) — definitions and support, see the "Message protocol" sections below
 - `packages/client/*`: packages provide client-side capability only; every package stays single-sided. Three kinds live here (the axes are owned by the [client plugin loading note](2026-07-23-client-plugin-loading-model.md)):
     - **Pure libraries** (`ui-slots`, `web-react`, `ui-primitives`, plus the `loader` kernel package): ordinary root-index packages, statically bundled into the shell; the first three are seeded into the module table.
-    - **Static-arrival entry packages** (`connection`, `runtime`, `ui-theme`, `i18n`, `hmr`): no `dsh.client` key and no browser bundle — the shell bundles their `src/client/` half and registers it with `ctx.modules`; they are governed as entries of the host-authored graph like everything else.
-    - **Fetch-arrival plugin packages** (`ui-layout`, `ui-sidebar`, `ui-conversation`, `ui-trajectory`): dual-entry — the root index is the node half (an empty `apply`, existing so the host Loader governs lifecycle and the web plugin registry discovers the package.json `dsh.client` declaration); the implementation lives under `src/client/`, shipped as the `./client` subpath (a tsdown closure-factory bundle). Cross-plugin consumption of `/client` is type-only; value cooperation goes through cordis services.
+    - **Static-arrival entry packages** (`connection`, `runtime`, `ui-theme`, `i18n`, `hmr`): no `lasmex.client` key and no browser bundle — the shell bundles their `src/client/` half and registers it with `ctx.modules`; they are governed as entries of the host-authored graph like everything else.
+    - **Fetch-arrival plugin packages** (`ui-layout`, `ui-sidebar`, `ui-conversation`, `ui-trajectory`): dual-entry — the root index is the node half (an empty `apply`, existing so the host Loader governs lifecycle and the web plugin registry discovers the package.json `lasmex.client` declaration); the implementation lives under `src/client/`, shipped as the `./client` subpath (a tsdown closure-factory bundle). Cross-plugin consumption of `/client` is type-only; value cooperation goes through cordis services.
 - `apps/` holds the externally exported applications, assembled from Client / Host mixtures.
-    - `apps/web` (`dsh-web-frontend`) is the vite application: a thin `main.ts` over the shell API exported by `dsh-client-web`.
-    - `apps/cli` (`@deepseek-ai/dsh`) dispatches commands: `dsh web` = Host + webserver + the built `dsh-web-frontend` dist; `dsh --profile headless` = [a direct core Agent/Session entry point](2026-08-09-headless-direct-core-entry-point.md), with zero Host, HTTP, or browser layer.
-    - A future Electron application reuses the same web client packages over an IPC fetch carrier.
+    - `apps/web` (`lasmex-web-frontend`) is the vite application: a thin `main.ts` over the shell API exported by `lasmex-client-web`.
+    - `apps/cli` (`lasmex`) dispatches commands: `lasmex web` = Host + webserver + the built `lasmex-web-frontend` dist; `lasmex --profile headless` = [a direct core Agent/Session entry point](2026-08-09-headless-direct-core-entry-point.md), with zero Host, HTTP, or browser layer.
+    - `apps/desktop` reuses the same web client packages over an isolated `lasmex://app` Fetch carrier. The main process dispatches that scheme directly to the composed Host and module graph, with no listening port.
 
 ```
-apps/*  (applications: apps/web = vite app, apps/cli = bin dispatch)
+apps/*  (apps/web = vite, apps/desktop = Electron, apps/cli = bin dispatch)
   │ consume
   ▼
 packages/host/*                      packages/client/*
   apiproxy   front layer: protocol     pure libs: ui-slots / web-react / ui-primitives
-  runtime    assembly / host entity    dsh.client plugins ×8 (node half = empty apply,
+  runtime    assembly / host entity    lasmex.client plugins ×8 (node half = empty apply,
   webserver  Web HTTP carriage                              client half = src/client/)
   │ ctx.plugin(...)                      ▲ import only apiproxy's /api /client subpaths
   ▼                                      │ (type-only + the client base class)
@@ -62,28 +62,28 @@ On the protocol side: TS interfaces (`packages/host/apiproxy/src/api/`, zero Nod
 
 | Layer | Package | Responsibility | Key discipline |
 |---|---|---|---|
-| Front layer | `dsh-host-apiproxy` | TS/zod definitions (api/) + the fetch abstraction (fetch/: handler + client base class) | Keep it simple — every consumer needs it; importable from Node and browser alike; protocol content in the "Message protocol" sections below; clients must not bypass api through ctx |
-| Assembly layer | `dsh-host-runtime` | Plugin composition + ApiProxy integration + the web UI plugin mount (in-memory Loader tree over the eight dsh.client packages); home of host-level configuration (defaults/persistenceRoot, future user profile) | Which plugins mount and with what defaults is decided only here; shells must not alter the assembly |
-| Carrier layer | `dsh-host-webserver` | Web HTTP and upgrade: static serving + `/api/*`→handler forwarding + WebSocket upgrade route + close semantics; plugin bundle endpoint + `__DSH_BOOT__` manifest injection (fed by the web plugin registry) | Web (browser access) only; zero workspace dependencies (the registry arrives by structural injection); Electron does not reuse it |
-| Client libraries | `dsh-client-ui-slots` / `dsh-client-web-react` / `dsh-client-ui-primitives` | Slot registry core / ctx↔React glue / pure React atoms | Zero cordis runtime dependency in components; seeded into the loader module table by the shell |
-| Client plugins | `dsh-client-connection` / `dsh-client-runtime` / `dsh-client-ui-theme` / `dsh-client-i18n` / `dsh-client-ui-layout` / `dsh-client-ui-sidebar` / `dsh-client-ui-conversation` / `dsh-client-ui-trajectory` | Browser-side cordis plugin tree (wire consumer, core services, theme, i18n, layout, sidebar, conversation, trajectory) — see the web client architecture note | Dual entry (node half = empty apply; implementation in `src/client/`); the consumption face goes exclusively through ApiProxy |
-| Application | `@deepseek-ai/dsh` (apps/cli) + `dsh-web-frontend` (apps/web, the vite application) | Coarse bin dispatch + one assembly module per application (web.ts / headless.ts); the vite app is a thin main over the `dsh-client-web` shell surface | Applications use dynamic imports so they never load each other; workspace knowledge like dist location stays in the app |
+| Front layer | `lasmex-host-apiproxy` | TS/zod definitions (api/) + the fetch abstraction (fetch/: handler + client base class) | Keep it simple — every consumer needs it; importable from Node and browser alike; protocol content in the "Message protocol" sections below; clients must not bypass api through ctx |
+| Assembly layer | `dsh-host-runtime` | Plugin composition + ApiProxy integration + the web UI plugin mount (in-memory Loader tree over the eight lasmex.client packages); home of host-level configuration (defaults/persistenceRoot, future user profile) | Which plugins mount and with what defaults is decided only here; shells must not alter the assembly |
+| Carrier layer | `lasmex-host-webserver` | Web HTTP and upgrade: static serving + `/api/*`→handler forwarding + WebSocket upgrade route + close semantics; plugin bundle endpoint + `__DSH_BOOT__` manifest injection (fed by the web plugin registry) | Web (browser access) only; zero workspace dependencies (the registry arrives by structural injection); Electron does not reuse it |
+| Client libraries | `lasmex-client-ui-slots` / `lasmex-client-web-react` / `lasmex-client-ui-primitives` | Slot registry core / ctx↔React glue / pure React atoms | Zero cordis runtime dependency in components; seeded into the loader module table by the shell |
+| Client plugins | `lasmex-client-connection` / `lasmex-client-runtime` / `lasmex-client-ui-theme` / `dsh-client-i18n` / `lasmex-client-ui-layout` / `lasmex-client-ui-sidebar` / `lasmex-client-ui-conversation` / `lasmex-client-ui-trajectory` | Browser-side cordis plugin tree (wire consumer, core services, theme, i18n, layout, sidebar, conversation, trajectory) — see the web client architecture note | Dual entry (node half = empty apply; implementation in `src/client/`); the consumption face goes exclusively through ApiProxy |
+| Application | `lasmex` (apps/cli) + `lasmex-web-frontend` (apps/web) + `dsh-desktop` (apps/desktop) | Coarse bin dispatch plus one assembly per product; Web and Electron remain thin mains over the `lasmex-client-web` shell surface | Applications do not import each other; distribution paths and process/window lifecycle stay in the owning app |
 
 #### Naming rule
 
-Packages under `packages/host/*` and `packages/client/*` **must carry the directory-group prefix in the package name**: host/runtime → `dsh-host-runtime`, client/runtime → `dsh-client-runtime`. The directory name does not repeat the group prefix (host/ already expresses it). The package-name tail therefore ≠ the directory name, so the `dsh-*` wildcard in tsconfig.base.json (which resolves by directory name) misses them — **each package in these two groups needs an explicit paths entry**, including separate entries for the client packages' `/client` subpaths so source-level resolution matches the exports map.
+Packages under `packages/host/*` and `packages/client/*` **must carry the directory-group prefix in the package name**: host/runtime → `dsh-host-runtime`, client/runtime → `lasmex-client-runtime`. The directory name does not repeat the group prefix (host/ already expresses it). The package-name tail therefore ≠ the directory name, so the `dsh-*` wildcard in tsconfig.base.json (which resolves by directory name) misses them — **each package in these two groups needs an explicit paths entry**, including separate entries for the client packages' `/client` subpaths so source-level resolution matches the exports map.
 
 #### How to integrate a new application (operational checklist)
 
-1. **Pick a fetch impersonation**: browser same-origin HTTP / in-process `host.handler.fetch` injection / your own transport-aspect subclass (e.g. future Electron IPC, see the "Subclass table" below).
+1. **Pick a Fetch carrier**: browser same-origin HTTP/WebSocket, in-process handler injection, or a secure custom scheme backed by `HostConnectionService.fetch` (see the "Subclass table" below).
 2. **Write an assembly module under `apps/`**: `startHost()` + a client subclass + the application's private signal/print/exit semantics; a mixture never becomes a package — assembly is written in the app.
-3. **Import `dsh-host-webserver` only if you need HTTP carriage**, otherwise zero ports.
+3. **Import `lasmex-host-webserver` only if you need HTTP carriage**, otherwise zero ports.
 
-The two existing applications preserve the division: the Web application mounts Host, carrier, and browser composition, while `dsh --profile headless` mounts a direct core runner with zero Host, HTTP, or ports. ACP-class protocol bridges do not follow the client-carrier checklist: they expose core to the external ecosystem and mount directly via `ctx.plugin(entry-point plugin)` without fetch.
+The applications preserve the division: Web mounts the HTTP/WebSocket carrier and browser composition; desktop mounts the same composition behind its isolated custom scheme with zero listening ports; `lasmex --profile headless` mounts a direct core runner with zero Host, HTTP, or browser layer. ACP-class protocol bridges do not follow the client-carrier checklist: they expose core to the external ecosystem and mount directly via `ctx.plugin(entry-point plugin)` without fetch.
 
 ## Message protocol
 
-The sections from here down are the protocol body carried by the front layer (`dsh-host-apiproxy`). The wire has exactly four message kinds (the four quadrants) — the Web carriage in the right column is only an example; swapping the carrier (in-process/IPC) leaves the quadrants unchanged:
+The sections from here down are the protocol body carried by the front layer (`lasmex-host-apiproxy`). The wire has exactly four message kinds (the four quadrants) — the Web carriage in the right column is only an example; swapping the carrier (in-process/custom scheme) leaves the quadrants unchanged:
 
 ```
                  client 发起                      server 发起
@@ -215,10 +215,10 @@ All four quadrant full forms pass through `onEnvelope`; the base implementation 
 
 | Subclass | Package | doFetch | Purpose |
 |---|---|---|---|
-| `InProcessApiClient` | apiproxy itself | the injected `{ fetch }` handler | **The isomorphic point**: `new InProcessApiClient(toFetchHandler(api))` never touches the network yet runs the real wire serialization/zod/SSE framing; carrier tests and callers can exercise the protocol without opening a port, while product `dsh --profile headless` drives core directly |
-| `WebApiClient` | dsh-client-connection | `globalThis.fetch` uplink + one same-origin WebSocket downlink per logical stream | the browser client; physical boundary in the [WebSocket downlink carrier](2026-08-04-websocket-downlink-carrier.md) |
-| `FixtureApiClient` | dsh-client-connection | unused (protocol-layer override) | serverless UI development (`?fixture`): overrides the `callUnary`/`openMux`/`openHost`/`respond` virtuals and is itself the fake server (frame rpcIds minted by it, semantics self-consistent) |
-| IPC bridge subclass (hypothetical example — no such shell exists) | an Electron shell | IPC serialization round trip | would swap only doFetch; contract and base class unchanged |
+| `InProcessApiClient` | apiproxy itself | the injected `{ fetch }` handler | **The isomorphic point**: `new InProcessApiClient(toFetchHandler(api))` never touches the network yet runs the real wire serialization/zod/SSE framing; carrier tests and callers can exercise the protocol without opening a port, while product `lasmex --profile headless` drives core directly |
+| `WebApiClient` | lasmex-client-connection | `globalThis.fetch` uplink + one same-origin WebSocket downlink per logical stream | the browser client; physical boundary in the [WebSocket downlink carrier](2026-08-04-websocket-downlink-carrier.md) |
+| `FixtureApiClient` | lasmex-client-connection | unused (protocol-layer override) | serverless UI development (`?fixture`): overrides the `callUnary`/`openMux`/`openHost`/`respond` virtuals and is itself the fake server (frame rpcIds minted by it, semantics self-consistent) |
+| `FetchApiClient` | lasmex-client-connection | `globalThis.fetch` for unary and inherited SSE host/mux streams | secure non-HTTP carriers such as desktop `lasmex://app`; Electron's main process forwards each Fetch request to `HostConnectionService.fetch`, which reuses the Typert interceptor and `toFetchHandler` fallback without a public port |
 
 ## How to extend (operational checklists)
 
@@ -244,8 +244,8 @@ Every client consumes one contract: adding a unary method is a five-step mechani
 | A package per mixture (e.g. a standalone headless package) | A mixture has exactly one consumer (its own app); packaging it is ownerless abstraction, while assembly in the app is readable and disposable |
 | Consuming clients connecting to ctx directly (skipping the apiproxy layer) | Clients require wire validation, observability, and multi-client consistency. Direct headless is a local entry point with no client boundary and uses the public Agent/Session seams rather than a client command plane |
 | webserver depending on runtime (saving the handler injection) | Structural-typing injection keeps webserver reusable by sidecars/tests with zero workspace deps; a package dependency would drag assembly knowledge into the carrier layer |
-| Package names without the group prefix (continuing dsh-<tail>) | `dsh-runtime`/`dsh-web-ui` lose their belonging in the flat npm namespace; the cost is one explicit paths entry per package |
-| Reusing the in-repo JSON-RPC 2.0 (dsh-sdk-jsonrpc-server) | Numeric error codes degrade to a single fallback code, contracts get aligned by hand in two copies, and naming drifts without a convention |
+| Package names without the group prefix (continuing dsh-<tail>) | `dsh-runtime`/`lasmex-web-ui` lose their belonging in the flat npm namespace; the cost is one explicit paths entry per package |
+| Reusing the in-repo JSON-RPC 2.0 (lasmex-sdk-jsonrpc-server) | Numeric error codes degrade to a single fallback code, contracts get aligned by hand in two copies, and naming drifts without a convention |
 | A three-envelope model (Request/Response/Frame envelopes, signatures direction-blind) | rpcId correlation is logical-layer; frame and response direction semantics inferred from the channel break the moment the carrier changes |
 | Named Request/Response type pairs as the source of truth (map registering type pairs) | Flat named types are a second name for the same fact; signature inference makes adding a method a one-place change |
 | REST-style paths | The consumer is our own client with no third-party REST expectations; RPC mapping straight onto the method table is more mechanical |

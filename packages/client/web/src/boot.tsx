@@ -35,11 +35,11 @@
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import { createRoot, type Root } from 'react-dom/client'
-import * as ModulesClient from '@deepseek-ai/dsh-client-modules/client'
+import * as ModulesClient from 'lasmex-client-modules/client'
 import {
   ClientModuleSystem, parseBootManifest,
-  type BootManifest, type ClientModuleSystemOptions, type DshWindow,
-} from '@deepseek-ai/dsh-client-modules/client'
+  type BootManifest, type ClientModuleSystemOptions, type LasmexWindow,
+} from 'lasmex-client-modules/client'
 import * as AppShell from './app-shell.ts'
 import { APP_SHELL_ID } from './app-shell.ts'
 import { AppRoot } from './AppRoot.tsx'
@@ -57,7 +57,7 @@ export type BootSeams = Pick<ClientModuleSystemOptions, 'loadBundle'>
  * does not deduplicate by name, and a second fiber would provide 'modules'
  * twice.
  */
-const MODULES_ID = '@deepseek-ai/dsh-client-modules'
+const MODULES_ID = 'lasmex-client-modules'
 
 /**
  * The web shell kernel: mounts the loading page into a DOM element and runs
@@ -95,7 +95,7 @@ export class AppWebEntry {
    * @returns resolves once the UI settled or the failure report rendered.
    */
   async run(): Promise<void> {
-    this.manifest = parseBootManifest((globalThis as DshWindow).__DSH_BOOT__)
+    this.manifest = parseBootManifest((globalThis as LasmexWindow).__DSH_BOOT__)
 
     this.modules = new ClientModuleSystem({
       modules: this.manifest.modules, staticModules: getStaticModules(), ...this.seams,
@@ -109,7 +109,7 @@ export class AppWebEntry {
     // trigger a real fetch), and put the instance on the kernel slot the
     // wrapper's apply reads to provide ctx.modules.
     this.modules.registerStatic(MODULES_ID, ModulesClient)
-    ;(globalThis as DshWindow).__DSH_MODULES__ = this.modules
+    ;(globalThis as LasmexWindow).__DSH_MODULES__ = this.modules
 
     this.root = createRoot(this.el)
     this.root.render(
@@ -203,6 +203,13 @@ export class AppWebEntry {
       }
     }))
 
+    await loader.await()
+    // Entry callbacks may mount child service fibers without awaiting the
+    // thenable returned by ctx.plugin(). Settle those children before the
+    // final entry sweep, then let their service notifications activate any
+    // entries that were inject-pending (notably the shell assembly).
+    const fibers = [...ctx.registry.values()].flatMap(runtime => [...runtime.fibers])
+    await Promise.all(fibers.map(async fiber => fiber.await()))
     await loader.await()
     this.assertEntriesActive()
   }

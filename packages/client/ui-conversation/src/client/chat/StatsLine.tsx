@@ -3,12 +3,12 @@
 // active conversation scrollport (see ConversationRoot data-conversation-scroll).
 
 import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ConversationSnapshot, UseProjection } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+import { Tooltip } from 'lasmex-client-ui-primitives'
+import type { ConversationSnapshot, UseProjection } from 'lasmex-client-runtime/client'
+import type { SnapshotSelectorHook } from 'lasmex-client-ui-slots'
 // Type-only: merges the sessionStats key into SessionProjectionMap for useProjection.
-import type {} from '@deepseek-ai/dsh-session-stats/client'
-import type { ContextPressureProjection, TokenUsageProjection } from '@deepseek-ai/dsh-token-meter/client'
+import type {} from 'lasmex-session-stats/client'
+import type { ContextPressureProjection, TokenUsageProjection } from 'lasmex-token-meter/client'
 import type { ComposerBarProps } from '../contract/slots.ts'
 import { formatTokensPerSecond } from './message-chrome.ts'
 import { assistantStepReading } from './turn-metrics.ts'

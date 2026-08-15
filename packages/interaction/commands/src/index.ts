@@ -1,14 +1,14 @@
 /**
  * Plugin-owned human-command registry shared by interactive UI adapters.
- * @module @deepseek-ai/dsh-commands
+ * @module lasmex-commands
  */
 
 import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { NamedEntries, ScopedLayers } from '@deepseek-ai/dsh-scope'
-import type { ScopeKey, ScopeLayer } from '@deepseek-ai/dsh-scope'
-import type { Session, SessionEvent, SessionEventMap } from '@deepseek-ai/dsh-session'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import type { Agent } from 'lasmex-agent'
+import { NamedEntries, ScopedLayers } from 'lasmex-scope'
+import type { ScopeKey, ScopeLayer } from 'lasmex-scope'
+import type { Session, SessionEvent, SessionEventMap } from 'lasmex-session'
+import { TypertRemoteService, Remote } from 'lasmex-typert-protocol'
 import { CommandId } from './brand.ts'
 import type {
   CommandDescriptor,

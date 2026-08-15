@@ -41,7 +41,7 @@ const appOverlayFiles = new Set([
 const metadataFields = ['id', 'name', 'group', 'inject', 'intercept', 'isolate'] as const
 
 /** The adaptive directory-picker chooser package (mounts a backend row at boot). */
-const CHOOSER_PACKAGE = '@deepseek-ai/dsh-host-directory-picker-auto'
+const CHOOSER_PACKAGE = 'lasmex-host-directory-picker-auto'
 
 /**
  * The packages the chooser mounts by runtime string (mirror of its exported
@@ -51,10 +51,10 @@ const CHOOSER_PACKAGE = '@deepseek-ai/dsh-host-directory-picker-auto'
  * until a macOS boot.
  */
 const CHOOSER_BACKEND_PACKAGES = [
-  '@deepseek-ai/dsh-host-directory-picker-native',
-  '@deepseek-ai/dsh-host-directory-picker-browse',
-  '@deepseek-ai/dsh-client-ui-directory-picker-browse',
-  '@deepseek-ai/dsh-client-ui-directory-picker-native',
+  'lasmex-host-directory-picker-native',
+  'lasmex-host-directory-picker-browse',
+  'lasmex-client-ui-directory-picker-browse',
+  'lasmex-client-ui-directory-picker-native',
 ]
 const jsExprType = new yaml.Type('tag:yaml.org,2002:js', {
   kind: 'scalar',
@@ -102,7 +102,7 @@ if (import.meta.main) {
  * A browser plugin must declare the browser half it ships.
  *
  * The browser roster is discovered by scanning composed packages for a
- * `dsh.client` block, and the node half of a surface plugin is an empty
+ * `lasmex.client` block, and the node half of a surface plugin is an empty
  * `apply`. A `packages/client` package that exports `./client` without that
  * block therefore composes, activates, and contributes nothing — its bundle is
  * never served and no error is raised anywhere. The mismatch is invisible in
@@ -110,20 +110,20 @@ if (import.meta.main) {
  * this group is checked: a Host package's `./client` export is the typed wire
  * face its browser consumers import, not a plugin the roster serves.
  * @returns one violation per client package whose `./client` export and
- * `dsh.client` declaration disagree.
+ * `lasmex.client` declaration disagree.
  */
 function validateClientHalvesDeclared(): string[] {
   return globSync('packages/client/*/package.json', { cwd: root }).flatMap((manifestPath) => {
     const manifest = readManifest(manifestPath) as PackageManifest & {
       exports?: Record<string, unknown>
-      dsh?: { client?: unknown }
+      lasmex?: { client?: unknown }
     }
     const shipsClient = manifest.exports !== undefined && Object.hasOwn(manifest.exports, './client')
-    const declaresClient = manifest.dsh?.client !== undefined
+    const declaresClient = manifest.lasmex?.client !== undefined
     if (shipsClient === declaresClient) return []
     return [shipsClient
-      ? `${manifestPath}: exports "./client" but declares no dsh.client, so its browser half is never served`
-      : `${manifestPath}: declares dsh.client but exports no "./client" entry to serve`]
+      ? `${manifestPath}: exports "./client" but declares no lasmex.client, so its browser half is never served`
+      : `${manifestPath}: declares lasmex.client but exports no "./client" entry to serve`]
   })
 }
 
@@ -137,7 +137,7 @@ function validateClientHalvesDeclared(): string[] {
  * contributor to that service reaches nobody; a row that registers into a host
  * singleton registers once per live session, so the second one collides.
  *
- * Both have happened. `shell-env` in a preset realm left `DSH_WEB_URL` reaching
+ * Both have happened. `shell-env` in a preset realm left `LASMEX_WEB_URL` reaching
  * no shell, and `tool-subagent-report` handed every child `report` once per live
  * session until the second registration threw. Neither changes a tool catalog,
  * so no catalog assertion can see them — and the shipped presets are near-copies

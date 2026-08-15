@@ -3,13 +3,13 @@
  * recovery after an HMR collapse of the declaring entry. */
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { SettingsScopeBinder } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { SettingsScopeBinder } from 'lasmex-client-ui-settings/client'
+import { TestRemote } from 'lasmex-client-test-runtime'
 import {
   apply, inject, SETTINGS_NS,
-} from '@deepseek-ai/dsh-client-locale/client'
-import type { LanguageRowInjected, LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
+} from 'lasmex-client-locale/client'
+import type { LanguageRowInjected, LocaleRuntime } from 'lasmex-client-locale/client'
 import { LOCALE_SETTINGS_NAMESPACE, LocaleSettingsSchema } from '../src/locale-settings.ts'
 import { LanguageRow } from '../src/client/LanguageRow.tsx'
 import type { createLanguageRowStore } from '../src/client/settings-store.ts'
@@ -73,8 +73,7 @@ function faceOf(slots: SlotRegistry) {
 }
 
 describe('locale apply', () => {
-  // A fresh service opens in the browser's language, so these wiring specs
-  // pin one to keep their zh baseline independent of the test environment.
+  // These wiring specs pin a Chinese browser to keep their baseline deterministic.
   beforeEach(() => {
     vi.stubGlobal('navigator', { languages: ['zh-CN'], language: 'zh-CN' })
   })
@@ -95,7 +94,8 @@ describe('locale apply', () => {
     // Base dictionaries are registered: the (ns, locale) seats are occupied.
     expect(() => locale.register('common', 'zh', {})).toThrow('already has locale')
     expect(() => locale.register('common', 'en', {})).toThrow('already has locale')
-    expect(locale.bind(SETTINGS_NS)('language.title')).toBe('语言')
+    expect(() => locale.register('common', 'fr', {})).toThrow('already has locale')
+    expect(locale.bind(SETTINGS_NS)('language.title')).toBe('Langue')
     const entry = before.slots.entries(SLOT).find(e => e.component === LanguageRow)!
     expect(entry.options).toMatchObject({ id: 'language', order: 0 })
 
@@ -119,7 +119,7 @@ describe('locale apply', () => {
     const { entry, instance, face } = faceOf(b.slots)
     // The inject-time re-sync sealed the init window: the mirror is current.
     expect(instance.getSnapshot().active).toBe('en')
-    expect(instance.getSnapshot().options.map(o => o.id)).toEqual(['zh', 'en'])
+    expect(instance.getSnapshot().options.map(o => o.id)).toEqual(['fr', 'en', 'zh'])
     // Copy rides the standard locale seat: the entry declares the namespace.
     expect(entry.locale).toBe(SETTINGS_NS)
     expect(locale.bind(SETTINGS_NS)('language.title')).toBe('Language')
@@ -140,7 +140,7 @@ describe('locale apply', () => {
     await vi.waitFor(() => { expect(locale.getLocale().active).toBe('en') })
     b.setHostPreference(undefined)
     b.ctx.remote.$dispatch('settings/document-updated', [LOCALE_SETTINGS_NAMESPACE, 0])
-    await vi.waitFor(() => { expect(locale.getLocale().active).toBe('zh') })
+    await vi.waitFor(() => { expect(locale.getLocale().active).toBe('fr') })
     b.setHostPreference('en')
     b.ctx.remote.$dispatch('settings/document-updated', [LOCALE_SETTINGS_NAMESPACE, 0])
     await vi.waitFor(() => { expect(locale.getLocale().active).toBe('en') })

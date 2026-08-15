@@ -10,8 +10,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import type { WebServer } from '@deepseek-ai/dsh-host-webserver'
+import SystemPrompt from 'lasmex-system-prompt'
+import type { WebServer } from 'lasmex-host-webserver'
 import { apply, Config, internals } from '../src/index.ts'
 
 vi.mock('node:os', async importOriginal => ({
@@ -35,7 +35,7 @@ const originalResolve = internals.resolveDistIndex
 
 /** Stage a dist fixture and point the bundle's resolver at it. */
 function stageDist(): string {
-  dist = mkdtempSync(join(tmpdir(), 'dsh-web-app-'))
+  dist = mkdtempSync(join(tmpdir(), 'lasmex-web-app-'))
   mkdirSync(join(dist, 'dist'))
   const index = join(dist, 'dist', 'index.html')
   writeFileSync(index, '<head></head><body>shell</body>')
@@ -94,16 +94,16 @@ describe('web-app runtime glue', () => {
       lanAddresses: ['192.168.1.5'],
       trustedHosts: ['192.168.1.5', 'lab.internal'],
     })
-    expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567 (LAN: http://192.168.1.5:4567)')
+    expect(log).toHaveBeenCalledWith('lasmex web: http://127.0.0.1:4567 (LAN: http://192.168.1.5:4567)')
     const assembly = await ctx.systemPrompt.assemble()
-    expect(assembly.sections.find(entry => entry.name === 'harness:source')?.text).toContain('DeepSeek Harness implementation checkout')
+    expect(assembly.sections.find(entry => entry.name === 'harness:source')?.text).toContain('LasmeX implementation checkout')
     const section = assembly.sections.find(entry => entry.name === 'app:web-surface')
     expect(section?.text).toContain('http://127.0.0.1:4567')
     // The single update contract: the receiver is always on; no-refresh
     // reloads additionally need the rebuild watcher.
     expect(section?.text).toContain('pnpm run dev:web')
     const webRuntime = contributions.find(contribution => contribution.name === 'web-runtime')
-    expect(webRuntime?.resolve()).toEqual({ DSH_WEB_URL: 'http://127.0.0.1:4567' })
+    expect(webRuntime?.resolve()).toEqual({ LASMEX_WEB_URL: 'http://127.0.0.1:4567' })
     await ctx.fiber.dispose()
   })
 
@@ -150,7 +150,7 @@ describe('web-app runtime glue', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     apply(ctx, new Config({ printUrl: true, surfaceContext: true, trustedHosts: [] }))
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567')
+    expect(log).toHaveBeenCalledWith('lasmex web: http://127.0.0.1:4567')
     await ctx.fiber.dispose()
   })
 
@@ -169,7 +169,7 @@ describe('web-app runtime glue', () => {
     expect(log).not.toHaveBeenCalled()
     release!()
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567')
+    expect(log).toHaveBeenCalledWith('lasmex web: http://127.0.0.1:4567')
     await settled.fiber.dispose()
 
     // Failed path: Loader reports the sibling failure; the app prints no URL
@@ -213,7 +213,7 @@ describe('web-app runtime glue', () => {
     apply(ctx, new Config({ printUrl: false, surfaceContext: true, trustedHosts: [] }))
     await ctx.plugin(SystemPrompt, { persona: '' })
     await new Promise(resolve => setTimeout(resolve, 0))
-    await expect(ctx.systemPrompt.assemble()).rejects.toThrow('webServer service missing')
+    await expect(ctx.systemPrompt.assemble()).rejects.toThrow('service webServer absent')
     await ctx.fiber.dispose()
   })
 
@@ -225,7 +225,7 @@ describe('web-app runtime glue', () => {
     try {
       expect(originalResolve()).toMatch(/dist[/\\]index\.html$/)
     } catch (error) {
-      expect((error as Error).message).toContain('frontend dist not built')
+      expect((error as Error).message).toContain('frontend de distribution n’est pas construit')
     }
   })
 })

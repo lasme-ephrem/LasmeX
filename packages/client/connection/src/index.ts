@@ -1,10 +1,9 @@
 /** Host HTTP bridge for browser-client RPC. */
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type {} from '@deepseek-ai/dsh-attachment'
+import type {} from 'lasmex-attachment'
 // Activates the webServer Context merge used below.
-import type { WebRoute, WebUpgradeRoute } from '@deepseek-ai/dsh-host-webserver'
-import { toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
+import type { WebRoute, WebUpgradeRoute } from 'lasmex-host-webserver'
 import { API_PATH, HOST_EVENTS_PATH, MUX_EVENTS_PATH } from './api-path.ts'
 import { bridge, DEFAULT_MAX_REQUEST_BODY_BYTES } from './http-bridge.ts'
 import { assertTrustedAuthority, isTrustedApiRequest } from './api-request-trust.ts'
@@ -43,8 +42,8 @@ function assertImageBodyCapacity(ctx: Context, maxRequestBodyBytes: number): voi
   }
 }
 
-/** Services required before providing Connection; API Proxy is an optional `/api` fallback. */
-export const inject = ['webServer']
+/** Required services: none; physical carriers attach when their services exist. */
+export const inject: string[] = []
 
 /** Plugin config: the deployment's non-loopback serving authorities. */
 export interface ConnectionConfig {
@@ -53,7 +52,7 @@ export interface ConnectionConfig {
    * port-less `host` matching any port. The /api trust fence refuses any
    * request whose Host is neither loopback nor listed here, so a
    * non-loopback (`0.0.0.0`) deployment must declare the names it is reached
-   * by (the dsh CLI derives the machine's LAN IP literals itself). An entry
+   * by (the LasmeX CLI derives the machine's LAN IP literals itself). An entry
    * that is not a bare, canonical authority fails the plugin load.
    */
   trustedHosts?: string[]
@@ -134,9 +133,13 @@ export function apply(ctx: Context, config?: ConnectionConfig): void {
   // Config boundary: a malformed entry fails the load loudly here rather than
   // silently authorizing its hostname prefix at request time.
   for (const entry of trustedHosts) assertTrustedAuthority(entry)
-  if (ctx.get('apiProxy') !== undefined) assertImageBodyCapacity(ctx, maxRequestBodyBytes)
   const connection = new HostConnectionService(ctx, trustedHosts)
-  const fetchHandler = connection.createSharedFetchHandler(API_PATH, {
+  if (ctx.get('apiProxy') === undefined) {
+    ctx.inject(['apiProxy'], (apiCtx) => { assertImageBodyCapacity(apiCtx, maxRequestBodyBytes) })
+  } else {
+    assertImageBodyCapacity(ctx, maxRequestBodyBytes)
+  }
+  const browserFetchHandler: { fetch(request: Request): Promise<Response> } = {
     async fetch(request) {
       const pathname = new URL(request.url).pathname
       const method = pathname.startsWith(`${API_PATH}/`)
@@ -153,44 +156,47 @@ export function apply(ctx: Context, config?: ConnectionConfig): void {
           headers: { connection: 'Upgrade', upgrade: 'websocket' },
         })
       }
-      const apiProxy = ctx.get('apiProxy')
-      if (apiProxy === undefined) return new Response('not found', { status: 404 })
-      return toFetchHandler(apiProxy).fetch(request)
-    },
-  })
-  const route: WebRoute = {
-    kind: 'prefix',
-    path: API_PATH,
-    handler: async (req, res) => {
-      if (!isTrustedApiRequest(req, trustedHosts)) {
-        res.writeHead(403)
-        res.end('forbidden')
-        return
-      }
-      await bridge(req, res, fetchHandler, maxRequestBodyBytes)
+      return connection.fetch(request)
     },
   }
-  ctx.effect(() => ctx.webServer.register(route), 'client-connection: /api route')
-  ctx.inject(['apiProxy'], (apiCtx) => {
-    assertImageBodyCapacity(apiCtx, maxRequestBodyBytes)
-    const downlinks = new WebSocketDownlinks(apiCtx.apiProxy)
-    const registerDownlink = (
-      path: string,
-      handle: WebUpgradeRoute['handler'],
-    ): void => {
-      apiCtx.effect(() => apiCtx.webServer.registerUpgrade({
-        path,
-        handler: (req, socket, head) => {
-          if (!isTrustedApiRequest(req, trustedHosts)) {
-            rejectWebSocketUpgrade(socket)
-            return
-          }
-          return handle(req, socket, head)
-        },
-      }), `client-connection: ${path} WebSocket`)
+  const attachWebCarrier = (httpCtx: Context): void => {
+    const webServer = httpCtx.get('webServer')
+    if (webServer === undefined) throw new Error('client-connection HTTP carrier started without webServer')
+    const route: WebRoute = {
+      kind: 'prefix',
+      path: API_PATH,
+      handler: async (req, res) => {
+        if (!isTrustedApiRequest(req, trustedHosts)) {
+          res.writeHead(403)
+          res.end('forbidden')
+          return
+        }
+        await bridge(req, res, browserFetchHandler, maxRequestBodyBytes)
+      },
     }
-    apiCtx.effect(() => () => downlinks.close(), 'client-connection: WebSocket downlinks')
-    registerDownlink(MUX_EVENTS_PATH, (req, socket, head) => { downlinks.handleMux(req, socket, head) })
-    registerDownlink(HOST_EVENTS_PATH, (req, socket, head) => { downlinks.handleHost(req, socket, head) })
-  })
+    httpCtx.effect(() => webServer.register(route), 'client-connection: /api route')
+    httpCtx.inject(['apiProxy'], (apiCtx) => {
+      const downlinks = new WebSocketDownlinks(apiCtx.apiProxy)
+      const registerDownlink = (
+        path: string,
+        handle: WebUpgradeRoute['handler'],
+      ): void => {
+        apiCtx.effect(() => webServer.registerUpgrade({
+          path,
+          handler: (req, socket, head) => {
+            if (!isTrustedApiRequest(req, trustedHosts)) {
+              rejectWebSocketUpgrade(socket)
+              return
+            }
+            return handle(req, socket, head)
+          },
+        }), `client-connection: ${path} WebSocket`)
+      }
+      apiCtx.effect(() => () => downlinks.close(), 'client-connection: WebSocket downlinks')
+      registerDownlink(MUX_EVENTS_PATH, (req, socket, head) => { downlinks.handleMux(req, socket, head) })
+      registerDownlink(HOST_EVENTS_PATH, (req, socket, head) => { downlinks.handleHost(req, socket, head) })
+    })
+  }
+  if (ctx.get('webServer') === undefined) ctx.inject(['webServer'], attachWebCarrier)
+  else attachWebCarrier(ctx)
 }

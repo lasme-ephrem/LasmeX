@@ -6,13 +6,13 @@
 
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
 import {
   createSnapshotStore, EMPTY_CHAT_SNAPSHOT, EMPTY_CONVERSATION_VIEWS,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
-import type { ClientContext, ConversationSnapshot, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import type { ClientContext, ConversationSnapshot, SessionId } from 'lasmex-client-runtime/client'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import type { ComposerAttachment } from '../src/client/contract/slots.ts'
 import type { DraftAttachmentId } from '../src/client/input/contract.ts'
@@ -1192,16 +1192,16 @@ describe('command launcher chrome and control seats', () => {
     const { view } = bench({ permissions, command })
     const trigger = view.getByLabelText(/^访问模式/) as HTMLButtonElement
     // Title-case display is presentation only; the menu ids stay machine names.
-    expect(trigger.textContent).toBe('Read Only')
+    expect(trigger.textContent).toBe('只读')
     expect([...trigger.querySelectorAll('svg')]
       .every(icon => icon.closest('[aria-hidden="true"]') !== null)).toBe(true)
     fireEvent.click(trigger)
     const items = view.getAllByRole('menuitem')
-    expect(items.map(o => o.textContent)).toEqual(['Read Only', 'Workspace Write', 'Full access'])
+    expect(items.map(o => o.textContent)).toEqual(['只读', '工作区可写', '完全访问'])
     fireEvent.click(items[1]!)
     // Optimistic pick + disable until admission resolves (command stub resolves true).
     const busy = view.getByLabelText(/^访问模式/) as HTMLButtonElement
-    expect(busy.textContent).toBe('Workspace Write')
+    expect(busy.textContent).toBe('工作区可写')
     expect(busy.disabled).toBe(true)
     expect(command).toHaveBeenCalledWith('/permission workspace-write')
     await act(async () => {})
@@ -1219,11 +1219,11 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: 'Full access' }))
+    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
 
     expect(command).not.toHaveBeenCalled()
-    expect(view.getByRole('dialog', { name: '确认启用 Full access？' })).toBeTruthy()
-    const enable = view.getByRole('button', { name: '启用 Full access' }) as HTMLButtonElement
+    expect(view.getByRole('dialog', { name: '确认启用完全访问？' })).toBeTruthy()
+    const enable = view.getByRole('button', { name: '启用完全访问' }) as HTMLButtonElement
     expect(enable.disabled).toBe(true)
 
     fireEvent.click(view.getByRole('checkbox', { name: '我已了解风险，并愿意继续' }))
@@ -1233,7 +1233,7 @@ describe('command launcher chrome and control seats', () => {
     expect(command).toHaveBeenCalledOnce()
     expect(command).toHaveBeenCalledWith('/permission danger-full-access')
     expect(view.queryByRole('dialog')).toBeNull()
-    expect((view.getByLabelText(/^访问模式/) as HTMLButtonElement).textContent).toBe('Full access')
+    expect((view.getByLabelText(/^访问模式/) as HTMLButtonElement).textContent).toBe('完全访问')
     await act(async () => {})
   })
 
@@ -1249,18 +1249,18 @@ describe('command launcher chrome and control seats', () => {
     const { view } = bench({ permissions, command })
     const openConfirmation = () => {
       fireEvent.click(view.getByLabelText(/^访问模式/))
-      fireEvent.click(view.getByRole('menuitem', { name: 'Full access' }))
+      fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
     }
 
     openConfirmation()
     fireEvent.click(view.getByRole('checkbox'))
-    fireEvent.click(view.getByRole('button', { name: '取消' }))
+    fireEvent.click(view.getByText('取消'))
     expect(command).not.toHaveBeenCalled()
-    expect((view.getByLabelText(/^访问模式/) as HTMLButtonElement).textContent).toBe('Workspace Write')
+    expect((view.getByLabelText(/^访问模式/) as HTMLButtonElement).textContent).toBe('工作区可写')
 
     openConfirmation()
     expect((view.getByRole('checkbox') as HTMLInputElement).checked).toBe(false)
-    expect((view.getByRole('button', { name: '启用 Full access' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((view.getByRole('button', { name: '启用完全访问' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('revokes an open Full access confirmation when the task locks', () => {
@@ -1274,7 +1274,7 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view, session } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: 'Full access' }))
+    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
     fireEvent.click(view.getByRole('checkbox'))
     act(() => { session.set(snapshotOf({ removed: true })) })
     expect(view.queryByRole('dialog')).toBeNull()
@@ -1292,7 +1292,7 @@ describe('command launcher chrome and control seats', () => {
     }
     const { view, props } = bench({ permissions, command })
     fireEvent.click(view.getByLabelText(/^访问模式/))
-    fireEvent.click(view.getByRole('menuitem', { name: 'Full access' }))
+    fireEvent.click(view.getByRole('menuitem', { name: '完全访问' }))
     fireEvent.click(view.getByRole('checkbox'))
     view.rerender(<InputBar {...props} sessionId={'s2' as SessionId} />)
     expect(view.queryByRole('dialog')).toBeNull()

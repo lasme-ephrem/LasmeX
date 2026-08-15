@@ -1,20 +1,19 @@
 ---
 name: Feature
-about: 新增或有意改变可观察行为
+about: Ajouter ou modifier un comportement observable
 title: ''
-labels: ''
+labels: 'type/feature'
 assignees: ''
-type: Feature
 ---
 
-<!-- 标题写中文行动或结果句；外露正文不超过 50 单位。 -->
-一句话说明预期结果。
+<!-- Rédigez un titre d’action ou de résultat en français. Ne dépassez pas 50 unités visibles. -->
+Résumez le résultat attendu en une phrase.
 
 <details>
-<summary>验收与细节</summary>
+<summary>Validation et détails</summary>
 
-- 验收条件：
-- 用户或模型可见变化：
-- 测试证据：
+- Critères de validation :
+- Changement visible par l’utilisateur ou le modèle :
+- Preuves de test :
 
 </details>

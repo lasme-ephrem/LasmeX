@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-sdk-jsonrpc-server",
-  "description": "Stdio JSON-RPC server plugin for out-of-process DeepSeek Harness SDK clients",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-sdk-jsonrpc-server",
+  "description": "Stdio JSON-RPC server plugin for out-of-process LasmeX SDK clients",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/sdk/server"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -35,28 +30,37 @@
     "@deepseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-llm-deepseek": "workspace:^",
+    "lasmex-scope": "workspace:^",
+    "lasmex-sdk-protocol": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-subagent": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-spine-demo": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-spine-demo": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-llm-deepseek": "workspace:^",
+    "lasmex-scope": "workspace:^",
+    "lasmex-sdk-protocol": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence-jsonl": "workspace:^",
+    "lasmex-subagent": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/sdk/server"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

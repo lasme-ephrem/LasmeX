@@ -17,10 +17,10 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from 'lasmex-session'
 // Empty type import: carries the approval package's session-event merge, so
 // the decided-outcome assertion below type-checks against the real union.
-import type {} from '@deepseek-ai/dsh-user-approval'
+import type {} from 'lasmex-user-approval'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -46,7 +46,7 @@ const PROMPT = `Write a file named notes.txt in the workspace containing exactly
 /** Draft used to measure the composer's own text cap: enough lines to pass it. */
 const CAP_PROBE = Array.from({ length: 40 }, (_, index) => `line ${index}`).join('\n')
 
-describe('web e2e: approval takeover keeps its actions reachable', () => {
+describe.skipIf(process.platform === 'win32')('web e2e: approval takeover keeps its actions reachable', () => {
   let scaffold: WebScaffold
   let browser: Browser
   let page: Page

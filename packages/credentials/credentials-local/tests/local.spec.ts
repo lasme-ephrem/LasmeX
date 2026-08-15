@@ -3,9 +3,9 @@ import { Context } from '@deepseek-ai/cordis'
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
-import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialRef } from 'lasmex-credentials'
+import { createLaunchEnvironmentSnapshot, LASMEX_LAUNCH_ENVIRONMENT_KEY } from 'lasmex-launch-environment'
+import type { CredentialRef } from 'lasmex-credentials'
 import { LocalCredentialProvider, resolveSpec } from '../src/index.ts'
 
 /** Credential documents are seeded owner-only, exactly as the provider creates them. */
@@ -24,7 +24,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-credentials-local-'))
+  const dir = await mkdtemp(join(tmpdir(), 'lasmex-credentials-local-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }
@@ -49,12 +49,12 @@ function updates(ctx: Context): CredentialRef[] {
 
 describe('resolveSpec', () => {
   it('defaults to .credentials.yaml under the harness home with watching on', () => {
-    const spec = resolveSpec({ dshHome: '/custom/home' })
+    const spec = resolveSpec({ lasmexHome: '/custom/home' })
     expect(spec).toEqual({ filename: resolve('/custom/home/.credentials.yaml'), watch: true, debounceMs: 100 })
   })
 
   it('lets an explicit path win over the home', () => {
-    const spec = resolveSpec({ path: '/etc/dsh/creds.yaml', dshHome: '/ignored', watch: false, debounceMs: 5 })
+    const spec = resolveSpec({ path: '/etc/dsh/creds.yaml', lasmexHome: '/ignored', watch: false, debounceMs: 5 })
     expect(spec).toEqual({ filename: resolve('/etc/dsh/creds.yaml'), watch: false, debounceMs: 5 })
   })
 })
@@ -107,14 +107,14 @@ describe('layering and reads', () => {
 })
 
 describe('layer ladder', () => {
-  // inherited process env > .credentials.yaml > $DSH_HOME/.env, and the
+  // inherited process env > .credentials.yaml > $LASMEX_HOME/.env, and the
   // invoking directory's .env supplies no credential at all.
   async function bootLayered(
     path: string,
     layers: Parameters<typeof createLaunchEnvironmentSnapshot>[0],
   ): Promise<Context> {
     const ctx = new Context()
-    ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot(layers))
+    ctx.provide(LASMEX_LAUNCH_ENVIRONMENT_KEY, createLaunchEnvironmentSnapshot(layers))
     const fiber = ctx.plugin(LocalCredentialProvider, { path, watch: false })
     cleanups.push(async () => { await fiber.dispose() })
     await fiber
@@ -127,7 +127,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'DSH_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'older-user-env' } },
+      { source: 'user-env', path: '/home/.lasmex/.env', values: { DSH_CRED_TEST: 'older-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'stored', source: 'file' })
     // A key sitting in the user's .env does not make the stored one
@@ -141,7 +141,7 @@ describe('layer ladder', () => {
     const dir = await tempDir()
     const ctx = await bootLayered(join(dir, '.credentials.yaml'), [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.lasmex/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'from-user-env', source: 'user-env' })
     // Writable: storing a key replaces it as the effective one.
@@ -157,7 +157,7 @@ describe('layer ladder', () => {
     const layers = [
       { source: 'process' as const, values: {} },
       { source: 'project-env' as const, path: '/work/.env', values: { DSH_CRED_TEST: 'from-project' } },
-      { source: 'user-env' as const, path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user' } },
+      { source: 'user-env' as const, path: '/home/.lasmex/.env', values: { DSH_CRED_TEST: 'from-user' } },
     ]
     const bare = await bootLayered(path, layers)
     expect(await bare.credentials.resolve(KEY)).toEqual({ value: 'from-project', source: 'project-env' })
@@ -215,7 +215,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'DSH_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: { DSH_CRED_TEST: 'from-shell' } },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.lasmex/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'from-shell', source: 'env' })
     expect(await ctx.credentials.describe(KEY)).toEqual({ configured: true, source: 'env', writable: false })

@@ -1,9 +1,9 @@
 import { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { describe, expect, it, vi } from 'vitest'
-import type { RpcResponse, SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+import type { RpcResponse, SettingsNamespaceView } from 'lasmex-api-remotes/client'
+import { TestRemote } from 'lasmex-client-test-runtime'
+import type { SettingsScope } from 'lasmex-client-runtime/client'
 import { SettingsScopeController, SettingsScopeBinder } from '../src/client/settings-scope.ts'
 
 interface UiTestSettings {

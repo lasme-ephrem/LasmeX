@@ -3,18 +3,18 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { assembleContextFor } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import { CallId, LlmAdapter } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, StreamChunk } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import * as SubagentSpawn from '@deepseek-ai/dsh-subagent-spawn-in-process'
-import * as control from '@deepseek-ai/dsh-tool-subagent-control'
+import type { Agent } from 'lasmex-agent'
+import { assembleContextFor } from 'lasmex-agent'
+import AgentLoop from 'lasmex-agent-loop'
+import { mountAgentLoopTestDependencies } from 'lasmex-agent-loop-testkit'
+import { CallId, LlmAdapter } from 'lasmex-llm'
+import type { GenerateOptions, StreamChunk } from 'lasmex-llm'
+import { SessionId } from 'lasmex-session'
+import type { SessionEvent } from 'lasmex-session'
+import JsonlSessionPersistence from 'lasmex-session-persistence-jsonl'
+import SubagentRuntime from 'lasmex-subagent'
+import * as SubagentSpawn from 'lasmex-subagent-spawn-in-process'
+import * as control from 'lasmex-tool-subagent-control'
 import { textResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 import * as tool from '../src/index.ts'
 
@@ -48,7 +48,7 @@ afterEach(async () => {
 async function setup(options: { load?: boolean; config?: tool.Config } = {}) {
   const ctx = new Context()
   await mountAgentLoopTestDependencies(ctx)
-  const root = mkdtempSync(join(tmpdir(), 'dsh-tool-subagent-report-'))
+  const root = mkdtempSync(join(tmpdir(), 'lasmex-tool-subagent-report-'))
   await ctx.plugin(JsonlSessionPersistence, { root })
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(SubagentRuntime)
@@ -131,7 +131,7 @@ async function sectionNames(ctx: Context, agent: Agent): Promise<string[]> {
   return assembly.sections.map(section => section.name)
 }
 
-describe('dsh-tool-subagent-report', () => {
+describe('lasmex-tool-subagent-report', () => {
   it('registers report only in continuable child scopes', async () => {
     const { ctx, parent } = await setup()
     expect(ctx.tools.schemas().map(schema => schema.name)).not.toContain('report')
@@ -540,7 +540,7 @@ function userTexts(events: readonly SessionEvent[]): string[] {
     : [])
 }
 
-describe('dsh-tool-subagent-report result independence', () => {
+describe('lasmex-tool-subagent-report result independence', () => {
   it('does not report a final assistant answer automatically or create Jobs', async () => {
     const { ctx, parent, adapter } = await setup()
     const { started } = await startChild(ctx, parent)

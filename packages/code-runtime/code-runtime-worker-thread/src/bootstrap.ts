@@ -2,7 +2,7 @@
  * Worker-side execution logic, written as plain functions over an injected port so the unit
  * suite can run every line IN-PROCESS against a fake port (a real worker thread is a separate
  * V8 isolate the coverage provider cannot observe).
- * @module @deepseek-ai/dsh-code-runtime-worker-thread/src/bootstrap
+ * @module lasmex-code-runtime-worker-thread/src/bootstrap
  */
 
 import { inspect } from 'node:util'
@@ -325,10 +325,11 @@ export function makeNamespaces(
     for (const name of names) {
       Object.defineProperty(namespace, name, {
         enumerable: true,
-        value: (args: unknown): Promise<unknown> => {
+        value: function (args: unknown): Promise<unknown> {
+          const bindingArgs = arguments.length === 0 ? {} : args
           let detached: ReturnType<typeof snapshotCodeJsonValue>
           try {
-            detached = snapshotCodeJsonValue(args)
+            detached = snapshotCodeJsonValue(bindingArgs)
           } catch {
             detached = undefined
           }

@@ -4,11 +4,11 @@
  * any request was built under by taking the latest canonical snapshot; the
  * loop uses the same equality helper to avoid logging unchanged headers.
  *
- * @module dsh-session/request-header
+ * @module lasmex-session/request-header
  */
 
-import { callConfigEquals } from '@deepseek-ai/dsh-llm'
-import type { ToolSchema } from '@deepseek-ai/dsh-llm'
+import { callConfigEquals } from 'lasmex-llm'
+import type { ToolSchema } from 'lasmex-llm'
 import type { EpochHeader, SessionEvent } from './types.ts'
 
 /**

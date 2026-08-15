@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-subagent",
+  "name": "lasmex-subagent",
   "description": "Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/subagent/subagent"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -40,67 +35,76 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-session-projection-cache": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-presets": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-scope": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence": "workspace:^",
+    "lasmex-session-projection": "workspace:^",
+    "lasmex-session-projection-cache": "workspace:^",
+    "lasmex-jobs": "workspace:^",
+    "lasmex-tools": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "peerDependenciesMeta": {
-    "@deepseek-ai/dsh-agent-presets": {
+    "lasmex-agent-presets": {
       "optional": true
     },
-    "@deepseek-ai/dsh-sandbox": {
+    "lasmex-sandbox": {
       "optional": true
     },
-    "@deepseek-ai/dsh-sandbox-policy": {
+    "lasmex-sandbox-policy": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-persistence": {
+    "lasmex-session-persistence": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-projection": {
+    "lasmex-session-projection": {
       "optional": true
     },
-    "@deepseek-ai/dsh-session-projection-cache": {
+    "lasmex-session-projection-cache": {
       "optional": true
     },
-    "@deepseek-ai/dsh-jobs": {
+    "lasmex-jobs": {
       "optional": true
     },
-    "@deepseek-ai/dsh-user-approval": {
+    "lasmex-user-approval": {
       "optional": true
     }
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-session-projection-cache": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/dsh-storage-domain": "workspace:^",
-    "@deepseek-ai/dsh-jobs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-agent-presets": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-sandbox": "workspace:^",
+    "lasmex-sandbox-policy": "workspace:^",
+    "lasmex-scope": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-persistence": "workspace:^",
+    "lasmex-session-projection": "workspace:^",
+    "lasmex-session-projection-cache": "workspace:^",
+    "lasmex-storage": "workspace:^",
+    "lasmex-storage-domain": "workspace:^",
+    "lasmex-jobs": "workspace:^",
+    "lasmex-tools": "workspace:^",
+    "lasmex-user-approval": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/subagent/subagent"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

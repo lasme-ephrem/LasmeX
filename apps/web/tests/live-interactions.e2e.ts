@@ -1,6 +1,6 @@
 // Web e2e scenarios: live-turn interactions — cancellation, error surfacing,
 // and transient-retry recovery, all through the real composition and wire.
-// The model adapter is dsh-llm-replay with override sidecars: `hang` (+ a
+// The model adapter is lasmex-llm-replay with override sidecars: `hang` (+ a
 // readyFile marker) makes mid-stream cancel deterministic by construction,
 // `throw` entries express provider failures by stable code, and `{ patches }`
 // augmentation injects a transient throw before the recorded success so
@@ -16,9 +16,9 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterEach, describe, expect, it, onTestFailed } from 'vitest'
-import { deriveReplayScript, parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
-import type { ReplayOverrideDoc } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { deriveReplayScript, parseSessionLog } from 'lasmex-llm-replay'
+import type { ReplayOverrideDoc } from 'lasmex-llm-replay'
+import type { SessionEvent } from 'lasmex-session'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -81,7 +81,7 @@ describe('web e2e: live-turn interactions (cancel / error / retry)', () => {
       // The sidecar CONTENT is authored in this spec; the file is a per-run
       // artifact minted in a spec-owned temp dir. It must exist BEFORE the
       // scaffold boots — installLlmReplay resolves the script at install.
-      sidecarDir = await mkdtemp(join(tmpdir(), 'dsh-web-e2e-sidecar-'))
+      sidecarDir = await mkdtemp(join(tmpdir(), 'lasmex-web-e2e-sidecar-'))
       overridePath = join(sidecarDir, 'replay.override.json')
       await writeFile(overridePath, JSON.stringify(buildOverride(sidecarDir)))
     }
@@ -135,7 +135,7 @@ describe('web e2e: live-turn interactions (cancel / error / retry)', () => {
     // hang (prefix chunks delivered to the loop) before the stop click.
     await expect.poll(() => existsSync(marker), { timeout: 15_000 }).toBe(true)
     await expect.poll(
-      () => page.getByRole('status').filter({ hasText: 'Deep diving...' }).isVisible(),
+      () => page.getByRole('status').filter({ hasText: 'Deep diving…' }).isVisible(),
       { timeout: 10_000 },
     ).toBe(true)
     const loadingSnapshot = await captureStableAria(page, '[class*="centerCol"]', scaffold!.workspaceCwd)

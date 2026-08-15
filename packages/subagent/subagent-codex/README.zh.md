@@ -1,12 +1,12 @@
-# @deepseek-ai/dsh-subagent-codex
+# lasmex-subagent-codex
 
 [English](README.md) | 中文
 
-本包注册固定的 `codex` subagent 提供方。每次接受运行请求后，它都会在发起委托的会话工作区中启动官方 `codex app-server --stdio` 命令，创建一个临时 Codex 线程，提交一个自包含的文本任务，并通过共享的 [`dsh-subagent`](../subagent/README.md) 结果约定仅返回最终答案。
+本包注册固定的 `codex` subagent 提供方。每次接受运行请求后，它都会在发起委托的会话工作区中启动官方 `codex app-server --stdio` 命令，创建一个临时 Codex 线程，提交一个自包含的文本任务，并通过共享的 [`lasmex-subagent`](../subagent/README.md) 结果约定仅返回最终答案。
 
 ## 启动与所有权
 
-`start(request)` 只接受非空的文本块序列，并根据父会话确定子级 cwd。随后，它通过 [`dsh-subprocess`](../../subprocess/subprocess/README.md) spawn 固定命令，依次执行 `initialize` → `initialized` → `thread/start { cwd, ephemeral: true }`，且仅在 Codex 返回有效的临时线程后才发布此次运行。若在发布前发生失败或取消，它会关闭通信链路、终止受管进程树并等待其退出，然后拒绝 `start()` 调用。
+`start(request)` 只接受非空的文本块序列，并根据父会话确定子级 cwd。随后，它通过 [`lasmex-subprocess`](../../subprocess/subprocess/README.md) spawn 固定命令，在 `initialize` 时将 app-server 客户端标识为 LasmeX，再依次执行 `initialized` → `thread/start { cwd, ephemeral: true }`，且仅在 Codex 返回有效的临时线程后才发布此次运行。若在发布前发生失败或取消，它会关闭通信链路、终止受管进程树并等待其退出，然后拒绝 `start()` 调用。
 
 已发布的 `run.result` 恰好启动一个轮次。它只接受与此次运行的线程和轮次匹配的通知，随后等待权威的终止通知 `turn/completed`。以最后一条 `phase: "final_answer"` 的 `agentMessage` 为准；若 Codex 没有发出明确的最终阶段，则以最后一条 `phase: null` 的消息作为兼容性回退。过程说明绝不会取代上述任一答案；成功完成的轮次若没有非空白答案，结果也会判为错误。
 
@@ -31,13 +31,13 @@
 
 ```yaml
 - id: subagent-codex
-  name: '@deepseek-ai/dsh-subagent-codex'
+  name: 'lasmex-subagent-codex'
   config:
     env:
       OPENAI_API_KEY: !!js process.env.OPENAI_API_KEY
 
 - id: tool-subagent-codex
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: 'lasmex-tool-subagent'
   disabled: true
   config:
     provider: codex
@@ -70,7 +70,7 @@ Codex 子级会在一个全新的临时线程中，以单个轮次接收这些�
 
 #### 模型看到的内容
 
-通过 `dsh-tool-subagent`，父级模型只会看到选定的 Codex 最终答案，或者看到消费方针对未成功完成的结果给出的原样错误。Codex 的过程说明、推理（reasoning）、工具活动、stderr、工作区差异和产品标识符均不会复制到父会话。
+通过 `lasmex-tool-subagent`，父级模型只会看到选定的 Codex 最终答案，或者看到消费方针对未成功完成的结果给出的原样错误。Codex 的过程说明、推理（reasoning）、工具活动、stderr、工作区差异和产品标识符均不会复制到父会话。
 
 #### 对 token 的影响
 

@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from 'lasmex-session'
 import {
   captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -163,6 +163,8 @@ describe('web e2e: Cordis tools use their owned cards', () => {
 
   it.skipIf(MODE === 'record')('matches the conversation aria golden', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-cordis-aria'))
+    const backToBottom = page.getByRole('button', { name: 'Back to bottom', exact: true })
+    if (await backToBottom.isVisible()) await backToBottom.click()
     const snapshot = await captureStableAria(page, '[class*="centerCol"]', scaffold.workspaceCwd)
     await compareOrRefreshGolden(UI_EXPECTED, snapshot, MODE)
   })

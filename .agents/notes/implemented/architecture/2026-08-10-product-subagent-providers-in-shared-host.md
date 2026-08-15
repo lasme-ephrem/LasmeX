@@ -12,7 +12,7 @@ The placement decision must preserve two independent facts. Loading a provider m
 
 ## Decision
 
-Every shipped Profile loads the fixed `codex` and `claude-code` providers once through the base bundle's host plane. Loading either plugin only registers a dormant backend; the corresponding Codex or Claude process starts on the first actual delegation call. Agent Presets independently contribute ordinary `dsh-tool-subagent` rows for `subagent_codex` and `subagent_claude_code`, so a preset can expose neither tool, either one, or both without changing the provider registry.
+Every shipped Profile loads the fixed `codex` and `claude-code` providers once through the base bundle's host plane. Loading either plugin only registers a dormant backend; the corresponding Codex or Claude process starts on the first actual delegation call. Agent Presets independently contribute ordinary `lasmex-tool-subagent` rows for `subagent_codex` and `subagent_claude_code`, so a preset can expose neither tool, either one, or both without changing the provider registry.
 
 This decision supersedes only the opt-in composition placement recorded by the provider-contract note. That note continues to own each product protocol, result mapping, cancellation, process-tree lifecycle, and evidence tiers. The [Agent Preset architecture](2026-08-03-per-session-agent-presets.md) continues to own the Host/Agent split, preset authoring, and the rule that edits affect only newly composed sessions.
 

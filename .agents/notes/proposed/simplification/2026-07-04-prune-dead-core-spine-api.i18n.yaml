@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/proposed/simplification/2026-07-04-prune-dead-core-spine-api.md
-2026-07-04-prune-dead-core-spine-api.md: 64c9bb00a7f26463aea6767018da8814a13133ec
-2026-07-04-prune-dead-core-spine-api.zh.md: 0666fa8b6b6228b97ade7ba91eb214db82f6bf94
+2026-07-04-prune-dead-core-spine-api.md: 6a94015cf434e2c918bab2f9244927d59ba64079
+2026-07-04-prune-dead-core-spine-api.zh.md: 1b7f321a916bbbfdc4042ef6aa51b58b188fc993

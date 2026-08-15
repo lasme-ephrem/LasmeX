@@ -5,7 +5,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { exactEditState } from './rescope-vendor.ts'
+import { exactEditState, isCordisProductDataToken } from './rescope-vendor.ts'
 
 const ANCHOR = '\n## Sync procedure'
 const INSERTED = `\n15. **rescope**: one log entry.\n${ANCHOR}`
@@ -37,5 +37,19 @@ describe('exactEditState', () => {
     // A moved or partially applied site: neither state is complete.
     expect(exactEditState('a = 1\nb = 2\n', 'a = 1', 'b = 2', 1)).toBe('invalid')
     expect(exactEditState('x\n', 'a = 1', 'b = 2', 1)).toBe('invalid')
+  })
+})
+
+describe('isCordisProductDataToken', () => {
+  it('protects Cordis event namespaces without hiding package subpaths', () => {
+    expect(isCordisProductDataToken('packages/example/src/index.ts', "ctx.emit('cordis/request-run')", '/request-run')).toBe(true)
+    expect(isCordisProductDataToken('packages/example/src/index.ts', "import x from 'cordis/context'", '/context')).toBe(false)
+  })
+
+  it('protects exact locale and catalog identifiers without hiding imports', () => {
+    const locale = 'packages/extensions/ui-cordis/src/client/locales.ts'
+    expect(isCordisProductDataToken(locale, "export const NS = 'cordis'", '')).toBe(true)
+    expect(isCordisProductDataToken(locale, "import type { Context } from 'cordis'", '')).toBe(false)
+    expect(isCordisProductDataToken('scripts/gen-cordis-catalog.ts', "  'cordis': 'extensions.md',", '')).toBe(true)
   })
 })

@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-connection",
+  "name": "lasmex-client-connection",
   "description": "Wire consumer layer: HTTP-up/WebSocket-down client, ConnectionController dual streams with reconnect, and fixture api",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/connection"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,7 +24,7 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [],
       "platform": "web",
@@ -38,12 +33,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-host-apiproxy": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-attachment": "workspace:^",
+    "lasmex-host-apiproxy": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@deepseek-ai/schemastery": "workspace:^",
     "ws": "^8.21.0"
   },
@@ -54,14 +49,23 @@
     "lib/types/**/*.d.ts"
   ],
   "peerDependencies": {
-    "@deepseek-ai/dsh-host-webserver": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-host-webserver": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-host-webserver": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-host-webserver": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@types/ws": "^8.18.1",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/connection"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

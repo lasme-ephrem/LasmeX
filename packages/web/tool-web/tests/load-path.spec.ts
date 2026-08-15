@@ -8,12 +8,12 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import WebRuntime from '@deepseek-ai/dsh-web'
-import * as toolWeb from '@deepseek-ai/dsh-tool-web'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime from 'lasmex-tools'
+import WebRuntime from 'lasmex-web'
+import * as toolWeb from 'lasmex-tool-web'
 
-describe('dsh-tool-web real-load-path guard', () => {
+describe('lasmex-tool-web real-load-path guard', () => {
   it('has no default export and keeps name/inject/Config through unwrapExports', () => {
     expect('default' in toolWeb).toBe(false)
 

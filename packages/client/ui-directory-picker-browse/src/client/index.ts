@@ -7,9 +7,9 @@
  * cordis.yml row; no client code branches on a capability kind. The dialog's
  * copy is locale-registered here — the flow package owns its own strings.
  */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext } from 'lasmex-client-runtime/client'
 // Type-only: pulls the SlotMap merge declaring the directory-flow holes.
-import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
+import type {} from 'lasmex-client-ui-workspace/client'
 import type { BrowseFlowInjected } from './flow.ts'
 import { BrowseDirectoryFlow } from './flow.ts'
 
@@ -32,6 +32,21 @@ export function apply(ctx: ClientContext): void {
     // a failed activation must not squat the namespace's other locale.
     const disposers: (() => void)[] = []
     const dictionaries: [locale: string, dict: Record<string, string>][] = [
+      ['fr', {
+        'browser.title': 'Choisir le dossier de l’espace de travail',
+        'browser.home': 'Dossier personnel',
+        'browser.newFolder': 'Nouveau dossier',
+        'browser.folderName': 'Nom du dossier',
+        'browser.createIn': 'Nouveau dossier dans « {name} »',
+        'browser.untitledFolder': 'Dossier sans titre',
+        'browser.create': 'Créer',
+        'browser.cancel': 'Annuler',
+        'browser.open': 'Ouvrir',
+        'browser.editPath': 'Modifier le chemin',
+        'browser.loading': 'Chargement…',
+        'browser.truncated': 'Trop de dossiers à afficher ; seul le début de la liste est visible.',
+        'browser.showHidden': 'Afficher les fichiers cachés',
+      }],
       ['zh', {
         'browser.title': '选择工作区目录',
         'browser.home': '主目录',

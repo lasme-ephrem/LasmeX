@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import * as primitives from '@deepseek-ai/dsh-client-ui-primitives'
+import * as primitives from 'lasmex-client-ui-primitives'
 import {
   IconApiOutline14, IconArchiveOutline20, IconFolderClose16, IconGoalOutline16, IconSendOutline16,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-ui-primitives'
 
 afterEach(cleanup)
 
@@ -54,15 +54,14 @@ describe('ic_ds_ icon set', () => {
   })
 })
 
-describe('FishLogo', () => {
-  it('renders the fish path in currentColor at the native ratio', () => {
-    const { container } = render(<primitives.FishLogo />)
+describe('LasmexMark', () => {
+  it('renders the LX mark in currentColor at a square ratio', () => {
+    const { container } = render(<primitives.LasmexMark />)
     const svg = container.querySelector('svg')!
     expect(svg.getAttribute('width')).toBe('24')
-    expect(Number(svg.getAttribute('height'))).toBeCloseTo(17.66, 1)
-    expect(svg.getAttribute('viewBox')).toBe('0 0 23.16 17.04')
-    expect(container.querySelectorAll('path')).toHaveLength(1)
+    expect(svg.getAttribute('height')).toBe('24')
+    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24')
+    expect(container.querySelectorAll('path')).toHaveLength(2)
     expect(container.innerHTML).toContain('currentColor')
-    expect(container.innerHTML).not.toContain('M0 0L23.16')
   })
 })

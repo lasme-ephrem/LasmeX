@@ -1,13 +1,13 @@
 ---
 name: dsh-doc-site-sync
-description: Use when publishing, updating, moving, or removing DeepSeek Harness documentation website pages; editing website/docs.ts mappings or navigation; diagnosing a page missing from the VitePress site; fixing projected documentation links; or running the docs:dev, docs:check, and doc-sync workflow after website-content changes.
+description: Use when publishing, updating, moving, or removing LasmeX documentation website pages; editing website/docs.ts mappings or navigation; diagnosing a page missing from the VitePress site; fixing projected documentation links; or running the docs:dev, docs:check, and doc-sync workflow after website-content changes.
 ---
 
-# Synchronizing the DeepSeek Harness Documentation Site
+# Synchronizing the LasmeX Documentation Site
 
 Keep repository Markdown as the only editable content source. Treat the website as a tested projection: [website/docs.ts](../../../website/docs.ts) selects public pages, [scripts/project-doc-site.ts](../../../scripts/project-doc-site.ts) rewrites them into the disposable `website/.generated/` tree, and VitePress builds that tree.
 
-Repository translations follow the sibling pairing contract: English `foo.md`, Chinese `foo.zh.md`, and `foo.i18n.yaml` live together. Never create `zh-CN/` or other locale directories for website content. The site route trees are independent of that source layout: `foo.zh.md` projects to the root route and `foo.md` projects to the matching `/en/` route.
+Repository translations follow the sibling pairing contract: English `foo.md`, Chinese `foo.zh.md`, and `foo.i18n.yaml` live together. Never create locale directories for website content. The site route trees are independent of that source layout: French owns the root route, English owns `/en/`, and Chinese owns `/zh/`. `pairedPages()` projects `foo.md` into the French root as an explicit English fallback and into `/en/`, then projects `foo.zh.md` into `/zh/`. A reviewed French source is mapped explicitly, as the `LASMEX.md` home page is; do not copy English Markdown into a French source file merely to fill the route.
 
 ## Read the owning contracts
 
@@ -30,15 +30,17 @@ Never edit or commit `website/.generated/`, `website/.cache/`, or `website/.dist
 
 Set every `DocsPage` field deliberately:
 
-- `source`: repository-relative canonical Markdown path. For a complete bilingual pair, add the English `.md` path through `pairedPages()`; it derives the sibling `.zh.md`, the content locales, and counterpart aliases.
+- `source`: repository-relative canonical Markdown path. For a complete English/Chinese pair, add the English `.md` path through `pairedPages()`; it derives the sibling `.zh.md`, all three route projections, content locales, and counterpart aliases. Use an explicit locale source record for reviewed French prose.
 - `route`: public VitePress path including the `.md` suffix.
-- `label`: sidebar label, not necessarily the document H1.
-- `sidebar`: reuse `zh-guide`, `zh-develop`, or `en-docs` unless the information architecture genuinely needs another collection.
-- `section`: reuse an existing section when possible. If adding one, also place it in `sectionOrder` in the VitePress config.
+- `label`: sidebar label, not necessarily the document H1. Add reviewed French navigation copy through the manifest's French-copy map when using `pairedPages()`.
+- `sidebar`: reuse the matching `fr-*`, `en-*`, and `zh-*` guide, development, or reference collections unless the information architecture genuinely needs another collection.
+- `section`: reuse an existing section when possible. If adding one, also place its French, English, and Chinese labels in the locale-specific `sections` declarations.
 - `order`: stable order within the section.
 - `sourceAliases`: optional additional repository paths that should resolve to this page when links are projected. It does not create another public route.
 
-Use `mirroredPages()` only for a source that intentionally falls back to the same available language in both route trees. Convert that entry to `pairedPages()` when its counterpart is added. Keep the manifest an explicit public allowlist. Do not publish RFCs, postmortems, testing guides, `AGENTS.md`, or maintainer workflows merely because they exist under `docs/`; add internal material only when the user explicitly expands what the site publishes.
+Use `fallbackPages()` for a source that intentionally falls back to English in all three route trees. Convert that entry to `pairedPages()` when its Chinese counterpart is added. Use `mirroredPages()` for explicit per-locale sources, such as the home pages. Keep the manifest an explicit public allowlist. Do not publish RFCs, postmortems, testing guides, `AGENTS.md`, or maintainer workflows merely because they exist under `docs/`; add internal material only when the user explicitly expands what the site publishes.
+
+The public site identifies the product as LasmeX. Until a real fork repository origin exists, any GitHub or source link must point to LasmeX only when visibly labeled as the upstream repository. Do not invent a LasmeX GitHub URL or enable edit links against the upstream repository.
 
 ## Preserve link behavior
 

@@ -18,7 +18,7 @@
  * pi-ai treats as the highest-priority auth override — so `Models` never holds
  * a credential store and the harness keeps its fail-loud reference semantics.
  *
- * @module dsh-llm-pi-ai/adapter
+ * @module lasmex-llm-pi-ai/adapter
  */
 
 import { createModels, getSupportedThinkingLevels } from '@earendil-works/pi-ai'
@@ -37,7 +37,7 @@ import {
   LlmAdapter,
   LlmError,
   ReasoningEffortId,
-} from '@deepseek-ai/dsh-llm'
+} from 'lasmex-llm'
 import type {
   GenerateOptions,
   LlmModelInfo,
@@ -46,9 +46,9 @@ import type {
   ReasoningEffortId as ReasoningEffortIdType,
   ResolvedRetryPolicy,
   StreamChunk,
-} from '@deepseek-ai/dsh-llm'
-import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import { idleWatchdog, timeoutOf } from '@deepseek-ai/dsh-timeout'
+} from 'lasmex-llm'
+import type { AttachmentStore } from 'lasmex-attachment'
+import { idleWatchdog, timeoutOf } from 'lasmex-timeout'
 import type { ResolvedPiAiProviderProfile } from './config.ts'
 import { toPiContext } from './context.ts'
 import { toStreamChunks } from './stream.ts'

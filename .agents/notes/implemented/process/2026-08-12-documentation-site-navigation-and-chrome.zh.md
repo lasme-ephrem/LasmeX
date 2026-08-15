@@ -10,19 +10,25 @@ Status: implemented
 
 顶栏把 `入门` 指向 `/guide/`，而 manifest 已把入门首页发布在 `guide/quickstart.md`，该导航项因此返回 404：写死的导航目标会与 manifest 实际发布的路由脱节。
 
-另外，每个规范页面都带有写给 GitHub 读者的行——标题下的语言切换行，部分页面还有仓库徽章——站点原样投影了它们，尽管其导航栏已经提供了这两者。
+另外，每个规范页面都带有写给 GitHub 读者的行——标题下的语言切换行，部分页面还有仓库徽章——站点原样投影了它们，尽管其导航栏已经提供了 locale 与仓库导航。
 
 ## 决定
 
-[website/docs.ts](../../../../website/docs.ts) 拥有分区位置。`sections` 按 locale 声明各分组，`sectionSpec(locale, label)` 返回分组的位置与折叠行为，当某 locale 未为该 label 声明位置时抛错。未出现在声明中的分组现在会让构建失败，而不是静默排到最前。位置按 locale 声明，是因为两侧侧边栏各自命名分组，而两侧共用的标签 `SDK` 无法同时相对 `入门` 和相对 `Guide` 取同一位次。
+[website/docs.ts](../../../../website/docs.ts) 拥有分区位置。`sections` 按 locale 声明各分组，`sectionSpec(locale, label)` 返回分组的位置与折叠行为，当某 locale 未为该 label 声明位置时抛错。未出现在声明中的分组会让构建失败，而不是静默排到最前。位置按 locale 声明，是因为法语、英语和中文侧边栏各自命名分组，而 `SDK` 这样的共用标签无法在三套不同分组序列中取同一位次。
+
+根路由使用法语，`/en/` 使用英语，`/zh/` 使用中文。`pairedPages()` 把每组英语/中文源文件投影到三套路由树：法语路由使用经过审校的法语导航，并在法语正文存在时使用该正文；英语路由使用英语源文件；中文路由使用中文同级文件。以英语正文为源的法语路由会显示法语提示，明确该页属于英语技术内容，并引导读者使用法语界面与用户指南。根首页直接映射经过审校的法语 [LASMEX.md](../../../../LASMEX.md) 源文件。这样既不复制回退内容，又能让规范 Markdown 留在其所属的仓库层级。
+
+经过评审的法语 allowlist 同时定义 `verify-french-docs` 的输入；该门禁由 `doc-sync` 执行。它会拒绝未发布的 `.fr.md` 文件、缺失的英语源文件，以及标题、列表、表格、链接、围栏代码或行内代码顺序上的任何差异。正文含义与法语是否自然仍由编辑评审负责；门禁保护翻译不得改变的技术框架。
 
 子系统页按关注点分组——总览、内核与作用域、会话与持久化、模型与上下文、执行与工具、策略与交互、平台与接入——其中六个主题组保持折叠，直到某一组包含正在阅读的页面。这些分组排在参考侧边栏的最后：展开时它们的数量超过其余所有分组之和，因此排在它们之后的任何内容都只能靠滚过整个列表才能到达。页面 `order` 由数组位置推导，不再手写数字。
 
 `landingLink(locale, collection)` 依据 `orderedPages`——即侧边栏所用的同一套排序——推导每个导航项的目标，因此导航项始终打开该分区已发布的首个页面。
 
-[scripts/project-doc-site.ts](../../../../scripts/project-doc-site.ts) 中的 `projectedPageContent` 会丢弃语言切换行和仓库徽章。切换行的匹配被限制在前八行内，因此展示该约定的教程仍能渲染出它的示例。
+[scripts/project-doc-site.ts](../../../../scripts/project-doc-site.ts) 中的 `projectedPageContent` 会丢弃语言切换行和仓库徽章。切换行的匹配被限制在前八行内，因此展示该约定的教程仍能渲染出它的示例。源文件中的英语/中文对应页链接会进入 `/en/` 和 `/zh/`；进入法语根路由的导航由 VitePress 负责。
 
-导航栏标题是内联进 `siteTitle` 的 DeepSeek 字标，VitePress 会将其按 HTML 渲染。内联正是让字标的 `currentColor` 填充跟随当前主题的原因；`themeConfig.logo` 渲染为 `<img>`，会把字标固定为文件声明的颜色，并且需要为每套主题各准备一份资源。侧边栏滚动条平时不可见，滚动时出现，通过 `data-` 属性而非 class 标记，因为 Vue 在 patch 该元素时会整体重写 `class`。
+导航栏标题是内联进 `siteTitle` 的 LasmeX 字标，VitePress 会将其按 HTML 渲染。内联让字标的 `currentColor` 填充跟随当前主题；`themeConfig.logo` 渲染为 `<img>`，会把字标固定为文件声明的颜色，并且需要为每套主题各准备一份资源。侧边栏滚动条平时不可见，滚动时出现，通过 `data-` 属性而非 class 标记，因为 Vue 在 patch 该元素时会整体重写 `class`。
+
+站点只把 LasmeX 仓库作为明确标注的上游链接。在真实的 LasmeX fork origin 存在之前，编辑链接保持禁用，避免读者以 LasmeX 身份被引导去编辑上游仓库。
 
 ## 考虑过的替代方案
 
@@ -34,8 +40,8 @@ Status: implemented
 
 ## 影响
 
-在所有子系统分组折叠时，参考侧边栏高度为 1452px，此前为 2478px，且架构页是它的第一个条目。分区位置与折叠行为声明在同一份 manifest 中，不再分散于 manifest 与配置之间；`scripts/project-doc-site.spec.ts` 固定了三条不变式：每个拥有侧边栏的页面都能解析到位置、未声明的分区会被拒绝、同一分区内没有两个页面共用 `order`。
+在所有子系统分组折叠时，中文参考侧边栏高度为 1452px，此前为 2478px，且架构页是它的第一个条目。分区位置与折叠行为声明在同一份 manifest 中，不再分散于 manifest 与配置之间。`scripts/project-doc-site.spec.ts` 固定了三种 locale 之间的路由对等性、源语言选择、导航目标、分区位置，以及各分区内唯一的 `order` 值。`verify-french-docs` 防止经过评审的法语路由静默翻译命令、标识符或链接；其余根路由则继续显式声明自身使用英语内容。
 
 剥离 chrome 不改动规范 Markdown——切换行与徽章仍服务于 GitHub 读者。代价是投影器现在知晓源语料的两项呈现约定，而采用不同切换行措辞的页面将不会被匹配到。
 
-字标是同一图形的第二份副本，另两份位于 `apps/web/public/favicon.svg` 和 `packages/client/ui-primitives/src/FishLogo.tsx`，各自承载自己的呈现方式。DeepSeek 字标的变更只有通过更新这份副本才能到达文档站。
+字标是同一图形的第二份副本，另两份位于 `apps/web/public/favicon.svg` 和 `packages/client/ui-primitives/src/LasmexMark.tsx`，各自承载自己的呈现方式。产品字标的变更只有通过更新这份副本才能到达文档站。

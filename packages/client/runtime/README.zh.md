@@ -1,12 +1,12 @@
-# @deepseek-ai/dsh-client-runtime
+# lasmex-client-runtime
 
 [English](README.md) | 中文
 
-客户端 cordis 启动与不依赖 React 的对象服务：SlotRegistry 包装 SlotCore 并提供 renderer 数据源；SessionRuntime 拥有 Session 对象、列表与 scope 状态，以及供已注册 conversation view target 共用的事件窗口与历史分页。WorkspaceRuntime 依赖 SessionRuntime，拥有 Workspace 对象、列表／操作、默认目标派生，以及 New Session 空会话复用入口（`connectWorkspace`）。运行时把共享 Host 流分发给 Session 与 Workspace 所有者，并把每个通用 `host/remote-event` 帧交给 `ctx.remote.$dispatch`；各领域包通过 `ctx.remote.$on` 订阅自身 owner 事件，并自行决定使哪些缓存或会话行失效。客户端会话一律由 Host 创建（一次 `session.create` 同时产生 Session、agent（智能体）和 cwd）；客户端不持有任何实体化之前的会话状态——agent scope（host dsh-scope 的客户端镜像，以 agent/session 共用 id 为键）在会话行进入列表镜像时创建，并随 prune 销毁。约定：api-contracts v3 §4。每个 `Session` 持有一个通用的 `ProjectionValueStore`，由历史记录尾部的 `projections` 块播种，并经 `session/projection` 帧按 seq 高者胜更新；领域键（含 `todos`）经 `projections.faceOf`／`useProjection` 读取，不经 `ConversationSnapshot`。该 store 还会通过 `SessionSummary.projectionValues` 发布一份引用稳定的完整值映射，使全局列表消费方无需为每个会话创建订阅，即可复用同一组投影。
+客户端 cordis 启动与不依赖 React 的对象服务：SlotRegistry 包装 SlotCore 并提供 renderer 数据源；SessionRuntime 拥有 Session 对象、列表与 scope 状态，以及供已注册 conversation view target 共用的事件窗口与历史分页。WorkspaceRuntime 依赖 SessionRuntime，拥有 Workspace 对象、列表／操作、默认目标派生，以及 New Session 空会话复用入口（`connectWorkspace`）。运行时把共享 Host 流分发给 Session 与 Workspace 所有者，并把每个通用 `host/remote-event` 帧交给 `ctx.remote.$dispatch`；各领域包通过 `ctx.remote.$on` 订阅自身 owner 事件，并自行决定使哪些缓存或会话行失效。客户端会话一律由 Host 创建（一次 `session.create` 同时产生 Session、agent（智能体）和 cwd）；客户端不持有任何实体化之前的会话状态——agent scope（host lasmex-scope 的客户端镜像，以 agent/session 共用 id 为键）在会话行进入列表镜像时创建，并随 prune 销毁。约定：api-contracts v3 §4。每个 `Session` 持有一个通用的 `ProjectionValueStore`，由历史记录尾部的 `projections` 块播种，并经 `session/projection` 帧按 seq 高者胜更新；领域键（含 `todos`）经 `projections.faceOf`／`useProjection` 读取，不经 `ConversationSnapshot`。该 store 还会通过 `SessionSummary.projectionValues` 发布一份引用稳定的完整值映射，使全局列表消费方无需为每个会话创建订阅，即可复用同一组投影。
 
 对于每条可到达本地根 Agent 或可继续子 Agent 的提示词，运行时都会采样浏览器当前的 `Intl.DateTimeFormat().resolvedOptions().timeZone`，并只把该值附加到这一次 Session 或 subagent 提示词 RPC。该值既不缓存，也不包含在 Session 创建或 fork 状态中，因此旅行与并发标签页都能保留消息本地的来源信息。浏览器若无法提供非空时区，会在本地拒绝该提示词，而不会悄然使用部署状态代替。
 
-`bindSettingsScope` 面向单个由领域持有的 namespace，是 Host 侧 settings owner seam 的浏览器镜像。它在开始非阻塞初始读取前建立订阅，发布 uSES 快照（状态、分节值、组装 `base` 层与原始 `user` 层、revision、可写性、host／内存模式），使用已知最新 namespace revision 串行执行 `set` 与 `unset` 写入，抑制陈旧发布，并在最新写入被拒时从 Host 状态恢复；插件释放时，它会达到完全停稳。默认解码器会对照该 namespace 自身的序列化 wire schema（经 dsh-client-schema-form 还原）校验每个分节，因此领域只有在需要比该 schema 进一步收窄时才添加解码器。回环页面使用 Host settings API，远程页面则停留在内存模式。字段是否被覆盖，取决于它是否**出现**在 `user` 中——与组装默认值相同的覆盖仍然是覆盖，比较值是看不出来的——而 `unset` 就是表单把某个字段清回 `base` 的方式。namespace schema、默认值与实时服务归领域包所有，而非把产品政策放入运行时。
+`bindSettingsScope` 面向单个由领域持有的 namespace，是 Host 侧 settings owner seam 的浏览器镜像。它在开始非阻塞初始读取前建立订阅，发布 uSES 快照（状态、分节值、组装 `base` 层与原始 `user` 层、revision、可写性、host／内存模式），使用已知最新 namespace revision 串行执行 `set` 与 `unset` 写入，抑制陈旧发布，并在最新写入被拒时从 Host 状态恢复；插件释放时，它会达到完全停稳。默认解码器会对照该 namespace 自身的序列化 wire schema（经 lasmex-client-schema-form 还原）校验每个分节，因此领域只有在需要比该 schema 进一步收窄时才添加解码器。回环页面使用 Host settings API，远程页面则停留在内存模式。字段是否被覆盖，取决于它是否**出现**在 `user` 中——与组装默认值相同的覆盖仍然是覆盖，比较值是看不出来的——而 `unset` 就是表单把某个字段清回 `base` 的方式。namespace schema、默认值与实时服务归领域包所有，而非把产品政策放入运行时。
 
 ## Slot 声明注入
 
@@ -21,6 +21,8 @@ Workspace 和 Session 列表各自具有单调的 `pending` → `ready` 基线�
 `SessionSummary.pendingInteraction` 将阻塞 Session 的实时用户操作分类为 `approval`、`plan-review` 或 `question`。`SessionManager` 依据稳定的请求标识跟踪可应答请求的 requested/resolved mux 帧，即使 `Session` 对象尚未实例化也不例外；实例化前的缓冲会保留每个仍有效的请求，替换回放产生的重复项，并移除已解决的请求，因此打开 Session 时，列表状态始终有一个对应的可应答 `PendingWait`。审批与问题并发时，第一个 pending 问题具有更高的呈现优先级，以匹配 composer 路由；只有满足 plan-review composer 二元呈现约束的请求才会保留独立的 `plan-review` 状态。该状态的作用域限定在连接代次内：断连时清除，mux 打开时的回放只恢复仍处于 pending 的请求。
 
 `WorkspaceRuntime.delete(workspaceId)` 在一元响应成功后从客户端投影中移除注册记录；对应的 `host/workspace-removed` 帧具有幂等性，并负责同步其他标签页。Session 状态与当前 Session selection 相互独立，因此 Workspace 消失后，其已纳入客户端投影的 Session 会立即投影到 Ungrouped 下。
+
+当前 Session selection 是浏览器本地的 LasmeX 状态，存储在 `lasmex.sessions.current`。预发布客户端不读取继承的 `lasmex.sessions.current` key，因此 LasmeX 安装不会与同源的上游 Harness 页面静默共享 selection 状态。
 
 `WorkspaceListState.archivedSessionIds` 镜像 Host 的注册表级全局归档集合（一个按 Host 顺序的 `readonly SessionId[]`，仅在成员变化时才替换；需要 O(1) 查询的消费方自建临时 Set）。它是全快照状态：`workspace.list` 基线、`archiveSession` 一元回声和 `host/archived-sessions-changed` 帧各自安装完整集合。`WorkspaceRuntime.archiveSession(sessionId)` 通过 wire 归档；投影层在当前 selection 落入归档集合时统一清空为 New Session 视图状态——一条规则同时覆盖本地回声、其他标签页的帧、以及重连基线恢复出一个离线期间被归档的 selection。在 `workspace.list` 请求进行中安装的集合还会取代该过期基线携带的集合。各分组视图在所有位置隐藏集合成员，而会话行本身仍留在列表 store 中。
 

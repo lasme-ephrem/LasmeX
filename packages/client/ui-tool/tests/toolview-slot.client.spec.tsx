@@ -11,13 +11,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
-import type { ISession, SessionId, ToolResultNode } from '@deepseek-ai/dsh-client-runtime/client'
-import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
-import { SlotTestRuntime, stubSettingsScope } from '@deepseek-ai/dsh-client-test-runtime'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { apply as applyConversation, inject as injectConversation } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { apply as applyTool, inject as injectTool } from '@deepseek-ai/dsh-client-ui-tool/client'
-import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
+import type { ISession, SessionId, ToolResultNode } from 'lasmex-client-runtime/client'
+import type { PropsRenderSlots } from 'lasmex-client-ui-slots'
+import { SlotTestRuntime, stubSettingsScope } from 'lasmex-client-test-runtime'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { apply as applyConversation, inject as injectConversation } from 'lasmex-client-ui-conversation/client'
+import { apply as applyTool, inject as injectTool } from 'lasmex-client-ui-tool/client'
+import type { ToolCallViewProps } from 'lasmex-client-ui-tool/client'
 import { toolChatSnapshot } from './tool-details-render.client.tsx'
 
 const SID = 's1' as SessionId
@@ -92,14 +92,17 @@ describe('keyed toolview hole through the real machinery', () => {
   it('dispatches registered rows by entryKey and unregistered tools to the GenericToolCard fallback', async () => {
     const b = await bench([
       toolResult(3, 'c1', 'bash'),
-      toolResult(4, 'c2', 'mystery', '{"n":1}'),
+      toolResult(4, 'c-pwsh', 'pwsh'),
+      toolResult(5, 'c2', 'mystery', '{"n":1}'),
     ])
     const view = b.runtime.renderRoot()
     // bash: the sample plugin's keyed registration took the row (root
     // session → global arm, decided inside the component off useSessions).
     expect(view.container.querySelector('[data-sample="bash"]')).not.toBeNull()
     expect(view.getByText('Bash')).toBeTruthy()
-    expect(view.getByText('Build')).toBeTruthy()
+    expect(view.getAllByText('Build')).toHaveLength(2)
+    expect(view.container.querySelector('[data-chat-call-id="c-pwsh"] [data-sample="bash"]')).not.toBeNull()
+    expect(view.getByText('Pwsh')).toBeTruthy()
     // mystery: no registration under that key → render-site fallback.
     expect(view.getByText('Tool call')).toBeTruthy()
     await b.runtime.dispose()

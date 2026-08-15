@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/rejected/simplification/2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md
-2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md: 8c46de37cbb936f31dc498b2100a031610b6d1e7
-2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.zh.md: 4795abff037ee19a7407cae02aee71ec3abcca44
+2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.md: 33d99c5acab07fd6d1cddf7b3cf602bb992ad3da
+2026-07-26-builtin-timer-promises-for-hand-rolled-sleeps.zh.md: bdaf28d620a0e7fbe9113aaf52af7147e2643216

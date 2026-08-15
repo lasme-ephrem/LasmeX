@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write examples/headless-agent/README.md
-README.md: 2f854924d4bfd2bf66b3d6f47433136098d7b762
-README.zh.md: 4128645da8a0f8a84b17d819fc614051b68f2a11
+README.md: c001a75af7e250bb076ed7bd3f69704c54290d39
+README.zh.md: 3433bf343fd5f191fd835e4de9c07bef0f302654

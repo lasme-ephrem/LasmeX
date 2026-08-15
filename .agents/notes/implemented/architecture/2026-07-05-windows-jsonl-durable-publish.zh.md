@@ -6,7 +6,7 @@ Status: implemented
 
 ## 问题
 
-`dsh-session-persistence-jsonl` 在首次追加时延迟发布会话日志。POSIX 协议会写入临时文件，对其执行 fsync，将其链接至最终名称，对父目录执行 fsync，然后移除临时链接。对父目录执行 fsync 是持久性约定的一部分：命名空间变更后发生崩溃时，已经提交的最终名称不能丢失，否则调用方会误以为会话日志已经物化。
+`lasmex-session-persistence-jsonl` 在首次追加时延迟发布会话日志。POSIX 协议会写入临时文件，对其执行 fsync，将其链接至最终名称，对父目录执行 fsync，然后移除临时链接。对父目录执行 fsync 是持久性约定的一部分：命名空间变更后发生崩溃时，已经提交的最终名称不能丢失，否则调用方会误以为会话日志已经物化。
 
 Windows 具备原子命名空间操作，但 Node 没有暴露与 POSIX 等价的父目录 fsync 约定。如果把 Windows 目录同步失败视为成功，就会在无提示的情况下削弱持久化后端。因此，Windows 路径需要采用不同的发布原语，而不是在 POSIX 的 `syncDir` 辅助函数中添加条件分支。
 

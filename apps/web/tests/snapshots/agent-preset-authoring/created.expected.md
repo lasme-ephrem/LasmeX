@@ -22,6 +22,16 @@
   - heading "内置" [level=3]
   - list:
     - listitem:
+      - 'button "设为默认: LasmeX Code"':
+        - text: LasmeX Code 内置 LasmeX 的完整编码 Agent，通过 Code Mode SDK 组合多步操作、验证变更并明确报告结果。
+        - code: lasmex-code
+      - 'button "查看: LasmeX Code"':
+        - img
+        - text: 查看
+      - 'button "复制: LasmeX Code"':
+        - img
+        - text: 复制
+    - listitem:
       - 'button "当前使用: 标准模式" [disabled] [pressed]':
         - text: 标准模式 内置 当前使用 功能完整的编码 Agent，支持文件编辑、Shell、文件与网页检索、Skills、计划、目标、子代理和工作流。
         - code: standard
@@ -29,16 +39,6 @@
         - img
         - text: 查看
       - 'button "复制: 标准模式"':
-        - img
-        - text: 复制
-    - listitem:
-      - 'button "设为默认: PTC 模式"':
-        - text: PTC 模式 内置 具备标准模式的全部能力，并通过 Code Mode SDK 呈现工具，让模型用一个 TypeScript 程序组合多步操作。
-        - code: code
-      - 'button "查看: PTC 模式"':
-        - img
-        - text: 查看
-      - 'button "复制: PTC 模式"':
         - img
         - text: 复制
     - listitem:
@@ -65,7 +65,7 @@
   - list:
     - listitem:
       - 'button "设为默认: 我的模式"':
-        - text: 我的模式 自定义 仅提供持久 bash 与 str_replace_editor 的双工具编码 Agent。
+        - text: 我的模式 自定义 Agent de développement à deux outils avec bash persistant et str_replace_editor.
         - code: my-agent
       - 'button "查看路径: 我的模式"':
         - img

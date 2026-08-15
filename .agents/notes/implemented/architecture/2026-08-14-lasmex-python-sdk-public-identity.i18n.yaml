@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-14-lasmex-python-sdk-public-identity.md
+2026-08-14-lasmex-python-sdk-public-identity.md: c4449919ea0fbc8499ede57a87edc1ba81f6c457
+2026-08-14-lasmex-python-sdk-public-identity.zh.md: f381d530a1c3aae94457f6039a51578e51305434

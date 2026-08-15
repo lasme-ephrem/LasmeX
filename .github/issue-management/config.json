@@ -1,10 +1,6 @@
 {
-  "organization": "deepseek-harness",
-  "repository": "deepseek-harness",
-  "projectNumber": 1,
-  "projectTitle": "DSH Issue Management",
-  "lifecycleActor": "dsh-issue-management",
-  "priorityField": "Priority",
+  "owner": "lasme-ephrem",
+  "repository": "LasmeX",
   "allowUnassignedOwner": true,
   "statuses": [
     "Inbox",

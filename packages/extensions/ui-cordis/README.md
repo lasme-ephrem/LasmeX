@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-cordis
+# lasmex-client-ui-cordis
 
 English | [中文](README.zh.md)
 
@@ -14,7 +14,7 @@ Cordis dynamic-plugin surfaces, browser half: a frame-wide panel that operates e
 
 Neither surface keeps run state in component state — settling a define call moves its card in the chat flow, which remounts it. Facts live in observables owned by whoever can close them: the browser-side runner owns open requests, orchestration outcomes (it resolves them, including when another page answers first), this page's live set and its render failures — it is the only party watching `slots.onEntryError` and the only one that can map a crashed entry back to the package that registered it — and this package owns the inventory it read and the announcements it folded.
 
-The `/client` export surface is the plugin body (`apply`/`inject`) plus the injected face, run-state, port and event payload types.
+The `/client` export surface is the plugin body (`apply`/`inject`) plus the injected face, run-state, port and event payload types. Every visible label and accessible action name follows the active French, English, or Simplified Chinese locale.
 
 ## Model Experience
 

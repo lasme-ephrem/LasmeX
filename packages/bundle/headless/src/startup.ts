@@ -2,12 +2,12 @@
  * The one-shot app's command-line provider: it parses the task positional and
  * `--help`, then publishes {@link HEADLESS_STARTUP_SERVICE}. The runner is an
  * ordinary consumer whose lazy config waits for that service.
- * @module @deepseek-ai/dsh-headless/startup
+ * @module lasmex-headless/startup
  */
 
 import { Command } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
-import { parseCmdline } from '@deepseek-ai/dsh-cmdline'
+import { configureFrenchCommand, parseCmdline } from 'lasmex-cmdline'
 
 /** Stable Cordis plugin name. */
 export const name = 'headless-startup'
@@ -29,14 +29,14 @@ export interface HeadlessStartupValues {
  * @returns a fresh program, so one process can parse more than once (tests).
  */
 function headlessCommand(): Command {
-  return new Command()
-    .name('dsh --profile headless')
-    .description('Answer one task, print the final assistant message, and exit.')
-    .helpOption('-h, --help', 'show this help')
-    .argument('[task...]', 'the task text; multiple words are joined by spaces')
+  return configureFrenchCommand(new Command())
+    .name('lasmex --profile headless')
+    .description('Traiter une tâche, afficher la réponse finale puis quitter.')
+    .helpOption('-h, --help', 'afficher cette aide')
+    .argument('[task...]', 'texte de la tâche ; plusieurs mots sont réunis avec des espaces')
     .addHelpText('after', `
-Examples:
-  dsh --profile headless "run the tests"     answer one task and exit
+Exemple :
+  lasmex --profile headless "lance les tests"  traiter une tâche puis quitter
 `)
 }
 
@@ -50,7 +50,7 @@ export function apply(ctx: Context): void {
   const program = headlessCommand()
   program.action(() => {
     const task = program.args.join(' ')
-    if (task.trim() === '') program.error('error: a task is required, for example: dsh --profile headless "run the tests"')
+    if (task.trim() === '') program.error('erreur : une tâche est requise, par exemple : lasmex --profile headless "lance les tests"')
     ctx.provide(HEADLESS_STARTUP_SERVICE, { task } satisfies HeadlessStartupValues)
   })
   parseCmdline(ctx, program)

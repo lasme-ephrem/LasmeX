@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-brand`.
- * @module @deepseek-ai/dsh-brand/invariant
+ * Package-owned invariant companion for `lasmex-brand`.
+ * @module lasmex-brand/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-brand'
+const PACKAGE_NAME = 'lasmex-brand'
 
 /** Cordis companion plugin name. */
 export const name = 'brand-invariant'

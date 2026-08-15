@@ -11,7 +11,7 @@
  * scalar. A match needs a quote (or `name: `) immediately left and the matching
  * quote — optionally after a `/subpath` — immediately right, which excludes
  * `cordis.yml`, the Loader's `cordis:` builtin prefix, `cordis-config-entry`,
- * `@deepseek-ai/dsh-tool-cordis`, and `cordiverse/cordis`, and makes the
+ * `lasmex-tool-cordis`, and `cordiverse/cordis`, and makes the
  * rewrite idempotent because the scoped name's `cordis` is preceded by `/`.
  * Markdown follows the rename inside every fence, and in `docs/` prose too:
  * a tutorial that teaches an unresolvable name is wrong, while prose elsewhere
@@ -214,10 +214,13 @@ const EXACT_EDITS: readonly ExactEdit[] = [
   {
     id: 'publication-set-scope-assertion',
     file: 'scripts/publish-npm-baseline.ts',
-    find: '      if (!isVendored && !name.startsWith(\'@deepseek-ai/\')) {',
-    replace: `      // Vendored packages are rescoped too (vendor/README.md), so publication
-      // never carries an upstream name that would squat it on the registry.
-      if (!name.startsWith('@deepseek-ai/')) {`,
+    find: "      if (!isVendored && !name.startsWith('@deepseek-ai/')) {\n"
+      + '        throw new Error(`${manifestPath} must name an @deepseek-ai package`)\n'
+      + '      }',
+    replace: "      if (isVendored ? !name.startsWith('@deepseek-ai/') : !/^lasmex(?:-|$)/.test(name)) {\n"
+      + "        const expected = isVendored ? 'an @deepseek-ai package' : 'an unscoped lasmex package'\n"
+      + '        throw new Error(`${manifestPath} must name ${expected}`)\n'
+      + '      }',
     expect: 1,
   },
   {
@@ -462,7 +465,7 @@ const VENDORED_LIBRARY = /^@deepseek-ai\\/(cosmokit|schemastery)(\\/|$)/
 
 /** Files the rescope must never rewrite. */
 function excluded(file: string): boolean {
-  if (file === 'scripts/rescope-vendor.ts') return true // the mapping itself
+  if (file === 'scripts/rescope-vendor.ts' || file === 'scripts/rescope-vendor.spec.ts') return true // the mapping and its literal-token tests
   if (file.startsWith('.agents/notes/')) return true // notes record what was true when written
   // Recorded model payloads quote documentation verbatim, so they must mirror the
   // sources on disk — including the notes this rescope leaves alone.
@@ -507,11 +510,40 @@ function skipped(file: string, pattern: Pattern): boolean {
   return GENERIC_SKIPS.some(skip => skip.file === file && skip.upstream.includes(pattern.upstream))
 }
 
+const CORDIS_EVENT_SUBPATH =
+  /^\/(?:dynamic-package|dynamic-retract|inspect-query|inspect-query-resolved|request-run|request-run-resolved|\*)?\\?$/
+
+/**
+ * Whether a quoted bare `cordis` token is product data rather than a module specifier.
+ * @param file - repository-relative file containing the token.
+ * @param line - complete line containing the quoted token.
+ * @param subpath - quoted suffix captured after `cordis`, including its leading slash.
+ * @returns true for owned event, preset, locale, trigger, and catalog identifiers.
+ */
+export function isCordisProductDataToken(file: string, line: string, subpath: string): boolean {
+  if (CORDIS_EVENT_SUBPATH.test(subpath)) return true
+  if (subpath !== '') return false
+  if (file === 'docs/subsystems/memory.md' || file === 'docs/subsystems/memory.zh.md') return true
+  if (file === 'packages/client/ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.tsx') {
+    return line.includes("t('cordis')") || line.includes('t("cordis")')
+  }
+  if (file.startsWith('packages/extensions/ui-cordis/src/client/')) {
+    return line.includes("PropsLocale<'cordis'>")
+      || line.includes('PropsLocale<"cordis">')
+      || /\b(?:name|NS)\s*[:=]\s*['"]cordis['"]/.test(line)
+  }
+  return file === 'scripts/gen-cordis-catalog.ts'
+    && /^\s*['"]cordis['"]:\s*['"]extensions\.md['"]/.test(line)
+}
+
 function rewriteLine(line: string, file: string, all: readonly Pattern[]): string {
   let out = line
   for (const pattern of all) {
     if (skipped(file, pattern)) continue
-    out = out.replace(pattern.token, (_match, quote: string, subpath: string) => `${quote}${pattern.to}${subpath}${quote}`)
+    out = out.replace(pattern.token, (match, quote: string, subpath: string) =>
+      pattern.from === 'cordis' && isCordisProductDataToken(file, line, subpath)
+        ? match
+        : `${quote}${pattern.to}${subpath}${quote}`)
     out = out.replace(pattern.yamlName, (_match, prefix: string, suffix: string) => `${prefix}${pattern.to}${suffix}`)
   }
   return out
@@ -597,9 +629,13 @@ function main(): void {
   const mode = args.includes('--apply') ? 'apply' : args.includes('--check') ? 'check' : 'dry'
   const reverse = args.includes('--reverse')
   const all = patterns(reverse)
-  const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+  const files = execFileSync(
+    'git',
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+    { cwd: root, encoding: 'utf8' },
+  )
     .split('\0')
-    .filter(file => file !== '' && !excluded(file))
+    .filter(file => file !== '' && existsSync(resolve(root, file)) && !excluded(file))
 
   const counts = new Map<string, { files: number; lines: number }>()
   const failures: string[] = []
@@ -651,7 +687,7 @@ function main(): void {
     if (mode === 'apply') writeFileSync(path, after)
   }
 
-  console.log(`rescope-vendor: ${mode}${reverse ? ' --reverse' : ''} over ${String(files.length)} tracked files`)
+  console.log(`rescope-vendor: ${mode}${reverse ? ' --reverse' : ''} over ${String(files.length)} working-tree files`)
   for (const kind of [...counts.keys()].sort()) {
     const { files: count, lines } = counts.get(kind) ?? { files: 0, lines: 0 }
     console.log(`  ${kind.padEnd(24)} ${String(count).padStart(4)} file(s), ${String(lines)} line(s)`)

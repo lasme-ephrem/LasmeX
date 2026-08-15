@@ -6,15 +6,15 @@
  * Plugin lifecycle reads use the optional `ctx.fs` provider, so providerless products
  * mount it as a no-op.
  *
- * @module @deepseek-ai/dsh-agent-instructions
+ * @module lasmex-agent-instructions
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import { isDeepStrictEqual } from 'node:util'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { Session, UserMessage } from '@deepseek-ai/dsh-session'
-import type { ToolExecution, ToolExecutionResult, ToolExecutionToken } from '@deepseek-ai/dsh-tools'
+import type { Agent, PreStepDecision } from 'lasmex-agent'
+import { createUserMessage } from 'lasmex-llm'
+import type { Session, UserMessage } from 'lasmex-session'
+import type { ToolExecution, ToolExecutionResult, ToolExecutionToken } from 'lasmex-tools'
 import { Config, resolveConfig, workspaceBaselineIdentity, type ResolvedConfig } from './config.ts'
 import { findProjectRoot, loadBaselineInstructionSet } from './files.ts'
 import {
@@ -136,7 +136,7 @@ export function apply(ctx: Context, config: Config): void {
       const replacePreviousBaseline = baselinePresent && !keepVisibleBaseline
       const instructions = await loadBaselineInstructionSet({
         cwd,
-        dshHome: resolved.dshHome,
+        lasmexHome: resolved.lasmexHome,
         projectRootMarkers: resolved.projectRootMarkers,
         maxBytes: resolved.maxBytes,
         maxSourceBytes: resolved.maxSourceBytes,
@@ -340,8 +340,9 @@ export function apply(ctx: Context, config: Config): void {
     if (desired === undefined || decision.messages.some(message => sameContextPayload(message, desired))) {
       return decision
     }
-    // Fold the context right after the claimed batch, so the direct prompt
-    // precedes it and the driver-appended runtime context follows it.
+    // Fold workspace instructions into the context producers' relative order.
+    // The driver later moves the direct-user group behind every context while
+    // preserving this placement against runtime context and other plugins.
     const lastClaimedIndex = decision.messages.findLastIndex(message => messages.includes(message))
     const entered = decision.messages.toSpliced(lastClaimedIndex + 1, 0, desired)
     return { kind: 'enter', messages: entered }

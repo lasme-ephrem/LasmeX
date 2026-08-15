@@ -19,7 +19,7 @@ export const zh = {
 /** The feedback namespace key union. */
 export type MessageFeedbackKey = keyof typeof zh
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The per-message feedback controls' copy. */
     feedback: MessageFeedbackKey
@@ -40,4 +40,20 @@ export const en = {
   'error.conflict': 'This feedback changed elsewhere; the latest state is shown',
   'error.load': 'Could not load feedback',
   'error.generic': 'Could not save feedback',
+} satisfies Record<MessageFeedbackKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'action.like': 'Bonne réponse',
+  'action.likeActive': 'Retirer l’évaluation',
+  'action.dislike': 'Réponse problématique',
+  'action.dislikeActive': 'Retirer l’évaluation',
+  'note.open': 'Ajouter une remarque',
+  'note.placeholder': 'Qu’est-ce qui était réussi ou problématique ? (facultatif)',
+  'note.save': 'Enregistrer',
+  'note.cancel': 'Annuler',
+  'note.aria': 'Remarque sur la réponse',
+  'error.conflict': 'Cet avis a été modifié ailleurs ; la version la plus récente est affichée',
+  'error.load': 'Impossible de charger l’avis',
+  'error.generic': 'Impossible d’enregistrer l’avis',
 } satisfies Record<MessageFeedbackKey, string>

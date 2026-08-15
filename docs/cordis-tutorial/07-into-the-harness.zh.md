@@ -10,8 +10,8 @@
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { CallId } from '@deepseek-ai/dsh-llm'
+import { defineTool } from 'lasmex-tools'
+import { CallId } from 'lasmex-llm'
 
 export const name = 'greet-tool'
 export const inject = ['tools']
@@ -54,7 +54,7 @@ export function apply(ctx: Context) {
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-tools'
+import type {} from 'lasmex-tools'
 
 export const name = 'tool-logger'
 export const inject = ['tools']
@@ -69,18 +69,18 @@ export function apply(ctx: Context) {
 }
 ```
 
-`import type {} from '@deepseek-ai/dsh-tools'` 行会引入该包的声明合并，使 `'tools/result'` 及其 payload 具有类型。这与第 4 章导入 `stats.ts` 的做法相同，只是扩展到了包级别。
+`import type {} from 'lasmex-tools'` 行会引入该包的声明合并，使 `'tools/result'` 及其 payload 具有类型。这与第 4 章导入 `stats.ts` 的做法相同，只是扩展到了包级别。
 
 ## 组合并运行
 
 ```yaml
-- name: '@deepseek-ai/dsh-system-prompt'
-- name: '@deepseek-ai/dsh-tools'
+- name: 'lasmex-system-prompt'
+- name: 'lasmex-tools'
 - name: './tool-logger.ts'
 - name: './greet-tool.ts'
 ```
 
-`@deepseek-ai/dsh-tools` 会注入 `systemPrompt` 服务，因为工具需要向系统提示词贡献 schema，所以组合中也要列出该服务的提供方。缺少提供方时，工具插件会像[第 6 章](06-composition-and-hmr.md)所述那样保持 PENDING。
+`lasmex-tools` 会注入 `systemPrompt` 服务，因为工具需要向系统提示词贡献 schema，所以组合中也要列出该服务的提供方。缺少提供方时，工具插件会像[第 6 章](06-composition-and-hmr.md)所述那样保持 PENDING。
 
 ```sh
 node --import tsx ../../vendor/cordis/bin.js
@@ -104,4 +104,4 @@ logger 会先触发：`tools/result` 在结果物化过程中发出，发生在 
 - [子系统页面](../subsystems/core.md)上生成的 `cordis-surface` 区块：可以注入和监听的所有内容，各在其所属页面上。
 - [架构](../architecture.md)：这些插件所处的系统地图。
 
-[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+[![](https://img.shields.io/badge/powered_by-LasmeX-4D6BFE?style=flat-square)](https://github.com/lasme-ephrem/LasmeX)

@@ -1,12 +1,12 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-base`.
- * @module @deepseek-ai/dsh-base/invariant
+ * Package-owned invariant companion for `lasmex-base`.
+ * @module lasmex-base/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-base'
+const PACKAGE_NAME = 'lasmex-base'
 
 /** Cordis companion plugin name. */
 export const name = 'base-bundle-invariant'

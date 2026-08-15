@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-session-title
+# lasmex-session-title
 
 English | [中文](README.zh.md)
 

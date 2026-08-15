@@ -1,14 +1,14 @@
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from 'lasmex-llm'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import LlmRuntime from 'lasmex-llm'
+import SessionStore, { SessionId } from 'lasmex-session'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime, { defineContentToolFixture } from 'lasmex-tools'
+import AgentRegistry, { type Agent } from 'lasmex-agent'
 
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
+import AgentLoop from 'lasmex-agent-loop'
+import * as LlmDeepSeek from 'lasmex-llm-deepseek'
 
 /**
  * With-key proof that log-derived requests translate into real provider cache hits: a

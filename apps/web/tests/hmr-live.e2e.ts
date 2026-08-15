@@ -1,4 +1,4 @@
-/** Published dsh web + pnpm dev:web → browser HMR, with no page reload. */
+/** Published lasmex web + pnpm dev:web → browser HMR, with no page reload. */
 
 import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -8,8 +8,8 @@ import { chromium } from 'playwright'
 import { expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import type { Fiber } from '@deepseek-ai/cordis'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import type { SubprocessHandle, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import type { SubprocessHandle, SubprocessSpawnSpec } from 'lasmex-subprocess'
 import { REPO_ROOT } from './support.ts'
 
 function spawnSpec(argv: readonly string[], cwd: string, env?: Record<string, string>): SubprocessSpawnSpec {
@@ -68,7 +68,7 @@ async function stopTree(child: SubprocessHandle): Promise<void> {
 }
 
 it('hot-reloads a real client-plugin source edit without refreshing the page', async () => {
-  const world = await mkdtemp(join(tmpdir(), 'dsh-web-hmr-world-'))
+  const world = await mkdtemp(join(tmpdir(), 'lasmex-web-hmr-world-'))
   const sourcePath = join(REPO_ROOT, 'packages/client/ui-conversation/src/client/locales.ts')
   const bundlePath = join(REPO_ROOT, 'packages/client/ui-conversation/lib/client.js')
   const binPath = join(REPO_ROOT, 'apps/cli/lib/bin.js')
@@ -89,19 +89,22 @@ it('hot-reloads a real client-plugin source edit without refreshing the page', a
   const failures: unknown[] = []
   try {
     subprocessFiber = await subprocessCtx.plugin(LocalSubprocessRuntime)
-    watcher = subprocessCtx.subprocess.spawn(spawnSpec(['pnpm', 'run', 'dev:web'], REPO_ROOT))
+    const watcherArgv = process.platform === 'win32'
+      ? [process.env.ComSpec ?? 'cmd.exe', '/d', '/s', '/c', 'pnpm run dev:web']
+      : ['pnpm', 'run', 'dev:web']
+    watcher = subprocessCtx.subprocess.spawn(spawnSpec(watcherArgv, REPO_ROOT))
     await waitForOutput(watcher, /dev-web: watching/, 'pnpm run dev:web')
     host = subprocessCtx.subprocess.spawn(spawnSpec(
       [process.execPath, binPath, 'web', '--port', '0'],
       world,
       {
         DEEPSEEK_API_KEY: 'keyless-hmr-no-call',
-        DSH_HOME: join(world, '.dsh'),
+        LASMEX_HOME: join(world, '.lasmex'),
       },
     ))
-    const baseUrl = await waitForOutput(host, /dsh web: (http:\/\/[^\s]+)/, 'built dsh web')
+    const baseUrl = await waitForOutput(host, /lasmex web: (http:\/\/[^\s]+)/, 'built LasmeX web')
     browser = await chromium.launch()
-    const page = await browser.newPage()
+    const page = await browser.newPage({ locale: 'en-US' })
     const pageErrors: string[] = []
     page.on('pageerror', error => pageErrors.push(String(error)))
     await page.goto(baseUrl, { waitUntil: 'load' })

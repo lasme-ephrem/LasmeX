@@ -1,7 +1,7 @@
 /**
  * Service Definition for the code-execution capability seam that runs one model-written program against host async bindings.
  * Runtimes know nothing about tools or sessions; consumers own those concerns.
- * @module @deepseek-ai/dsh-code-runtime
+ * @module lasmex-code-runtime
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
@@ -106,7 +106,7 @@ export abstract class CodeRuntime extends Service {
    * generates language-specific presentation (typed SDK stubs, usage
    * instructions) switches on it and fails loud on a language it cannot
    * present. Well-known values: `'typescript'` and `'python'`, those
-   * `dsh-tools` presents; only `'typescript'` has a published backend.
+   * `lasmex-tools` presents; only `'typescript'` has a published backend.
    */
   abstract readonly language: string
 

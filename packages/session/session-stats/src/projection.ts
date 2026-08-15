@@ -11,7 +11,7 @@
  * and undercount cancelled steps (aborted before the message assembles).
  *
  * The wall-time folds mirror the client window fold field by field
- * (`deriveStats` in dsh-client-ui-conversation, that fold's whole-window
+ * (`deriveStats` in lasmex-client-ui-conversation, that fold's whole-window
  * fallback role): model time is `step/start` → `assistant/message`, first
  * token is the first non-empty delta chunk and survives an in-step
  * `llm/retry`, decode spans first token → assembled message on steps that
@@ -20,12 +20,12 @@
  * time stays uncounted in every time figure — matching the window, which
  * renders it as an untimed interrupted node.
  *
- * @module @deepseek-ai/dsh-session-stats/projection
+ * @module lasmex-session-stats/projection
  */
 
 import { z } from 'zod'
-import { isTokenDelta } from '@deepseek-ai/dsh-llm/message'
-import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
+import { isTokenDelta } from 'lasmex-llm/message'
+import type { ProjectionDefinition } from 'lasmex-session-projection'
 
 /** Accumulated whole-log figures (the view is exactly these totals). */
 interface SessionStatsTotals {

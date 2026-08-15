@@ -207,7 +207,8 @@ const markdownGlobs = ['README.md', '.agents/notes/**/*.md', 'docs/**/*.md', 'pa
 const files: string[] = []
 for (const pattern of markdownGlobs) {
   for (const match of globSync(pattern, { cwd: root })) {
-    if (!isArchivedAgentNotePath(match)) files.push(resolve(root, match))
+    if (isArchivedAgentNotePath(match) || match.endsWith('.fr.md')) continue
+    files.push(resolve(root, match))
   }
 }
 files.sort()

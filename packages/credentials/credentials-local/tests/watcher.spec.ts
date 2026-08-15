@@ -3,7 +3,7 @@ import { Context } from '@deepseek-ai/cordis'
 import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialRef } from 'lasmex-credentials'
 import { LocalCredentialProvider } from '../src/index.ts'
 
 const fsHarness = vi.hoisted(() => ({
@@ -73,7 +73,7 @@ afterEach(async () => {
 })
 
 async function tempDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), 'dsh-credentials-watch-'))
+  const dir = await mkdtemp(join(tmpdir(), 'lasmex-credentials-watch-'))
   cleanups.push(() => rm(dir, { recursive: true, force: true }))
   return dir
 }

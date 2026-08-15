@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-session-telemetry-otel",
-  "description": "OpenTelemetry backend for the DeepSeek Harness telemetry seam: hands captured session records to the OTel JS SDK's log pipeline",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-session-telemetry-otel",
+  "description": "OpenTelemetry backend for LasmeX telemetry seam: hands captured session records to the OTel JS SDK's log pipeline",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/session/session-telemetry-otel"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -41,22 +36,31 @@
     "@deepseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-command-feedback": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-telemetry": "workspace:^",
-    "@deepseek-ai/dsh-anonymous-user-id": "workspace:^",
+    "lasmex-command-feedback": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-telemetry": "workspace:^",
+    "lasmex-anonymous-user-id": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-command-feedback": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-telemetry": "workspace:^",
-    "@deepseek-ai/dsh-anonymous-user-id": "workspace:^",
+    "lasmex-command-feedback": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-session-telemetry": "workspace:^",
+    "lasmex-anonymous-user-id": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/session/session-telemetry-otel"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

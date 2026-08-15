@@ -14,7 +14,7 @@ import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
 import { join } from 'node:path'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { SessionId } from 'lasmex-session'
 import {
   acknowledgeReloadConnectionLoss, assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold,
@@ -60,7 +60,7 @@ describe('web e2e: settings modal and General preferences', () => {
     expect(await trigger.getAttribute('aria-expanded')).toBe('true')
     // General is active by default; Permission, Language and Appearance are functional.
     expect(await dialog.getByRole('button', { name: '通用设置' }).getAttribute('aria-current')).toBe('true')
-    await dialog.getByRole('button', { name: 'Workspace Write' }).waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: '工作区可写' }).waitFor({ timeout: 10_000 })
     await expect.poll(() => dialog.getByText('语言', { exact: true }).count(), { timeout: 5_000 }).toBe(1)
     await expect.poll(() => dialog.getByText('外观', { exact: true }).count(), { timeout: 5_000 }).toBe(1)
     const openDocument = dialog.getByRole('button', { name: '打开配置文件' })
@@ -138,12 +138,12 @@ describe('web e2e: settings modal and General preferences', () => {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '设置' })
     await dialog.waitFor({ timeout: 10_000 })
-    const selector = dialog.getByRole('button', { name: 'Workspace Write' })
+    const selector = dialog.getByRole('button', { name: '工作区可写' })
     await selector.waitFor({ timeout: 10_000 })
     await expect.poll(() => selector.isEnabled(), { timeout: 5_000 }).toBe(true)
     await selector.click()
-    await page.getByRole('menuitem', { name: 'Read Only' }).click()
-    await dialog.getByRole('button', { name: 'Read Only' }).waitFor({ timeout: 10_000 })
+    await page.getByRole('menuitem', { name: '只读' }).click()
+    await dialog.getByRole('button', { name: '只读' }).waitFor({ timeout: 10_000 })
 
     const document = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
     expect(document).toContain('permission:')
@@ -158,14 +158,14 @@ describe('web e2e: settings modal and General preferences', () => {
       ['approval/policy', { policy: 'ask' }],
     ])
 
-    await dialog.getByRole('button', { name: 'Read Only' }).click()
-    await page.getByRole('menuitem', { name: 'Full access' }).click()
-    const confirmation = page.getByRole('dialog', { name: '确认启用 Full access？' })
-    const enable = confirmation.getByRole('button', { name: '启用 Full access' })
+    await dialog.getByRole('button', { name: '只读' }).click()
+    await page.getByRole('menuitem', { name: '完全访问' }).click()
+    const confirmation = page.getByRole('dialog', { name: '确认启用完全访问？' })
+    const enable = confirmation.getByRole('button', { name: '启用完全访问' })
     expect(await enable.isDisabled()).toBe(true)
     await confirmation.getByRole('checkbox').click()
     await enable.click()
-    await dialog.getByRole('button', { name: 'Full access' }).waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: '完全访问' }).waitFor({ timeout: 10_000 })
     const confirmedDocument = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
     expect(confirmedDocument).toContain('defaultPreset: danger-full-access')
     const confirmed = scaffold.ctx.sessions.create(SessionId('settings-permission-confirmed'))
@@ -184,9 +184,18 @@ describe('web e2e: settings modal and General preferences', () => {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const initialDialog = page.getByRole('dialog', { name: '设置' })
     const darkCube = initialDialog.getByRole('button', { name: '深色' })
+    // The row publishes its visual preference optimistically. Wait for the
+    // Host mutation before reading settings.yaml: polling the file during its
+    // atomic replacement can make the test itself contend with Windows rename.
+    const persisted = page.waitForResponse((response) => {
+      if (!response.url().endsWith('/api/settings.mutate')) return false
+      const request = response.request().postDataJSON() as { payload?: { ns?: string } }
+      return request.payload?.ns === 'ui-theme'
+    }, { timeout: 5_000 })
     await darkCube.click()
+    expect((await persisted).ok()).toBe(true)
     await expect.poll(() => darkCube.getAttribute('aria-pressed'), { timeout: 5_000 }).toBe('true')
-    await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 5_000 })
+    await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 15_000 })
       .toMatch(/ui-theme:\n\s+preference: dark/)
     await page.keyboard.press('Escape')
 
@@ -203,7 +212,7 @@ describe('web e2e: settings modal and General preferences', () => {
     let reload: ReturnType<Page['reload']> | undefined
     try {
       reload = page.reload({ waitUntil: 'domcontentloaded' })
-      const loading = page.getByText('Loading plugins…', { exact: true })
+      const loading = page.getByText('Chargement des plugins…', { exact: true })
       await loading.waitFor({ timeout: 10_000 })
       const state = await loading.evaluate((element) => {
         const boot = element.parentElement?.parentElement
@@ -235,6 +244,8 @@ describe('web e2e: settings modal and General preferences', () => {
     await expect.poll(() => page.evaluate(() => document.body.hasAttribute('data-ds-dark-theme')), {
       timeout: 5_000,
     }).toBe(false)
+    await expect.poll(async () => readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8'), { timeout: 5_000 })
+      .toMatch(/ui-theme:\n\s+preference: system/)
     await page.keyboard.press('Escape')
     expect(tripwire.pageErrors).toEqual([])
   }, 90_000)

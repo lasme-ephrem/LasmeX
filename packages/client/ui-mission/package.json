@@ -1,0 +1,89 @@
+{
+  "name": "lasmex-client-ui-mission",
+  "description": "French-first mission dashboard over whole-log session projections and live session status",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "lasmex": {
+    "client": {
+      "inject": [
+        "lasmex-client-locale",
+        "lasmex-client-runtime",
+        "lasmex-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-goal": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-permission-presets": "workspace:^",
+    "lasmex-plan-mode": "workspace:^",
+    "lasmex-session-mission": "workspace:^",
+    "lasmex-session-stats": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-tool-todo": "workspace:^",
+    "@deepseek-ai/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-conversation": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-goal": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-permission-presets": "workspace:^",
+    "lasmex-plan-mode": "workspace:^",
+    "lasmex-session-mission": "workspace:^",
+    "lasmex-session-stats": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-tool-todo": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@deepseek-ai/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-mission"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
+}

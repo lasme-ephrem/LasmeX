@@ -1,5 +1,5 @@
-# The dsh-web-app bundle patch: the browser surface over the dsh-base layer.
-# Applied after dsh-base's insert; rows here override base rows by id, with
+# The lasmex-web-app bundle patch: the browser surface over the lasmex-base layer.
+# Applied after lasmex-base's insert; rows here override base rows by id, with
 # the profile's own cordis.patch.yml and any --patch overlays still to come.
 #
 # A patch replaces the targeted row's whole `config`, so each row below
@@ -9,7 +9,7 @@
 # ordinary Cordis service. Rows configured from flags inject that service, so
 # Loader resolves their expressions only after it exists. The web runtime then
 # provides bind-dependent `webRuntime` values to the trust fence.
-# `dsh --profile web --help` provides neither service, so no server binds.
+# `lasmex web --help` provides neither service, so no server binds.
 
 # ── surface-specific values the base deliberately omits ─────────────────────
 
@@ -34,47 +34,34 @@
 
 - id: tools
   config:
-    # TEMPORARY workaround: DSH_TOOLS_MODE (native|code|both) opts a whole dsh
+    # TEMPORARY workaround: LASMEX_TOOLS_MODE (native|code|both) opts a whole dsh
     # process into Code Mode while per-session tool-presentation selection is being
     # designed; unset keeps the schema default (native). Remove the env seam
     # once the web UI owns the choice per session.
-    mode: !!js process.env.DSH_TOOLS_MODE
+    mode: !!js process.env.LASMEX_TOOLS_MODE
 
 # ── web-only host rows, the transport layer, and the browser roster ─────────
 
-# `dsh.client` rows are the browser roster the modules node half scans into
+# `lasmex.client` rows are the browser roster the modules node half scans into
 # window.__DSH_BOOT__; the modules row is simultaneously a host row.
 - insert:
     - id: code-runtime
-      name: '@deepseek-ai/dsh-code-runtime-worker-thread'
-
-    - id: storage
-      name: '@deepseek-ai/dsh-storage'
-
-    - id: storage-json
-      name: '@deepseek-ai/dsh-storage-json'
-      config:
-        root: !!js dshHomePath('storages')
-
-    - id: storage-domain
-      name: '@deepseek-ai/dsh-storage-domain'
-      config:
-        backend: json
+      name: 'lasmex-code-runtime-worker-thread'
 
     - id: message-feedback
-      name: '@deepseek-ai/dsh-message-feedback'
+      name: 'lasmex-message-feedback'
       config:
         maxNoteBytes: 8192
 
     # Browser Session export: `/export` command plus the shared download dialog.
     - id: session-log-download
-      name: '@deepseek-ai/dsh-session-log-export'
+      name: 'lasmex-session-log-export'
 
     - id: workspace
-      name: '@deepseek-ai/dsh-workspace'
+      name: 'lasmex-workspace'
 
     - id: session-projection-cache
-      name: '@deepseek-ai/dsh-session-projection-cache'
+      name: 'lasmex-session-projection-cache'
       config:
         writeEveryEvents: 200
         writeIntervalMs: 5000
@@ -82,30 +69,42 @@
     # Whole-log turn/step counts for the chat stats strip (the sessionStats
     # projection key); the projection registry itself is a base-layer row.
     - id: session-stats
-      name: '@deepseek-ai/dsh-session-stats'
+      name: 'lasmex-session-stats'
+
+    # Whole-log operational facts for the Mission dashboard. Command
+    # classification is an explicit deployment choice; the view never guesses
+    # whether an arbitrary shell command is a validation.
+    - id: session-mission
+      name: 'lasmex-session-mission'
+      config:
+        maxRecentValidations: 8
+        validationCommandTools: [bash, pwsh]
+        validationCommandPatterns:
+          - '^(?:pnpm|npm|yarn|bun)\b.*\b(?:test|typecheck|lint|build|hygiene)\b'
+          - '^(?:pytest|python(?:3)?\s+-m\s+pytest|cargo\s+test|go\s+test)\b'
 
     # Resolve bind host, SSH launch, and display once at boot, then mount the
     # matching dual-face directory picker. Mount -native or -browse directly in
     # an overlay to pin the interaction.
     - id: directory-picker
-      name: '@deepseek-ai/dsh-host-directory-picker-auto'
+      name: 'lasmex-host-directory-picker-auto'
 
     # Read-only projection of current Loader entries for trusted client RPCs.
     - id: plugin-inventory
-      name: '@deepseek-ai/dsh-host-plugin-inventory'
+      name: 'lasmex-host-plugin-inventory'
 
     # The API gateway: the transport-agnostic dispatch face every client shape
     # shares. The base layer's agent-default-model service owns the default model.
     - id: api-gateway
-      name: '@deepseek-ai/dsh-host-apiproxy'
+      name: 'lasmex-host-apiproxy'
 
     - id: cordis-host-runner
-      name: '@deepseek-ai/dsh-cordis-host-runner'
+      name: 'lasmex-cordis-host-runner'
 
     # Ordinary provider for the parsed Web flags. Its plugin-level injection
     # waits for cmdlineArgs; no launcher metadata or special row kind is needed.
     - id: web-startup
-      name: '@deepseek-ai/dsh-web-app/startup'
+      name: 'lasmex-web-app/startup'
 
     # ── layer 2: transport/service ──────────────────────────────────────────────
 
@@ -113,14 +112,14 @@
     # webStartup provider, with these deployment fallbacks. The dist is served by
     # the web-runtime row below through the fallback seat.
     - id: webserver
-      name: '@deepseek-ai/dsh-host-webserver'
+      name: 'lasmex-host-webserver'
       inject: [webStartup]
       config:
         host: !!js ctx.webStartup.host ?? '127.0.0.1'
         port: !!js ctx.webStartup.port ?? 3080
 
     # Web glue owned by this bundle: resolves the built frontend dist (an
-    # assembly fact of dsh-web-app, never user config), mounts the
+    # assembly fact of lasmex-web-app, never user config), mounts the
     # frontend-static fallback owner, registers the web-surface prompt
     # section and the bash runtime variable, and prints the URL line. The
     # webStartup provider supplies invocation-only values; after the server
@@ -128,7 +127,7 @@
     # complete agent-preset persona suppresses the prompt section for that
     # agent while retaining the host-owned shell variable.
     - id: web-runtime
-      name: '@deepseek-ai/dsh-web-app'
+      name: 'lasmex-web-app'
       inject: [webStartup]
       config:
         printUrl: true
@@ -140,21 +139,21 @@
     # is a row rather than a child of web-runtime because its node half is a
     # client-side package, which a host-side bundle cannot import.
     - id: client-hmr
-      name: '@deepseek-ai/dsh-client-hmr'
+      name: 'lasmex-client-hmr'
 
-    # ── browser plugin roster (dsh.client rows; node halves are layer-2 hosts) ──
+    # ── browser plugin roster (lasmex.client rows; node halves are layer-2 hosts) ──
 
     # Dual-face: the node half scans this tree, composes window.__DSH_BOOT__,
     # and serves /plugins/<id>/client.js; the browser half is the module table
     # the shell kernel constructs before cordis exists (adopted as a plugin
     # entry by the kernel, never fetched).
     - id: modules
-      name: '@deepseek-ai/dsh-client-modules'
+      name: 'lasmex-client-modules'
 
     # Owns both ends of the web transport: node half binds the gateway to the
     # webserver under /api; browser half is the fetch/SSE client.
     - id: connection
-      name: '@deepseek-ai/dsh-client-connection'
+      name: 'lasmex-client-connection'
       inject: [webRuntime]
       config:
         # LAN literals derived from the active bind plus --trusted-host extras.
@@ -163,115 +162,120 @@
         trustedHosts: !!js ctx.webRuntime.trustedHosts
 
     - id: api-remotes
-      name: '@deepseek-ai/dsh-api-remotes'
+      name: 'lasmex-api-remotes'
 
     - id: client-runtime
-      name: '@deepseek-ai/dsh-client-runtime'
+      name: 'lasmex-client-runtime'
 
     - id: cordis-client-runner
-      name: '@deepseek-ai/dsh-cordis-client-runner'
+      name: 'lasmex-cordis-client-runner'
 
     - id: ui-theme
-      name: '@deepseek-ai/dsh-client-ui-theme'
+      name: 'lasmex-client-ui-theme'
 
     - id: locale
-      name: '@deepseek-ai/dsh-client-locale'
+      name: 'lasmex-client-locale'
 
     - id: ui-layout
-      name: '@deepseek-ai/dsh-client-ui-layout'
+      name: 'lasmex-client-ui-layout'
 
     - id: ui-sidebar
-      name: '@deepseek-ai/dsh-client-ui-sidebar'
+      name: 'lasmex-client-ui-sidebar'
 
     - id: ui-settings
-      name: '@deepseek-ai/dsh-client-ui-settings'
+      name: 'lasmex-client-ui-settings'
 
     - id: ui-settings-general
-      name: '@deepseek-ai/dsh-client-ui-settings-general'
+      name: 'lasmex-client-ui-settings-general'
 
     - id: ui-settings-models
-      name: '@deepseek-ai/dsh-client-ui-settings-models'
+      name: 'lasmex-client-ui-settings-models'
 
     - id: ui-settings-plugin-inventory
-      name: '@deepseek-ai/dsh-client-ui-settings-plugin-inventory'
+      name: 'lasmex-client-ui-settings-plugin-inventory'
 
     - id: ui-conversation
-      name: '@deepseek-ai/dsh-client-ui-conversation'
+      name: 'lasmex-client-ui-conversation'
+
+    # Projection-backed operational dashboard; no transcript payload enters
+    # this view.
+    - id: ui-mission
+      name: 'lasmex-client-ui-mission'
 
     # Tool call tree, generic fallback, and keyed business Tool views.
     - id: ui-tool
-      name: '@deepseek-ai/dsh-client-ui-tool'
+      name: 'lasmex-client-ui-tool'
 
     - id: ui-cordis
-      name: '@deepseek-ai/dsh-client-ui-cordis'
+      name: 'lasmex-client-ui-cordis'
 
     # Durable workflow lifecycle as an independent Chat node after the
     # existing generic workflow tool row.
     - id: ui-workflow-run
-      name: '@deepseek-ai/dsh-client-ui-workflow-run'
+      name: 'lasmex-client-ui-workflow-run'
 
     # Turn tail: the produced-files row under each closing assistant message.
     # Remove this entry to turn the surface off; the tail hole renders empty.
     - id: ui-deliverables
-      name: '@deepseek-ai/dsh-client-ui-deliverables'
+      name: 'lasmex-client-ui-deliverables'
 
 
     - id: ui-workspace
-      name: '@deepseek-ai/dsh-client-ui-workspace'
+      name: 'lasmex-client-ui-workspace'
 
     # Input triggers: the '/' | '@' pipeline (ui-input-trigger), the command surface over
     # it (ui-commands), and the two reference sources (ui-skill / ui-subagent).
     - id: ui-input-trigger
-      name: '@deepseek-ai/dsh-client-ui-input-trigger'
+      name: 'lasmex-client-ui-input-trigger'
 
     - id: ui-commands
-      name: '@deepseek-ai/dsh-client-ui-commands'
+      name: 'lasmex-client-ui-commands'
 
     - id: ui-skill
-      name: '@deepseek-ai/dsh-client-ui-skill'
+      name: 'lasmex-client-ui-skill'
 
     - id: ui-subagent
-      name: '@deepseek-ai/dsh-client-ui-subagent'
+      name: 'lasmex-client-ui-subagent'
 
     # Background jobs: the session-header list over the jobsBySession mirror.
     - id: ui-jobs
-      name: '@deepseek-ai/dsh-client-ui-jobs'
+      name: 'lasmex-client-ui-jobs'
 
     # Goal surface: GoalBar in the input dock over the goal session projection.
     - id: ui-goal
-      name: '@deepseek-ai/dsh-client-ui-goal'
+      name: 'lasmex-client-ui-goal'
 
     # Per-message feedback: Like/Dislike plus an optional note in the
     # assistant-message action strip, over the messageFeedback Remote.
     - id: ui-message-feedback
-      name: '@deepseek-ai/dsh-client-ui-message-feedback'
+      name: 'lasmex-client-ui-message-feedback'
 
     # Model selection: the /model popupSelect + composer seat over session.models.
     - id: ui-model-selection
-      name: '@deepseek-ai/dsh-client-ui-model-selection'
+      name: 'lasmex-client-ui-model-selection'
 
     - id: ui-permission
-      name: '@deepseek-ai/dsh-client-ui-permission-presets'
+      name: 'lasmex-client-ui-permission-presets'
 
     # The agent-preset row in General settings: the default preset for
     # sessions created later. Absent a roster it renders nothing.
     - id: ui-agent-preset
-      name: '@deepseek-ai/dsh-client-ui-agent-preset'
+      name: 'lasmex-client-ui-agent-preset'
 
     # Plugin configuration: the host-plane sections a user owns, as expandable
     # cards. A namespace this deployment does not expose renders nothing.
     - id: ui-settings-plugins
-      name: '@deepseek-ai/dsh-client-ui-settings-plugins'
+      name: 'lasmex-client-ui-settings-plugins'
 
     # Plan control: the composer plan seat over the plan projection + /plan channel.
     - id: ui-plan
-      name: '@deepseek-ai/dsh-client-ui-plan'
+      name: 'lasmex-client-ui-plan'
 
     - id: ui-user-questions
-      name: '@deepseek-ai/dsh-client-ui-user-questions'
+      name: 'lasmex-client-ui-user-questions'
 
     - id: ui-trajectory
-      name: '@deepseek-ai/dsh-client-ui-trajectory'
+      name: 'lasmex-client-ui-trajectory'
 
 # ── the agent plane moves behind agent presets ─────────────────────────────
 #
@@ -285,7 +289,7 @@
 # the composition.
 
 # `shell-env` STAYS in the host plane: `apps/cli/src/web.ts` injects it to
-# publish `DSH_WEB_URL`/`DSH_WEB_MODE`, and a host row that injects a service is
+# publish `LASMEX_WEB_URL`/`LASMEX_WEB_MODE`, and a host row that injects a service is
 # the criterion for host-plane ownership — injection resolves before any session
 # exists, so there is no agent to key by. Behind a preset realm those variables
 # would never reach the model's shell at all.
@@ -408,17 +412,17 @@
   disabled: true
 
 # The preset roster. `config/agent-presets/` ships with the deployment and is
-# read-only (its entries carry `system` trust); `$DSH_HOME/.agent-presets` is
+# read-only (its entries carry `system` trust); `$LASMEX_HOME/.agent-presets` is
 # where a person — or an agent — authors their own, and carries the same trust
 # as shell access because a preset IS a composition.
 #
 # Only the SHIPPED root is an assembly fact: it sits beside the installed app's
 # own config, so `apps/cli`'s `composeProfile` resolves and patches it in — the
 # same treatment `distIndex` gets on the webserver row. The writable root is
-# `dsh-agent-presets`' own default (`includeUserRoot`), so a composition that
+# `lasmex-agent-presets`' own default (`includeUserRoot`), so a composition that
 # never reaches that patch still finds a person's presets.
 - insert:
     - id: agent-presets
-      name: '@deepseek-ai/dsh-agent-presets'
+      name: 'lasmex-agent-presets'
       config:
-        default: standard
+        default: lasmex-code

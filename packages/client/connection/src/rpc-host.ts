@@ -1,7 +1,7 @@
 /** Host registry and HTTP adapter for generic Connection RPC channels. */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import type { WebRoute } from '@deepseek-ai/dsh-host-webserver'
+import type { WebRoute } from 'lasmex-host-webserver'
 import {
   clientRequestSchema,
   RpcId,
@@ -10,7 +10,8 @@ import {
   type RpcErrorDetailsMap,
   type RpcId as RpcIdType,
   type ServerResponse as RpcServerResponse,
-} from '@deepseek-ai/dsh-host-apiproxy/api'
+} from 'lasmex-host-apiproxy/api'
+import { toFetchHandler } from 'lasmex-host-apiproxy'
 import { bridge, type FetchHandler } from './http-bridge.ts'
 import { isTrustedApiRequest } from './api-request-trust.ts'
 import { API_PATH } from './api-path.ts'
@@ -60,6 +61,23 @@ export class HostConnectionService extends Service implements HostConnectionHand
       intercept: (channel, matches, handler, options) =>
         this.registerInterceptor(owner, channel, matches, handler, options),
     }
+  }
+
+  /**
+   * Dispatch through the shared `/api` interceptor and API Proxy fallback.
+   * Browser trust belongs to the HTTP carrier; an in-process carrier must
+   * authenticate its own caller before invoking this method.
+   * @param request - request already admitted by its physical carrier.
+   * @returns the API response, including the original streaming body.
+   */
+  fetch(request: Request): Promise<Response> {
+    return this.createSharedFetchHandler(API_PATH, {
+      fetch: (fallbackRequest) => {
+        const apiProxy = this.ctx.get('apiProxy')
+        if (apiProxy === undefined) return Promise.resolve(new Response('not found', { status: 404 }))
+        return toFetchHandler(apiProxy).fetch(fallbackRequest)
+      },
+    }).fetch(request)
   }
 
   /**

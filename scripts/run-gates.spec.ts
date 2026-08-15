@@ -83,12 +83,18 @@ describe('gate graph validation', () => {
     expect(ids).toContain('public-repository-links')
   })
 
+  it('keeps reviewed French parity in the documentation gate', () => {
+    const ids = withPnpmEntrypoint(() => gatesForMode('doc-sync').map(subject => subject.id))
+
+    expect(ids).toContain('french-docs')
+  })
+
   it.each(['ci-primary', 'ci-static', 'check-all'] as const)(
-    'keeps the DSH package license policy in %s',
+    'keeps the LasmeX package license policy in %s',
     (mode) => {
       const ids = withPnpmEntrypoint(() => gatesForMode(mode).map(subject => subject.id))
 
-      expect(ids).toContain('dsh-package-licenses')
+      expect(ids).toContain('lasmex-package-licenses')
     },
   )
 

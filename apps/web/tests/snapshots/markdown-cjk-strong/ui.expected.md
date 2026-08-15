@@ -6,6 +6,7 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
 - text: Render adjacent CJK strong emphasis. {{clock}}
 - button "Copy":

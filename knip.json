@@ -61,9 +61,9 @@
         "acp-agent/tests/fixtures/subagent/subagent-claude-code/driver.ts",
         "acp-agent/tests/fixtures/subagent/subagent-codex/fixture.ts",
         "acp-agent/tests/fixtures/subagent/subagent-codex/driver.ts",
-        "jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/driver.ts",
-        "jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/child-mock-llm.ts",
-        "jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/mock-delegating-llm.ts",
+        "jsonrpc-agent/tests/fixtures/subagent/subagent-lasmex-sdk/driver.ts",
+        "jsonrpc-agent/tests/fixtures/subagent/subagent-lasmex-sdk/child-mock-llm.ts",
+        "jsonrpc-agent/tests/fixtures/subagent/subagent-lasmex-sdk/mock-delegating-llm.ts",
         "*/tests/**/*.e2e.ts",
         "*/tests/**/*.snapshot.ts"
       ],
@@ -71,7 +71,8 @@
         "**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@deepseek-ai/.+",
+        "lasmex-.+"
       ]
     },
     "packages/util/home": {
@@ -94,8 +95,8 @@
     },
     "packages/host/directory-picker-auto": {
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-directory-picker-browse",
-        "@deepseek-ai/dsh-client-ui-directory-picker-native"
+        "lasmex-client-ui-directory-picker-browse",
+        "lasmex-client-ui-directory-picker-native"
       ]
     },
     "packages/extensions/cordis-host-runner": {
@@ -147,7 +148,7 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-api-gateway"
+        "lasmex-api-gateway"
       ]
     },
     "packages/client/ui-primitives": {
@@ -692,7 +693,7 @@
         "tests/**/*.tsx"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-theme"
+        "lasmex-client-ui-theme"
       ]
     },
     "packages/client/ui-settings": {
@@ -717,9 +718,9 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-primitives",
-        "@deepseek-ai/dsh-client-ui-slots",
-        "@deepseek-ai/dsh-client-web-react",
+        "lasmex-client-ui-primitives",
+        "lasmex-client-ui-slots",
+        "lasmex-client-web-react",
         "@types/react",
         "@types/react-dom",
         "react",
@@ -737,7 +738,41 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "lasmex-.+"
+      ]
+    },
+    "apps/desktop": {
+      "entry": [
+        "src/main.ts"
+      ],
+      "ignoreBinaries": [
+        "powershell"
+      ],
+      "ignoreDependencies": [
+        "@deepseek-ai/cosmokit",
+        "@deepseek-ai/schemastery",
+        "@electron-forge/cli",
+        "lasmex-anonymous-user-id",
+        "lasmex-atomic-write",
+        "lasmex-bash-local",
+        "lasmex-client-ui-directory-picker-native",
+        "lasmex-code-runtime",
+        "lasmex-compaction",
+        "lasmex-fs",
+        "lasmex-host-directory-picker-native",
+        "lasmex-output-retention",
+        "lasmex-sandbox",
+        "lasmex-scope",
+        "lasmex-session-telemetry",
+        "lasmex-session-title-llm",
+        "lasmex-shell",
+        "lasmex-spill",
+        "lasmex-subagent-in-process-driver",
+        "lasmex-subprocess",
+        "lasmex-timeout",
+        "lasmex-workflow",
+        "react",
+        "react-dom"
       ]
     },
     "packages/client/modules": {
@@ -758,7 +793,7 @@
         "tests/**/*.ts"
       ]
     },
-    "packages/subagent/subagent-dsh-sdk": {
+    "packages/subagent/subagent-lasmex-sdk": {
       "entry": [
         "tests/**/*.spec.ts",
         "tests/**/*.e2e.ts"
@@ -770,17 +805,19 @@
     },
     "packages/bundle/base": {
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@deepseek-ai/.+",
+        "lasmex-.+"
       ]
     },
     "packages/bundle/headless": {
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-code-runtime-worker-thread"
+        "lasmex-code-runtime-worker-thread",
+        "lasmex-tool-memory"
       ]
     },
     "packages/bundle/web-app": {
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "lasmex-.+"
       ]
     }
   }

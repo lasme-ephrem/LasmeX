@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-host-plugin-inventory
+# lasmex-host-plugin-inventory
 
 [English](README.md) | 中文
 

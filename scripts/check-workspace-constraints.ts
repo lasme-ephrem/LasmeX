@@ -41,21 +41,21 @@ const publicationSourceAllowlist: Readonly<Record<string, readonly string[]>> = 
   '@deepseek-ai/node-addon-landlock-run': ['src/main.c'],
 }
 const repositoryUrl = 'git+https://github.com/deepseek-harness/deepseek-harness.git'
-/**
- * Source home the published packages point consumers at. It differs from
- * {@link repositoryUrl}, which the Landlock packages keep because npm resolves
- * their trusted publishing against the repository that runs the workflow.
- */
+/** Source home retained by the vendored framework packages. */
 const publishedRepositoryUrl = 'git+https://github.com/deepseek-ai/deepseek-harness.git'
-/** Directories whose packages this repository publishes: one release member each. */
-const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[^/]+)$/
+/** Public source home required by npm trusted publishing for LasmeX packages. */
+const lasmexRepositoryUrl = 'git+https://github.com/lasme-ephrem/LasmeX.git'
+/** Public LasmeX family directories; the private desktop app is not an npm release member. */
+const lasmexReleaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/(?:cli|web))$/
+/** Vendored framework directories published by their independent sequence. */
+const vendorReleaseMemberDirectory = /^vendor\/[^/]+$/
 
 const localArtifactDirs = new Set(['node_modules'])
 const appPackageFiles: Readonly<Record<string, readonly string[]>> = {
-  '@deepseek-ai/dsh': ['lib/*.js', 'config'],
+  'lasmex': ['lib/*.js', 'lib/types/*.d.ts', 'config'],
   // The Web build emits sourcemaps for browser debugging; publishing them is
   // what the payload policy forbids, so the bundle ships without them.
-  '@deepseek-ai/dsh-web-frontend': ['dist', '!dist/**/*.map'],
+  'lasmex-web-frontend': ['dist', '!dist/**/*.map'],
 }
 
 /** The subset of package.json fields this constraint check cares about. */
@@ -131,27 +131,27 @@ function workspaceManifests(): WorkspaceManifest[] {
 }
 
 const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
-  // Profile bundles publish their dsh.bundle.patch layer beside the lib.
-  '@deepseek-ai/dsh-base': ['cordis.patch.yml'],
-  '@deepseek-ai/dsh-web-app': ['cordis.patch.yml'],
-  '@deepseek-ai/dsh-headless': ['cordis.patch.yml'],
-  '@deepseek-ai/dsh-client-ui-theme': ['lib/styles'],
+  // Profile bundles publish their lasmex.bundle.patch layer beside the lib.
+  'lasmex-base': ['cordis.patch.yml'],
+  'lasmex-web-app': ['cordis.patch.yml'],
+  'lasmex-headless': ['cordis.patch.yml'],
+  'lasmex-client-ui-theme': ['lib/styles'],
   // The Python runtime uses a distinct closed-resolution bin; the public CLI
   // keeps config-owned bare-package resolution through lib/bin.js.
-  '@deepseek-ai/dsh-sdk-jsonrpc-demo': ['lib/packaged-bin.js'],
+  'lasmex-sdk-jsonrpc-demo': ['lib/packaged-bin.js'],
   // The argv-prefix runner entry ships beside the lib as its own bundle;
   // sandbox-local resolves it through the package's ./runner export. tsdown
   // also shares its generated FFI code through a hashed runtime chunk.
-  '@deepseek-ai/dsh-sandbox-windows-acl': ['lib/runner.js', 'lib/types-*.js'],
-  '@deepseek-ai/dsh-skill-badge': ['assets'],
-  '@deepseek-ai/dsh-subprocess-local': ['scripts/ensure-spawn-helper.mjs'],
+  'lasmex-sandbox-windows-acl': ['lib/runner.js', 'lib/types-*.js'],
+  'lasmex-skill-badge': ['assets'],
+  'lasmex-subprocess-local': ['scripts/ensure-spawn-helper.mjs'],
 }
 
 function sameStringList(actual: readonly string[] | undefined, expected: readonly string[]): boolean {
   return !!actual && actual.length === expected.length && actual.every((value, index) => value === expected[index])
 }
 
-function expectedDshPackageFiles(manifest: PackageManifest): readonly string[] {
+function expectedLasmeXPackageFiles(manifest: PackageManifest): readonly string[] {
   const extras = manifest.name ? packageFileExtras[manifest.name] ?? [] : []
   return [
     'lib/index.js',
@@ -226,6 +226,8 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
   const isPublicLandlockPackage = isLandlockPackageDir
     && manifest.name !== undefined
     && publicLandlockPackages.has(manifest.name)
+  const isLasmeXReleaseMember = lasmexReleaseMemberDirectory.test(dir)
+  const isVendorReleaseMember = vendorReleaseMemberDirectory.test(dir)
 
   if (isPublicLandlockPackage) {
     if (manifest.private === true) {
@@ -240,16 +242,14 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
       || manifest.repository.directory !== expectedDirectory) {
       errors.push(`${label}: published Landlock package repository must use ${repositoryUrl} with directory ${expectedDirectory} for trusted publishing`)
     }
-  } else if (releaseMemberDirectory.test(dir)) {
+  } else if (isLasmeXReleaseMember || isVendorReleaseMember) {
     // Release members state that they are publishable: npm refuses a private
     // package, and the repository field is how a consumer finds the source of
     // the package it installed.
     //
-    // Access is per release sequence, not per scope: the vendored framework and
-    // the Landlock packages publish publicly because outside consumers install
-    // them, while the dsh family stays restricted until its own sequence goes
-    // public. A mixed scope is why no publish path passes `--access` — one flag
-    // cannot serve both, so each packed manifest decides
+    // Access is per release sequence, not per scope. A mixed scoped/unscoped
+    // workspace is why no publish path passes `--access`: each packed manifest
+    // decides
     // ([rationale](../.agents/notes/implemented/process/2026-08-13-public-vendor-and-native-sequences.md)).
     if (manifest.private === true) {
       errors.push(`${label}: release member must not set "private": true`)
@@ -257,10 +257,15 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     if (manifest.publishConfig?.access !== 'public') {
       errors.push(`${label}: release member must set publishConfig.access to "public"`)
     }
-    if (manifest.repository?.type !== 'git'
+    if (isLasmeXReleaseMember && (manifest.repository?.type !== 'git'
+      || manifest.repository.url !== lasmexRepositoryUrl
+      || manifest.repository.directory !== dir)) {
+      errors.push(`${label}: LasmeX release member repository must use ${lasmexRepositoryUrl} with directory ${dir}`)
+    }
+    if (isVendorReleaseMember && (manifest.repository?.type !== 'git'
       || manifest.repository.url !== publishedRepositoryUrl
-      || manifest.repository.directory !== dir) {
-      errors.push(`${label}: release member repository must use ${publishedRepositoryUrl} with directory ${dir}`)
+      || manifest.repository.directory !== dir)) {
+      errors.push(`${label}: vendored release member repository must use ${publishedRepositoryUrl} with directory ${dir}`)
     }
   } else if (manifest.private !== true) {
     errors.push(`${label}: package.json must set "private": true`)
@@ -270,8 +275,8 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     return errors
   }
 
-  if (manifest.name?.startsWith('@deepseek-ai/')) {
-    const allowedSources = publicationSourceAllowlist[manifest.name] ?? []
+  if (manifest.name?.startsWith('@deepseek-ai/') || isLasmeXReleaseMember) {
+    const allowedSources = publicationSourceAllowlist[manifest.name ?? ''] ?? []
     for (const file of manifest.files ?? []) {
       if (isForbiddenPublicationFile(file) && !allowedSources.includes(file)) {
         errors.push(`${label}: package.json files must not publish ${JSON.stringify(file)}`)
@@ -279,8 +284,8 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     }
   }
 
-  if (dir.startsWith('apps/') && manifest.name?.startsWith('@deepseek-ai/')) {
-    const expectedFiles = appPackageFiles[manifest.name]
+  if (isLasmeXReleaseMember && dir.startsWith('apps/')) {
+    const expectedFiles = appPackageFiles[manifest.name ?? '']
     if (expectedFiles === undefined) {
       errors.push(`${label}: app package has no publication files policy`)
     } else if (!sameStringList(manifest.files, expectedFiles)) {
@@ -297,7 +302,7 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     }
   }
 
-  if (dir.startsWith('packages/') && manifest.name?.startsWith('@deepseek-ai/dsh-')) {
+  if (dir.startsWith('packages/') && manifest.name?.startsWith('lasmex-')) {
     const peer = manifest.peerDependencies?.['@deepseek-ai/cordis']
     const dev = manifest.devDependencies?.['@deepseek-ai/cordis']
 
@@ -337,7 +342,7 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     if (invariantExport && (invariantExport.types === undefined || invariantExport.default === undefined)) {
       errors.push(`${label}: package.json exports["./invariant"] must declare both types and default targets`)
     }
-    const expectedFiles = expectedDshPackageFiles(manifest)
+    const expectedFiles = expectedLasmeXPackageFiles(manifest)
     if (!sameStringList(manifest.files, expectedFiles)) {
       errors.push(`${label}: package.json files must be ${JSON.stringify(expectedFiles)}`)
     }
@@ -373,8 +378,8 @@ function checkHierarchyShape(): string[] {
 }
 
 function checkRepositoryVersion(): string[] {
-  // The root carries the dsh release family's version, so a prerelease such as
-  // 0.0.1-rc.1 is a valid state between `release:dsh` and its publication.
+  // The root carries the LasmeX release family's version, so a prerelease such as
+  // 0.0.1-rc.1 is a valid state between `release:lasmex` and its publication.
   if (repositoryVersion && /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(repositoryVersion)) return []
   return ['package.json: version must be X.Y.Z with an optional prerelease segment']
 }

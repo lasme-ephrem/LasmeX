@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-session-persistence",
-  "description": "Abstract durable session persistence seam (ctx.sessionPersistence) for the DeepSeek Harness",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-session-persistence",
+  "description": "Abstract durable session persistence seam (ctx.sessionPersistence) for LasmeX",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/session/session-persistence"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -32,18 +27,27 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-scope": "workspace:^",
+    "lasmex-session": "workspace:^",
+    "lasmex-timeout": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/session/session-persistence"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

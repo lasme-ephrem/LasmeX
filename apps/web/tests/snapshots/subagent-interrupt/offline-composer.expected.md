@@ -10,16 +10,17 @@
     - img
   - tablist:
     - tab "Chat" [selected]
+    - tab "Mission"
     - tab "Trajectory"
+- button "Context injection lasmex-system-prompt":
+  - img
+  - img
+  - text: Context injection lasmex-system-prompt
 - text: Explain event sourcing in one sentence. {{clock}}
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
-  - img
-  - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
 - paragraph: partial
-- status: Deep diving...
+- status: Deep diving…
 - textbox "Parent session offline; sending is unavailable but you can still stop the run" [disabled]
 - button "Commands" [disabled]:
   - img

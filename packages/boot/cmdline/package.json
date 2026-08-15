@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-cmdline",
-  "description": "Immutable command-line handoff from a dsh launcher to any app plugin that injects cmdlineArgs",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-cmdline",
+  "description": "Immutable command-line handoff from a LasmeX launcher to any app plugin that injects cmdlineArgs",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/boot/cmdline"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -33,14 +28,23 @@
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-include": "workspace:^",
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
     "commander": "^15.0.0",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/boot/cmdline"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

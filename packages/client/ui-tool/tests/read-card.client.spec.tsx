@@ -9,22 +9,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { Context } from '@deepseek-ai/cordis'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
 import {
   createSnapshotStore, EMPTY_CONVERSATION_VIEWS,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+} from 'lasmex-client-runtime/client'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import type {
   ConversationSnapshot, RunningToolCall, SessionId, SessionListState, ToolResultNode, WorkspaceListState,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { ToolResultView } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SelectionTarget } from '@deepseek-ai/dsh-client-ui-conversation/client'
+} from 'lasmex-client-runtime/client'
+import type { ToolResultView } from 'lasmex-api-remotes/client'
+import type { SelectionTarget } from 'lasmex-client-ui-conversation/client'
 import { CHAT_READ_MAX_LINES, readCardModel } from '../src/client/tool/models/read-card-model.ts'
-import { createChatStore } from '@deepseek-ai/dsh-client-ui-conversation/src/client/stores.ts'
+import { createChatStore } from 'lasmex-client-ui-conversation/src/client/stores.ts'
 import { GenericToolCard, type GenericToolCardProps } from '../src/client/tool/toolviews/GenericToolCard.tsx'
-import { zh } from '@deepseek-ai/dsh-client-ui-conversation/src/client/locales.ts'
-import { DetailsPanel } from '@deepseek-ai/dsh-client-ui-conversation/src/client/skeleton/DetailsPanel.tsx'
+import { zh } from 'lasmex-client-ui-conversation/src/client/locales.ts'
+import { DetailsPanel } from 'lasmex-client-ui-conversation/src/client/skeleton/DetailsPanel.tsx'
 import { ReadRow, readToolview } from '../src/client/tool/toolviews/read-row.tsx'
 import { renderToolDetails, SessionProviderStub, toolChatSnapshot } from './tool-details-render.client.tsx'
 
@@ -190,7 +190,7 @@ describe('ReadRow keyed toolview', () => {
 
   it('collapses to the path summary; the whole row toggles the read card', () => {
     const view = render(<ReadRow {...rowProps(settled())} />)
-    expect(view.getByText('Read')).toBeTruthy()
+    expect(view.getByText('读取')).toBeTruthy()
     // Collapsed: the path is the summary link alone, and the card is absent.
     expect(view.getAllByText('src/a.ts').length).toBe(1)
     expect(view.container.querySelector('[data-read]')).toBeNull()

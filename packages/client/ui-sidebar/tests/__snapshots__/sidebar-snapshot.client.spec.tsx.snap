@@ -1,5 +1,98 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`sidebar shell snapshots > renders the French-first LasmeX shell 1`] = `
+<div
+  data-slot="sidebar"
+  style="display: contents;"
+>
+  <div
+    class="root quietBars"
+    style="width: 300px;"
+  >
+    <div
+      class="logoRow"
+    >
+      <button
+        aria-label="Créer une session"
+        class="brand wide"
+        type="button"
+      >
+        <svg
+          aria-hidden="true"
+          data-content="8285c83e"
+          fill="none"
+          height="24"
+          viewBox="0 0 112 24"
+          width="112"
+        />
+      </button>
+      <button
+        aria-label="Réduire la barre latérale"
+        class="iconButton toggle"
+        type="button"
+      >
+        <svg
+          class="panelIcon"
+          data-content="35f95b0c"
+          fill="none"
+          height="16"
+          viewBox="0 0 16 16"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
+        />
+      </button>
+    </div>
+    <button
+      aria-label="Créer une session"
+      class="newSession"
+      type="button"
+    >
+      <svg
+        data-content="c0ce4dcc"
+        fill="none"
+        height="14"
+        viewBox="0 0 16 16"
+        width="14"
+        xmlns="http://www.w3.org/2000/svg"
+      />
+      <span
+        class="newSessionLabel wide"
+      >
+        Nouvelle session
+      </span>
+    </button>
+    <div
+      class="regionArea"
+    >
+      <div
+        data-slot="sidebar.workspaces"
+        style="display: contents;"
+      />
+    </div>
+    <div
+      class="footArea"
+    >
+      <div
+        class="footerActions"
+      >
+        <div
+          data-slot="sidebar.footer.action"
+          style="display: contents;"
+        />
+      </div>
+      <div
+        class="settingsArea"
+      >
+        <div
+          data-slot="sidebar.settings"
+          style="display: contents;"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+`;
+
 exports[`sidebar shell snapshots > renders the collapsed rail after the crossfade settles, in place 1`] = `
 <div
   data-slot="sidebar"
@@ -20,10 +113,10 @@ exports[`sidebar shell snapshots > renders the collapsed rail after the crossfad
         <svg
           aria-hidden="true"
           class="railFish"
-          data-content="965fe321"
+          data-content="c0696b2a"
           fill="none"
-          height="17.6580310880829"
-          viewBox="0 0 23.16 17.04"
+          height="24"
+          viewBox="0 0 24 24"
           width="24"
         />
         <svg
@@ -102,11 +195,11 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
       >
         <svg
           aria-hidden="true"
-          data-content="951274b9"
+          data-content="8285c83e"
           fill="none"
           height="24"
-          viewBox="0 0 182 24"
-          width="182"
+          viewBox="0 0 112 24"
+          width="112"
         />
       </button>
       <button
@@ -176,7 +269,7 @@ exports[`sidebar shell snapshots > renders the expanded column (wordmark, capsul
 </div>
 `;
 
-exports[`sidebar shell snapshots > renders the expanded column in the default locale (zh, no setLocale) 1`] = `
+exports[`sidebar shell snapshots > renders the expanded column in the browser locale (zh, no setLocale) 1`] = `
 <div
   data-slot="sidebar"
   style="display: contents;"
@@ -195,11 +288,11 @@ exports[`sidebar shell snapshots > renders the expanded column in the default lo
       >
         <svg
           aria-hidden="true"
-          data-content="951274b9"
+          data-content="8285c83e"
           fill="none"
           height="24"
-          viewBox="0 0 182 24"
-          width="182"
+          viewBox="0 0 112 24"
+          width="112"
         />
       </button>
       <button

@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-cordis-client-runner",
+  "name": "lasmex-cordis-client-runner",
   "description": "Browser half of dynamic dual-half plugin packages: event subscription, closure evaluation, guard facade, and loader entries",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/extensions/cordis-client-runner"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,13 +24,13 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-modules",
-        "@deepseek-ai/dsh-client-ui-theme"
+        "lasmex-client-runtime",
+        "lasmex-api-remotes",
+        "lasmex-client-modules",
+        "lasmex-client-ui-theme"
       ],
       "platform": "web"
     }
@@ -47,25 +42,25 @@
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-modules": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-client-connection": "workspace:^",
+    "lasmex-client-modules": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-theme": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-modules": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-theme": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-client-connection": "workspace:^",
+    "lasmex-client-modules": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-theme": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@types/react": "~18.3.1",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
@@ -75,5 +70,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/extensions/cordis-client-runner"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

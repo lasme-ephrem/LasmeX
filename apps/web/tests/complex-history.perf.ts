@@ -9,22 +9,22 @@ import { performance } from 'node:perf_hooks'
 import type { Browser, CDPSession, Locator, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import type { StreamChunk } from '@deepseek-ai/dsh-llm'
+import type { StreamChunk } from 'lasmex-llm'
 import {
   CallId,
   createAssistantMessage,
   createToolResultMessage,
   createUserMessage,
-} from '@deepseek-ai/dsh-llm'
-import type { ReplayEntry, ReplayOverrideDoc } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+} from 'lasmex-llm'
+import type { ReplayEntry, ReplayOverrideDoc } from 'lasmex-llm-replay'
+import type { SessionEvent } from 'lasmex-session'
 import {
   SESSION_FORMAT_VERSION,
   Session,
   SessionId,
-} from '@deepseek-ai/dsh-session'
+} from 'lasmex-session'
 // Carries the session/title event declaration into the fixture builder.
-import type {} from '@deepseek-ai/dsh-session-title'
+import type {} from 'lasmex-session-title'
 import {
   launchWebScaffold,
   seedSession,
@@ -827,7 +827,7 @@ async function launchPerformanceWorld(
     if (options.replay === undefined) {
       scaffold = await launchWebScaffold()
     } else {
-      replayDir = await mkdtemp(join(tmpdir(), 'dsh-web-perf-replay-'))
+      replayDir = await mkdtemp(join(tmpdir(), 'lasmex-web-perf-replay-'))
       const replayOverride = join(replayDir, 'replay.override.json')
       await writeFile(replayOverride, JSON.stringify(options.replay))
       scaffold = await launchWebScaffold({

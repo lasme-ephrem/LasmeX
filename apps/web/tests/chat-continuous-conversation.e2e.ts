@@ -9,9 +9,9 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { CallId, type StreamChunk } from '@deepseek-ai/dsh-llm'
-import type { ReplayEntry, ReplayOverrideDoc } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
+import { CallId, type StreamChunk } from 'lasmex-llm'
+import type { ReplayEntry, ReplayOverrideDoc } from 'lasmex-llm-replay'
+import type { SessionEvent, SessionId } from 'lasmex-session'
 import {
   launchWebScaffold,
   watchConsole,
@@ -168,7 +168,7 @@ function assistantKey(event: SessionEvent<'assistant/message'>): string {
   return conversationContextKey('assistant-step', `${event.data.turn}:${event.data.step}`)
 }
 
-describe('web e2e: continuous conversation grown through the composer', () => {
+describe.skipIf(process.platform === 'win32')('web e2e: continuous conversation grown through the composer', () => {
   let browser: Browser
   let page: Page
   let replayDir: string

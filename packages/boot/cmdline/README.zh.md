@@ -1,14 +1,14 @@
-# `@deepseek-ai/dsh-cmdline`
+# lasmex-cmdline
 
 [English](README.md) | 中文
 
-dsh 启动器交给它所引导应用的那条命令行。启动器只解析属于自己的 flag（`--profile`、`--patch`、配置 dump），并把**其后的一切**原样交给配置树，因此 flag 家族、`--help` 文本和解析错误都由应用自己持有，启动器不必知道它们。
+lasmex 启动器交给它所引导应用的那条命令行。启动器只解析属于自己的 flag（`--profile`、`--patch`、配置 dump），并把**其后的一切**原样交给配置树，因此 flag 家族、`--help` 文本和解析错误都由应用自己持有，启动器不必知道它们。
 
 ## 启动器提供的值
 
 启动器在任何配置树条目挂载之前调用 `provideCmdline(ctx, host)`，它提供：
 
-- `ctx.cmdlineArgs`：本次调用的内层参数。`get()` 就是它的全部接口，返回一份快照：`dsh --profile tui --resume abc` 得到 `['--resume', 'abc']`。
+- `ctx.cmdlineArgs`：本次调用的内层参数。`get()` 就是它的全部接口，返回一份快照：`lasmex --profile tui --resume abc` 得到 `['--resume', 'abc']`。
 - `ctx.appExit`：一个有边界的进程退出请求，接到启动器的关停控制器上。
 
 没有命令行的嵌入宿主提供空列表；这是诚实的答案，而不是缺失的值。
@@ -32,21 +32,21 @@ export function apply(ctx: Context): void {
 
 ```yaml
 - id: web-startup
-  name: '@deepseek-ai/dsh-web-app/startup'
+  name: 'lasmex-web-app/startup'
 ```
 
 所有由这些取值配置的行都使用普通服务注入，并在惰性配置中直接访问该服务：
 
 ```yaml
 - id: webserver
-  name: '@deepseek-ai/dsh-host-webserver'
+  name: 'lasmex-host-webserver'
   inject: [webStartup]
   config:
     host: !!js ctx.webStartup.host ?? '127.0.0.1'
     port: !!js ctx.webStartup.port ?? 3080
 ```
 
-`parseCmdline` 在加载时拒绝整棵命令树中没有任何命令声明 action 的 program，把每个命令的退出与输出都接到启动器上（commander 只在注册时把这些设置复制进子命令），再解析不可变参数；解析成功时 commander 运行被调用命令的同步 action。action 用 `program.error(...)` 拒绝无效调用——必须先拒绝后发布，因为写在拒绝之前的语句已经执行。遇到 `--help`、`--version`、解析错误或这种拒绝时，该适配器输出 commander 文本并请求退出；提供方什么也不发布，因此依赖行不会激活。
+`configureFrenchCommand(program)` 会本地化 Commander 共用的帮助标题与错误前缀；各应用仍持有自己的说明与校验消息。`parseCmdline` 在加载时拒绝整棵命令树中没有任何命令声明 action 的 program，把每个命令的退出与输出都接到启动器上（commander 只在注册时把这些设置复制进子命令），再解析不可变参数；解析成功时 commander 运行被调用命令的同步 action。action 用 `program.error(...)` 拒绝无效调用——必须先拒绝后发布，因为写在拒绝之前的语句已经执行。遇到 `--help`、`--version`、解析错误或这种拒绝时，该适配器输出 commander 文本并请求退出；提供方什么也不发布，因此依赖行不会激活。
 
 ### 注入如何排列配置求值
 

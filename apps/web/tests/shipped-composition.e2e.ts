@@ -7,17 +7,17 @@ import { readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { afterEach, expect, it } from 'vitest'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import { canonicalPath, writableRoots } from '@deepseek-ai/dsh-sandbox'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { CallId } from 'lasmex-llm'
+import { canonicalPath, writableRoots } from 'lasmex-sandbox'
+import { SessionId } from 'lasmex-session'
 // Empty type imports carry the tools/sandboxPolicy/approval Context merges.
-import type {} from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-sandbox-policy'
-import type {} from '@deepseek-ai/dsh-user-approval'
-import type {} from '@deepseek-ai/dsh-permission-presets'
-import type {} from '@deepseek-ai/dsh-agent-presets'
-import type {} from '@deepseek-ai/dsh-commands'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+import type {} from 'lasmex-tools'
+import type {} from 'lasmex-sandbox-policy'
+import type {} from 'lasmex-user-approval'
+import type {} from 'lasmex-permission-presets'
+import type {} from 'lasmex-agent-presets'
+import type {} from 'lasmex-commands'
+import type {} from 'lasmex-system-prompt'
 import { launchWebScaffold, type WebScaffold } from './scaffold.ts'
 
 const FILE_REFERENCE_PROMPT = fileURLToPath(new URL(
@@ -34,7 +34,7 @@ const FILE_REFERENCE_PROMPT = fileURLToPath(new URL(
  */
 const EXPECTED_TOOLS = [
   'ask_user_question',
-  'bash',
+  process.platform === 'win32' ? 'pwsh' : 'bash',
   'create_goal',
   'edit',
   'exit_plan_mode',
@@ -44,6 +44,11 @@ const EXPECTED_TOOLS = [
   'job_list',
   'job_output',
   'list_agents',
+  'memory_forget',
+  'memory_list',
+  'memory_read',
+  'memory_save',
+  'memory_search',
   'ralph',
   'read',
   'read_image',
@@ -56,10 +61,10 @@ const EXPECTED_TOOLS = [
   'web_search',
   'workflow',
   'write',
-]
+].sort()
 
 /**
- * `glob` and `grep` come from `dsh-tool-fs-search`, which spawns the PACKAGED
+ * `glob` and `grep` come from `lasmex-tool-fs-search`, which spawns the PACKAGED
  * ripgrep binary (`@vscode/ripgrep`) through the subprocess seam, so the pair
  * is always present on every host — asserted as fixed members, not a host
  * dependency.
@@ -136,15 +141,19 @@ it('lets a preset producer reach the background-job registry', async () => {
   })
   try {
     const signal = new AbortController().signal
-    // `tool-bash` is a preset row and `tasks` is a host registry; the producer
+    const shellTool = process.platform === 'win32' ? 'pwsh' : 'bash'
+    const command = process.platform === 'win32'
+      ? 'Write-Output SHIPPED_BACKGROUND_OK'
+      : 'printf SHIPPED_BACKGROUND_OK'
+    // The shell tool is a preset row and `tasks` is a host registry; the producer
     // resolves it with `ctx.get`, so a registry hidden behind a preset realm
     // fails here — with every task control still listed in the catalog above.
     const started = await ctx.tools.execute({
       signal,
-      callId: CallId('shipped-bash-background'),
-      name: 'bash',
+      callId: CallId('shipped-shell-background'),
+      name: shellTool,
       arguments: {
-        command: 'printf SHIPPED_BACKGROUND_OK',
+        command,
         description: 'shipped background probe',
         run_in_background: true,
       },
@@ -152,7 +161,7 @@ it('lets a preset producer reach the background-job registry', async () => {
     })
     expect({ isError: started.isError, content: started.content }).toEqual({
       isError: false,
-      content: [{ type: 'text', text: 'started background job bash-1' }],
+      content: [{ type: 'text', text: `started background job ${shellTool}-1` }],
     })
 
     // The controller reads what the producer started: same registry, one
@@ -166,7 +175,7 @@ it('lets a preset producer reach the background-job registry', async () => {
     })
     expect(listed.isError).toBe(false)
     expect(listed.content).toEqual([
-      { type: 'text', text: expect.stringContaining('bash-1 [bash]') as unknown as string },
+      { type: 'text', text: expect.stringContaining(`${shellTool}-1 [${shellTool}]`) as unknown as string },
     ])
 
     // The full round trip: the output a host-plane producer wrote is collected
@@ -175,7 +184,7 @@ it('lets a preset producer reach the background-job registry', async () => {
       signal,
       callId: CallId('shipped-task-output'),
       name: 'job_output',
-      arguments: { job_id: 'bash-1', wait: true },
+      arguments: { job_id: `${shellTool}-1`, wait: true },
       agent: handle.agent,
     })
     expect(collected.isError).toBe(false)

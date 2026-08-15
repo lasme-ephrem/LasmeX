@@ -5,14 +5,14 @@
  */
 
 import { useEffect, useState } from 'react'
-import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+import type { SnapshotStore } from 'lasmex-client-runtime/client'
+import type { InjectFace, PropsLocale, PropsRuntime } from 'lasmex-client-ui-slots'
 import {
   IconChevronDownOutline14, Menu, RiskConfirmation,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-ui-primitives'
 import type { PermissionSettingsState } from './settings-store.ts'
 import type { PermissionSettingsKey } from './locales.ts'
-import { FULL_ACCESS_PRESET } from './presentation.ts'
+import { FULL_ACCESS_PRESET, localizedPermissionPreset } from './presentation.ts'
 import css from './PermissionRow.module.css'
 
 /** Registration-side business face for the host-backed preference. */
@@ -58,7 +58,7 @@ export function PermissionRow({ load, select, usePermission, t }: PermissionRowP
   if (state.status === 'unavailable') return null
   const selected = state.options.find(option => option.id === state.currentValue)
   const busy = state.status === 'loading' || state.status === 'saving' || confirmingFullAccess
-  const label = selected?.label
+  const label = (selected === undefined ? undefined : localizedPermissionPreset(selected.id, selected.label, t))
     ?? (busy ? t('loading') : t('unavailable'))
   const description: string = state.error ?? t('description')
 
@@ -72,7 +72,10 @@ export function PermissionRow({ load, select, usePermission, t }: PermissionRowP
         <Menu
           open={open}
           onClose={() => { setOpen(false) }}
-          items={state.options.map(option => ({ id: option.id, label: option.label }))}
+          items={state.options.map(option => ({
+            id: option.id,
+            label: localizedPermissionPreset(option.id, option.label, t),
+          }))}
           selectedId={state.currentValue}
           onSelect={(id) => {
             setOpen(false)
@@ -125,7 +128,7 @@ export function PermissionRow({ load, select, usePermission, t }: PermissionRowP
   )
 }
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Permission row copy. */
     'settings.permission': PermissionSettingsKey

@@ -8,9 +8,10 @@ import { apply, type ConnectionHandle } from '../src/client/index.ts'
 import type { RpcMessage } from '../src/client/api.ts'
 import { RpcId } from '../src/client/api.ts'
 import { FixtureApiClient } from '../src/client/fixture.ts'
+import { FetchApiClient } from '../src/client/fetch-api-client.ts'
 import { WebApiClient } from '../src/client/web-api-client.ts'
 
-type Win = { location?: { hostname: string; search: string; origin?: string } }
+type Win = { location?: { hostname: string; protocol?: string; search: string; origin?: string } }
 type WebSocketGlobal = { WebSocket?: typeof WebSocket }
 
 const originalWebSocket = globalThis.WebSocket
@@ -82,6 +83,15 @@ describe('connection client apply', () => {
   it('reports non-loopback page authority through the connection handle', async () => {
     ;(globalThis as Win).location = { hostname: '192.0.2.20', search: '' }
     expect((await mount()).isLoopback).toBe(false)
+  })
+
+  it('uses the Fetch/SSE carrier for a secure custom protocol', async () => {
+    ;(globalThis as Win).location = {
+      hostname: 'app', protocol: 'lasmex:', search: '', origin: 'lasmex://app',
+    }
+    const handle = await mount()
+    expect(handle.api).toBeInstanceOf(FetchApiClient)
+    expect(handle.isLoopback).toBe(true)
   })
 
   it('start() hands out one loop, rejects a second consumer, and stop() aborts the streams', async () => {
