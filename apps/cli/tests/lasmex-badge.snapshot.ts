@@ -27,7 +27,9 @@ describe('LasmeX badge assembled snapshot', () => {
     })
     const disabledSnapshot = JSON.parse(disabled.stdout) as unknown
     const enabledSnapshot = JSON.parse(
-      enabled.stdout.replaceAll(badgeAssetsPath, '{{badgeAssetsPath}}'),
+      enabled.stdout
+        .replaceAll(badgeAssetsPath, '{{badgeAssetsPath}}')
+        .replaceAll(badgeAssetsPath.replaceAll('\\', '\\\\'), '{{badgeAssetsPath}}'),
     ) as unknown
 
     expect(disabled.stderr).toBe('')
@@ -72,7 +74,7 @@ describe('LasmeX badge assembled snapshot', () => {
             {
               "text": "<skill_content name="lasmex-badge">
       <skill_resources>
-      Base directory for this skill: C:\\Users\\lasme\\Documents\\ChatGPT\\Deepseek harness\\packages\\skill\\skill-badge\\assets\\
+      Base directory for this skill: {{badgeAssetsPath}}
       Resolve relative paths mentioned by this skill against the base directory before using them. Load referenced resources only as needed.
       </skill_resources>
 
@@ -142,7 +144,7 @@ describe('LasmeX badge assembled snapshot', () => {
             "provider": "lasmex-badge",
             "resourceBase": {
               "kind": "directory",
-              "path": "C:\\Users\\lasme\\Documents\\ChatGPT\\Deepseek harness\\packages\\skill\\skill-badge\\assets\\",
+              "path": "{{badgeAssetsPath}}",
             },
           },
         },
@@ -156,7 +158,7 @@ describe('LasmeX badge assembled snapshot', () => {
           "provider": "lasmex-badge",
           "resourceBase": {
             "kind": "directory",
-            "path": "C:\\Users\\lasme\\Documents\\ChatGPT\\Deepseek harness\\packages\\skill\\skill-badge\\assets\\",
+            "path": "{{badgeAssetsPath}}",
           },
           "source": "bundled",
         },
