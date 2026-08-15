@@ -899,34 +899,34 @@ describe('abort edge cases', () => {
 
 describe('environment and spill-file hardening', () => {
   it('scrubs credential-shaped and ambient LasmeX env vars from child processes', async () => {
-    process.env.DSH_TEST_API_KEY = 'super-secret'
-    process.env.DSH_TEST_TOKEN = 'also-secret'
+    process.env.LASMEX_TEST_API_KEY = 'super-secret'
+    process.env.LASMEX_TEST_TOKEN = 'also-secret'
     process.env.SUBPROCESS_TEST_PASSWORD = 'password-secret'
-    process.env.DSH_TEST_PLAIN = 'visible'
+    process.env.LASMEX_TEST_PLAIN = 'visible'
     try {
       const result = await finish(spawnSubprocess(spec(
-        'echo "[${DSH_TEST_API_KEY:-absent}|${DSH_TEST_TOKEN:-absent}|${SUBPROCESS_TEST_PASSWORD:-absent}|${DSH_TEST_PLAIN:-absent}]"',
+        'echo "[${LASMEX_TEST_API_KEY:-absent}|${LASMEX_TEST_TOKEN:-absent}|${SUBPROCESS_TEST_PASSWORD:-absent}|${LASMEX_TEST_PLAIN:-absent}]"',
       )))
       expect(result.stdout.text.trim()).toBe('[absent|absent|absent|absent]')
     } finally {
-      delete process.env.DSH_TEST_API_KEY
-      delete process.env.DSH_TEST_TOKEN
+      delete process.env.LASMEX_TEST_API_KEY
+      delete process.env.LASMEX_TEST_TOKEN
       delete process.env.SUBPROCESS_TEST_PASSWORD
-      delete process.env.DSH_TEST_PLAIN
+      delete process.env.LASMEX_TEST_PLAIN
     }
   })
 
   it('forwards explicit LASMEX_* env entries while scrubbing ambient ones', async () => {
-    // Both facts through one explicit map: the ambient DSH_STALE is dropped by
+    // Both facts through one explicit map: the ambient LASMEX_STALE is dropped by
     // the scrub, and the deliberately supplied current values merge after it.
-    process.env.DSH_STALE = 'old-value'
+    process.env.LASMEX_STALE = 'old-value'
     try {
-      const result = await finish(spawnSubprocess(spec('echo "[${DSH_STALE:-absent}|$LASMEX_SHELL|$LASMEX_SESSION_ID]"', {
+      const result = await finish(spawnSubprocess(spec('echo "[${LASMEX_STALE:-absent}|$LASMEX_SHELL|$LASMEX_SESSION_ID]"', {
         env: { LASMEX_SHELL: '1', LASMEX_SESSION_ID: 'current-session' },
       })))
       expect(result.stdout.text.trim()).toBe('[absent|1|current-session]')
     } finally {
-      delete process.env.DSH_STALE
+      delete process.env.LASMEX_STALE
     }
   })
 
