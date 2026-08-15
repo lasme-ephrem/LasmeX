@@ -840,6 +840,38 @@ describe('refreshFixtureReplacements', () => {
     ])
   })
 
+  it('maps Windows cwd values in their forward-slash and JSON-escaped text forms too', () => {
+    const log = (content: string): HarvestedLog => ({ id: 'diagnostic', createdAt: 1, content })
+    const logs = [
+      log('{"type":"session","id":"","cwd":"C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE"}\n'),
+    ]
+    const fixtures = [
+      '{"type":"session","id":"","cwd":"/Users/cty/acp-snap-cwd-ABCDE"}\n',
+    ]
+    expect(refreshFixtureReplacements(logs, fixtures)).toEqual([
+      { from: 'C:\\Users\\runner\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:/Users/runner/acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:\\\\\\\\Users\\\\\\\\runner\\\\\\\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+    ])
+  })
+
+  it('maps the run cwd when the harvested header already carries {{cwd}}', () => {
+    const log = (content: string): HarvestedLog => ({ id: 'diagnostic', createdAt: 1, content })
+    const logs = [
+      log('{"type":"session","id":"","cwd":"{{cwd}}"}\n'),
+    ]
+    const fixtures = [
+      '{"type":"session","id":"","cwd":"{{cwd}}"}\n',
+    ]
+    expect(refreshFixtureReplacements(logs, fixtures, 'C:\\Users\\runner\\acp-snap-cwd-ABCDE')).toEqual([
+      { from: 'C:\\Users\\runner\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:/Users/runner/acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:\\\\\\\\Users\\\\\\\\runner\\\\\\\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+    ])
+  })
+
   it('stabilizes moved snapshot spill paths by filename while skipping unchanged or unmatched names', () => {
     const spill = (session: string, hash: string, name: string): string =>
       `/tmp/lasmex-acp-snapshot-spill/session-${session}/${hash}-${name}`

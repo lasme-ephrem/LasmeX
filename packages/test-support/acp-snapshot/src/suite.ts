@@ -740,17 +740,43 @@ export function unknownToolCallIds(rawLog: string): string[] {
  * @param fixtures The existing fixture contents, in matching order.
  * @returns Literal replacements from fresh values to the fixture's existing values.
  */
-export function refreshFixtureReplacements(logs: HarvestedLog[], fixtures: string[]): FixtureReplacement[] {
+export function refreshFixtureReplacements(
+  logs: HarvestedLog[],
+  fixtures: string[],
+  runCwd?: string,
+): FixtureReplacement[] {
   const replacements: FixtureReplacement[] = []
   for (let i = 0; i < logs.length; i++) {
     const fresh = parseJsonlRecords((logs[i] as HarvestedLog).content)[0]
     const existing = parseJsonlRecords(fixtures[i] ?? '')[0]
+    const push = (from: string, to: string): void => {
+      if (from.length === 0 || from === to) return
+      // `applyFixtureReplacements` rewrites the raw JSONL text, so cover every
+      // spelling a backslash path can take there: slash form, the JSON-escaped
+      // form, and a policy text that embeds the already-escaped path.
+      const escaped = from.replaceAll('\\', '\\\\')
+      const forms = [...new Set([
+        from,
+        from.replaceAll('\\', '/'),
+        escaped,
+        escaped.replaceAll('\\', '\\\\'),
+      ])]
+      for (const form of forms) {
+        if (form === to) continue
+        replacements.push({ from: form, to })
+      }
+    }
     for (const field of ['id', 'cwd'] as const) {
       const from = fresh?.[field]
       const to = existing?.[field]
-      if (typeof from === 'string' && typeof to === 'string' && from.length > 0 && from !== to) {
-        replacements.push({ from, to })
-      }
+      if (typeof from === 'string' && typeof to === 'string') push(from, to)
+    }
+    // The replay pipeline can normalize a harvested header cwd to `{{cwd}}`
+    // already, so the header pair alone leaves raw body paths untouched. The
+    // run cwd still names the raw form those bodies carry.
+    const existingCwd = existing?.cwd
+    if (typeof existingCwd === 'string' && existingCwd.length > 0 && runCwd !== undefined) {
+      push(runCwd, existingCwd)
     }
     // Stabilize snapshot spill paths: match by filename suffix so the raw
     // fixture does not churn on every refresh from a different session run.
@@ -1243,7 +1269,7 @@ export function defineAcpSnapshotSuite(options: SnapshotSuiteOptions): void {
             return existsSync(path) ? readFile(path, 'utf8') : ''
           }))
           const refreshReplacements = REFRESHING
-            ? refreshFixtureReplacements(result.sessionLogs, existingFixtures)
+            ? refreshFixtureReplacements(result.sessionLogs, existingFixtures, result.cwd)
             : []
           const freshFixtures = REFRESHING
             ? result.sessionLogs.map((log, index) => scrub(portableFixture(stabilizeRefreshLog(

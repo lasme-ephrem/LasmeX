@@ -33,7 +33,11 @@ class CliMockAdapter extends LlmAdapter {
       yield { type: 'finish', reason: { kind: 'error', failure: { code: 'SERVER', message: 'CLI mock provider failed' } } }
       return
     }
-    const toolResult = options.messages.at(-1)?.content.find(block => block.type === 'tool-result')
+    // The loop appends a plugin continuation notice after tool results, so the
+    // tool result is not necessarily the last block of the last message.
+    const toolResult = [...options.messages].reverse()
+      .flatMap(message => message.content)
+      .find(block => block.type === 'tool-result')
     if (toolResult === undefined) {
       const args = '{}'
       yield { type: 'block-start', index: 0, blockType: 'tool-call' }

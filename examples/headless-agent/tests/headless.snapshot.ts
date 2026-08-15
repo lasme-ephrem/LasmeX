@@ -759,8 +759,14 @@ describe('headless stream-json snapshots', () => {
 
         const childRecords = children.map(child => parseJsonl(child.content))
         const childPrompts = childRecords.map((records) => {
-          const message = records.find(record => record.type === 'user/message')
-          return JSON.stringify((message?.data as JsonObject | undefined)?.content)
+          // Stable entered-message order places injected context before the
+          // direct prompt, so the Ralph prompt is not the first user message.
+          const contents = records
+            .filter(record => record.type === 'user/message')
+            .map(record => JSON.stringify((record.data as JsonObject | undefined)?.content))
+          const prompt = contents.find(content => content.includes('Ralph round:'))
+          if (prompt === undefined) throw new Error('child has no Ralph round prompt')
+          return prompt
         })
         expect(childPrompts[0]).toContain('Ralph round: 1 of 2.')
         expect(childPrompts[0]).toContain('(none — this is the first round)')
