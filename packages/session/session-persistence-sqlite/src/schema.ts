@@ -5,12 +5,12 @@
  * cut that gives the SQLite backend the SAME crash-tail-on-load semantics as
  * the JSONL backend.
  *
- * @module dsh-session-persistence-sqlite/schema
+ * @module lasmex-session-persistence-sqlite/schema
  */
 
 import { randomUUID } from 'node:crypto'
 import { DatabaseSync } from 'node:sqlite'
-import type { SessionEvent, SessionId, SessionHeader, SurfaceOp } from '@deepseek-ai/dsh-session'
+import type { SessionEvent, SessionId, SessionHeader, SurfaceOp } from 'lasmex-session'
 
 /**
  * The on-disk schema version. Bumped only on a breaking change to the table

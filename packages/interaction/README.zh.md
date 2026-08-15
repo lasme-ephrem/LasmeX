@@ -12,6 +12,6 @@
 | [`user-questions/`](user-questions/README.md) | 定义与提供方无关的用户问答 seam。 | `ctx.userQuestions` |
 | [`tool-ask-user/`](tool-ask-user/README.md) | 向模型提供用户问题。 | （注册到 `ctx.tools`） |
 
-这些包通过现有的 agent 和会话约定集成，而不改变循环。交互式应用提供具体的命令、审批和提问适配器；自动化使用 [`acp/`](../acp/README.md)，可运行的演示组合包位于 [`examples/`](../examples/README.md)。产品 [`dsh`](../../apps/cli/README.md) CLI（命令行界面）直接组合这些包。
+这些包通过现有的 agent 和会话约定集成，而不改变循环。交互式应用提供具体的命令、审批和提问适配器；自动化使用 [`acp/`](../acp/README.md)，可运行的演示组合包位于 [`examples/`](../examples/README.md)。产品 [`LasmeX`](../../apps/cli/README.md) CLI（命令行界面）直接组合这些包。
 
 子系统参考：[approval.md](../../docs/subsystems/approval.md)、[permission-presets.md](../../docs/subsystems/permission-presets.md)、[user-questions.md](../../docs/subsystems/user-questions.md)与 [commands.md](../../docs/subsystems/commands.md)。仅自动化的 ACP 传输是 [`acp/`](../acp/README.md)，SDK 的 JSON-RPC 服务器端是 [`sdk/server`](../sdk/README.md)，共享 bin 启动胶水是 [`boot/`](../boot/README.md)。

@@ -17,8 +17,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SDK_DISTRIBUTION = "deepseek-harness-sdk"
-RUNTIME_DISTRIBUTION = "deepseek-harness-runtime-bin"
+SDK_DISTRIBUTION = "lasmex-sdk"
+RUNTIME_DISTRIBUTION = "lasmex-runtime-bin"
 PLATFORM_MANIFEST = ROOT / "python" / "sdk-runtime" / "platforms.json"
 
 
@@ -78,12 +78,12 @@ def main() -> None:
         if args.package == "sdk":
             stage_sdk(staging, wheel_version)
             environment = None
-            expected = output_dir / f"deepseek_harness_sdk-{wheel_version}-py3-none-any.whl"
+            expected = output_dir / f"lasmex_sdk-{wheel_version}-py3-none-any.whl"
         else:
             platform_tag, executable_name = PLATFORMS[args.platform]
             stage_runtime(staging, wheel_version, args.runtime_exe.resolve(), executable_name)
             environment = {"DSH_RUNTIME_PLATFORM_TAG": platform_tag}
-            expected = output_dir / f"deepseek_harness_runtime_bin-{wheel_version}-py3-none-{platform_tag}.whl"
+            expected = output_dir / f"lasmex_runtime_bin-{wheel_version}-py3-none-{platform_tag}.whl"
         command = ["uv", "build", "--wheel", "--out-dir", str(output_dir), str(staging)]
         subprocess.run(command, cwd=ROOT, env=None if environment is None else {**os.environ, **environment}, check=True)
     if not expected.is_file():
@@ -149,7 +149,7 @@ def copy_package(source: Path, destination: Path) -> None:
             "*.pyc",
             "dist",
             "node_modules",
-            "dsh-jsonrpc-agent-pkg-*",
+            "lasmex-jsonrpc-agent-pkg-*",
         ),
     )
 
@@ -193,8 +193,8 @@ def stage_sdk(destination: Path, version: str) -> None:
     pyproject = destination / "pyproject.toml"
     rewrite_version(pyproject, version)
     text, count = re.subn(
-        r'"deepseek-harness-runtime-bin==[^"]+"',
-        f'"deepseek-harness-runtime-bin=={version}"',
+        r'"lasmex-runtime-bin==[^"]+"',
+        f'"lasmex-runtime-bin=={version}"',
         pyproject.read_text(),
         count=1,
     )
@@ -207,7 +207,7 @@ def stage_runtime(destination: Path, version: str, executable: Path, executable_
     copy_package(ROOT / "python" / "sdk-runtime", destination)
     stage_license_files(destination, include_notices=True)
     rewrite_version(destination / "pyproject.toml", version)
-    runtime_dir = destination / "src" / "deepseek_harness_runtime" / "runtime"
+    runtime_dir = destination / "src" / "lasmex_runtime" / "runtime"
     runtime_dir.mkdir(parents=True, exist_ok=True)
     for suffix in runtime_suffixes(executable_name):
         shutil.copy2(Path(f"{executable}{suffix}"), runtime_dir / f"{executable_name}{suffix}")
@@ -245,7 +245,7 @@ def verify_wheel(
                 f"{wheel} has license files {license_files}, expected {expected_license_files}"
             )
         runtime_files = [
-            name for name in archive.namelist() if "/runtime/dsh-jsonrpc-agent-pkg-" in name
+            name for name in archive.namelist() if "/runtime/lasmex-jsonrpc-agent-pkg-" in name
         ]
         if package == "runtime":
             assert platform is not None

@@ -1,17 +1,17 @@
 /**
- * `@deepseek-ai/dsh-web-search-exa`: registers an Exa-backed `WebSearchProvider`
+ * `lasmex-web-search-exa`: registers an Exa-backed `WebSearchProvider`
  * with `ctx.web`. A function/namespace plugin (NOT a default-export service):
  * a search provider does not own the `ctx.web` key — it registers INTO the
- * seam's provider registry, exactly as `@deepseek-ai/dsh-llm-deepseek`
- * registers an adapter into `ctx.llm`. The key is owned by `@deepseek-ai/dsh-web`.
+ * seam's provider registry, exactly as `lasmex-llm-deepseek`
+ * registers an adapter into `ctx.llm`. The key is owned by `lasmex-web`.
  *
- * @module @deepseek-ai/dsh-web-search-exa
+ * @module lasmex-web-search-exa
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
+import { launchEnvironmentOf } from 'lasmex-launch-environment'
 import z from '@deepseek-ai/schemastery'
-import type {} from '@deepseek-ai/dsh-web'
+import type {} from 'lasmex-web'
 import {
   ExaSearchProvider,
   EXA_DEFAULT_BASE_URL,

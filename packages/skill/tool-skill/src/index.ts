@@ -1,16 +1,16 @@
 /**
  * Durable session skill catalog and model-facing `skill` loader tool.
  *
- * @module @deepseek-ai/dsh-tool-skill
+ * @module lasmex-tool-skill
  */
 
 import { createHash } from 'node:crypto'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { UserMessage } from '@deepseek-ai/dsh-session'
+import type { Agent, PreStepDecision } from 'lasmex-agent'
+import { defineTool } from 'lasmex-tools'
+import { createUserMessage } from 'lasmex-llm'
+import type { UserMessage } from 'lasmex-session'
 import {
   escapeText,
   isModelInvocable,
@@ -19,7 +19,7 @@ import {
   renderSkillContent,
   type SkillInvocationSource,
   type SkillSummary,
-} from '@deepseek-ai/dsh-skill'
+} from 'lasmex-skill'
 
 export const name = 'tool-skill'
 export const inject = ['agents', 'tools', 'skills']
@@ -40,7 +40,7 @@ export interface SkillCatalogSource {
   readonly entries: readonly { readonly name: string; readonly description: string }[]
 }
 
-declare module '@deepseek-ai/dsh-llm' {
+declare module 'lasmex-llm' {
   interface MessageSourceMap {
     'skill-catalog': SkillCatalogSource
   }
@@ -164,8 +164,8 @@ export function apply(ctx: Context, config: Config = {}): void {
   // starts with `/<name>` naming a user-invocable skill is a deterministic
   // load gesture. The rendered body enters this step as injected
   // instructions context appended after every other injection — background
-  // first (workspace rules, runtime policy, the catalog), the material the
-  // model must act on last, closest to its answer. Registration order makes
+  // first (workspace rules, runtime policy, the catalog), then the material
+  // the model must act on immediately before the direct prompt. Registration order makes
   // that placement deterministic: this listener registers before the catalog
   // listener, so the waterfall hands it the catalog-bearing list to extend.
   // Only `source.kind === 'user'` messages are scanned — external text

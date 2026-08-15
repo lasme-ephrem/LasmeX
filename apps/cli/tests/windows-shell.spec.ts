@@ -3,7 +3,7 @@
  * platform on its own rows (`disabled: !!js process.platform`), so exactly
  * one shell stack mounts per host and no separate platform layer exists —
  * the launcher applies nothing beyond the bundle layers. The spec composes
- * the REAL shipped bundle layers (dsh-base + dsh-web-app resolved from the
+ * the REAL shipped bundle layers (lasmex-base + lasmex-web-app resolved from the
  * app installation anchor) through the boot's patch algorithm and pins the
  * effective per-platform roster, the preset-level gates that keep tool-bash
  * out of win32 sessions and tool-pwsh out of POSIX sessions, and the
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 import yaml from 'js-yaml'
 import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
 import { evaluate } from '@deepseek-ai/cordis-plugin-loader'
-import { composeEntries, initProfile, loadProfile, PROFILES_DIR } from '@deepseek-ai/dsh-app-boot'
+import { composeEntries, initProfile, loadProfile, PROFILES_DIR } from 'lasmex-app-boot'
 
 /**
  * The effective disabled state of one row on one platform: a `!!js` expression
@@ -36,14 +36,14 @@ describe('the shipped shell composition (real bundle layers)', () => {
   let home: string
   afterEach(() => { if (home !== undefined) rmSync(home, { recursive: true, force: true }) })
   // The app installation anchor, mirroring profile-boot.ts: the bundle layers
-  // resolve from the REAL dsh-base/dsh-web-app packages through it, so this
+  // resolve from the REAL lasmex-base/lasmex-web-app packages through it, so this
   // suite composes the shipped patch files, not test fixtures.
   const anchor = fileURLToPath(new URL('../package.json', import.meta.url))
 
   it('composes the confined pwsh roster on win32 and the bash roster on POSIX from the same rows', () => {
     home = mkdtempSync(join(tmpdir(), 'dsh-windows-home-'))
-    initProfile(join(home, PROFILES_DIR, 'web'), ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app'])
-    const profile = loadProfile('dsh', 'web', anchor, home)
+    initProfile(join(home, PROFILES_DIR, 'web'), ['lasmex-base', 'lasmex-web-app'])
+    const profile = loadProfile('lasmex', 'web', anchor, home)
     const warnings: string[] = []
     const rows = composeEntries(
       profile.layers.map(layer => layer.patches),
@@ -72,7 +72,7 @@ describe('the shipped shell composition (real bundle layers)', () => {
     // dependency closure into the profile's node_modules, so every bare
     // plugin name in the base patch must resolve from there.
     const cliManifest = JSON.parse(readFileSync(anchor, 'utf8')) as { dependencies?: Record<string, string> }
-    for (const name of ['@deepseek-ai/dsh-pwsh-sandbox', '@deepseek-ai/dsh-tool-pwsh']) {
+    for (const name of ['lasmex-pwsh-sandbox', 'lasmex-tool-pwsh']) {
       expect(cliManifest.dependencies?.[name], `cold-start closure must reach ${name}`).toBeDefined()
     }
     expect(warnings).toEqual([])
@@ -80,8 +80,8 @@ describe('the shipped shell composition (real bundle layers)', () => {
 
   it('base-only profiles carry both stacks with the same platform gating', () => {
     home = mkdtempSync(join(tmpdir(), 'dsh-windows-home-'))
-    initProfile(join(home, PROFILES_DIR, 'base-only'), ['@deepseek-ai/dsh-base'])
-    const profile = loadProfile('dsh', 'base-only', anchor, home)
+    initProfile(join(home, PROFILES_DIR, 'base-only'), ['lasmex-base'])
+    const profile = loadProfile('lasmex', 'base-only', anchor, home)
     const warnings: string[] = []
     const rows = composeEntries(
       profile.layers.map(layer => layer.patches),
@@ -103,7 +103,7 @@ describe('the shipped shell composition (real bundle layers)', () => {
 describe('shipped agent presets gate both shell tools by platform', () => {
   const presetRoot = resolve(fileURLToPath(new URL('../package.json', import.meta.url)), '..', 'config', 'agent-presets')
 
-  it.each(['standard', 'code', 'cordis'])('preset %s gates its shell tool rows by platform', (preset) => {
+  it.each(['standard', 'lasmex-code', 'cordis'])('preset %s gates its shell tool rows by platform', (preset) => {
     const entries: unknown = yaml.load(
       readFileSync(join(presetRoot, preset, 'agent.cordis.yml'), 'utf8'),
       { schema: entryListSchema },
@@ -122,16 +122,30 @@ describe('shipped agent presets gate both shell tools by platform', () => {
     }
   })
 
-  it('minimal mounts no shell tool row at all (its shell is the PTY stack)', () => {
+  it('minimal keeps its POSIX PTY shell and supplies PowerShell only on Windows', () => {
     const entries: unknown = yaml.load(
       readFileSync(join(presetRoot, 'minimal', 'agent.cordis.yml'), 'utf8'),
       { schema: entryListSchema },
     )
     if (!Array.isArray(entries)) throw new TypeError('minimal preset must parse to an entry array')
-    for (const id of ['tool-bash', 'tool-pwsh']) {
-      expect(entries.some(entry => (
-        typeof entry === 'object' && entry !== null && (entry as Record<string, unknown>).id === id
-      )), `${id} must be absent from minimal`).toBe(false)
-    }
+    expect(entries.some(entry => (
+      typeof entry === 'object' && entry !== null && (entry as Record<string, unknown>).id === 'tool-bash'
+    )), 'tool-bash must stay absent from minimal').toBe(false)
+    const pwsh = entries.find((entry): entry is Record<string, unknown> => (
+      typeof entry === 'object' && entry !== null && (entry as Record<string, unknown>).id === 'tool-pwsh'
+    ))
+    if (pwsh === undefined) throw new TypeError('minimal must mount tool-pwsh')
+    expect(pwsh.disabled).toMatchObject({ __jsExpr: expect.any(String) as string })
+    const expression = (pwsh.disabled as { __jsExpr: string }).__jsExpr
+    expect(Boolean(evaluate({ process: { platform: 'win32' } }, expression))).toBe(false)
+    expect(Boolean(evaluate({ process: { platform: 'linux' } }, expression))).toBe(true)
+    const persistent = entries.find((entry): entry is Record<string, unknown> => (
+      typeof entry === 'object' && entry !== null && (entry as Record<string, unknown>).id === 'persistent-shell'
+    ))
+    if (persistent === undefined) throw new TypeError('minimal must retain persistent-shell')
+    expect(persistent.disabled).toMatchObject({ __jsExpr: expect.any(String) as string })
+    const persistentExpression = (persistent.disabled as { __jsExpr: string }).__jsExpr
+    expect(Boolean(evaluate({ process: { platform: 'win32' } }, persistentExpression))).toBe(true)
+    expect(Boolean(evaluate({ process: { platform: 'linux' } }, persistentExpression))).toBe(false)
   })
 })

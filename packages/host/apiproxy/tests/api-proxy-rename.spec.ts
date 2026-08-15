@@ -9,16 +9,16 @@
 
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import SessionStore from '@deepseek-ai/dsh-session'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent, AgentHandle, CreateAgentOptions } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import SessionTitleService from '@deepseek-ai/dsh-session-title'
-import UserQuestionService from '@deepseek-ai/dsh-user-questions'
-import type { Session, SessionId } from '@deepseek-ai/dsh-session'
-import type { RpcRequest } from '@deepseek-ai/dsh-host-apiproxy/api/rpc'
-import { RpcId } from '@deepseek-ai/dsh-host-apiproxy/api/rpc'
-import { createApiProxy } from '@deepseek-ai/dsh-host-apiproxy'
+import SessionStore from 'lasmex-session'
+import AgentRegistry from 'lasmex-agent'
+import type { Agent, AgentHandle, CreateAgentOptions } from 'lasmex-agent'
+import { createUserMessage } from 'lasmex-llm'
+import SessionTitleService from 'lasmex-session-title'
+import UserQuestionService from 'lasmex-user-questions'
+import type { Session, SessionId } from 'lasmex-session'
+import type { RpcRequest } from 'lasmex-host-apiproxy/api/rpc'
+import { RpcId } from 'lasmex-host-apiproxy/api/rpc'
+import { createApiProxy } from 'lasmex-host-apiproxy'
 
 const sid = (id: string): SessionId => id as SessionId
 

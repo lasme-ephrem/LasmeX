@@ -5,13 +5,13 @@ import { mkdir, utimes, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { homedir } from 'node:os'
 import { expect, it } from 'vitest'
-import { defineAcpSnapshotSuite, type Scenario, type SnapshotSuiteOptions } from '@deepseek-ai/dsh-acp-snapshot'
-import { resolvePwshPath } from '@deepseek-ai/dsh-pwsh-local'
-import { decodeStorageRecord } from '@deepseek-ai/dsh-session'
+import { defineAcpSnapshotSuite, type Scenario, type SnapshotSuiteOptions } from 'lasmex-acp-snapshot'
+import { resolvePwshPath } from 'lasmex-pwsh-local'
+import { decodeStorageRecord } from 'lasmex-session'
 
 /**
  * The acp-agent example's snapshot suite: the scenario table for
- * `dsh-acp-snapshot`'s suite factory, which owns every compare/guard mechanic
+ * `lasmex-acp-snapshot`'s suite factory, which owns every compare/guard mechanic
  * (expected-output + re-persisted-log diffs, record/refresh write-back, the pinned-header
  * uniformity guard, the fixture guards). Fixtures live under `snapshots/<name>/`;
  * `pnpm run test:snapshot:record` re-records model transcripts against the real
@@ -20,7 +20,7 @@ import { decodeStorageRecord } from '@deepseek-ai/dsh-session'
  * .agents/notes/implemented/testing/2026-06-19-acp-snapshot-tests.md.
  */
 
-// The dsh-acp-demo bin (the demo:acp entry), this example's cordis.yml, and
+// The lasmex-acp-demo bin (the demo:acp entry), this example's cordis.yml, and
 // the repo-root tsconfig (four levels up from examples/acp-agent/tests) — all
 // ABSOLUTE: the subprocess cwd is a temp dir outside the repo.
 const AGENT = {
@@ -164,11 +164,11 @@ const SCENARIOS: Scenario[] = [
     overridden: true,
     configPath: SESSION_TITLE_CONFIG,
   },
-  { name: 'tool-call-turn', hasModelTurn: true, recorded: true },
+  { name: 'tool-call-turn', hasModelTurn: true, recorded: true, posixOnly: true },
   // Authored from the real PACKED_CHUNKS_SOURCE recording under the ordinary
   // app composition. The contract below pins decoded equality and all three
   // row kinds; replay additionally proves the assembled app re-packs identically.
-  { name: 'packed-chunks', hasModelTurn: true, recorded: false },
+  { name: 'packed-chunks', hasModelTurn: true, recorded: false, posixOnly: true },
   // The fs overlay only adds the spill stack (the sandboxed filesystem tools
   // live in the base tree), so these scenarios share the default header class.
   {
@@ -177,7 +177,7 @@ const SCENARIOS: Scenario[] = [
     recorded: false,
     configPath: FS_CONFIG,
   },
-  { name: 'bash-spill', hasModelTurn: true, recorded: false, configPath: FS_CONFIG },
+  { name: 'bash-spill', hasModelTurn: true, recorded: false, configPath: FS_CONFIG, posixOnly: true },
   {
     name: 'session-query-spill',
     hasModelTurn: true,
@@ -220,7 +220,7 @@ const SCENARIOS: Scenario[] = [
     headerClass: 'pty',
     configPath: PTY_CONFIG,
   },
-  { name: 'bash-tool-turn', hasModelTurn: true, recorded: true },
+  { name: 'bash-tool-turn', hasModelTurn: true, recorded: true, posixOnly: true },
   {
     name: 'background-job-admission',
     hasModelTurn: true,
@@ -254,7 +254,7 @@ const SCENARIOS: Scenario[] = [
     recorded: false,
     headerClass: 'sandbox',
     configPath: PARTIAL_LANDLOCK_CONFIG,
-    env: { DSH_PERMISSION_MODE: 'read-only' },
+    env: { LASMEX_PERMISSION_MODE: 'read-only' },
     posixOnly: true,
   },
   // A valid cwd plus a missing provider executable exercises the assembled
@@ -266,7 +266,7 @@ const SCENARIOS: Scenario[] = [
     headerClass: 'sandbox',
     configPath: PARTIAL_LANDLOCK_CONFIG,
     env: {
-      DSH_PERMISSION_MODE: 'read-only',
+      LASMEX_PERMISSION_MODE: 'read-only',
       DSH_SNAPSHOT_MISSING_SANDBOX_RUNNER: '1',
     },
     posixOnly: true,
@@ -292,6 +292,7 @@ const SCENARIOS: Scenario[] = [
     name: 'workspace-edit',
     hasModelTurn: true,
     recorded: true,
+    posixOnly: true,
   },
   // The real Loader/app/subprocess path executes the PACKAGED ripgrep binary
   // against a prepared workspace whose fixed mtimes pin the
@@ -337,7 +338,7 @@ const SCENARIOS: Scenario[] = [
   },
   { name: 'fs-read-window', hasModelTurn: true, recorded: true },
   { name: 'fs-policy-reject', hasModelTurn: true, recorded: true },
-  { name: 'fs-delete-recreate', hasModelTurn: true, recorded: true },
+  { name: 'fs-delete-recreate', hasModelTurn: true, recorded: true, posixOnly: true },
   { name: 'multi-turn', hasModelTurn: true, recorded: true },
   { name: 'error-finish', hasModelTurn: true, recorded: false, overridden: true },
   // Keyless, authored (like error-finish): a live provider cannot be coaxed
@@ -390,7 +391,7 @@ const SCENARIOS: Scenario[] = [
   // and the parent log pins call/call/result/result instead of the serial
   // interleaving. The twin delegations must stay identical: replay binds child
   // scripts and harvest order nondeterministically across concurrent children
-  // (XXX(concurrent-subagents) in dsh-llm-replay).
+  // (XXX(concurrent-subagents) in lasmex-llm-replay).
   { name: 'subagent-parallel', hasModelTurn: true, recorded: false },
   { name: 'subagent-fork-in-process', hasModelTurn: true, recorded: true },
   { name: 'subagent-mixed', hasModelTurn: true, recorded: true },
@@ -513,8 +514,8 @@ const SCENARIOS: Scenario[] = [
   // Prompt-submit blocks are authored keylessly with malformed matcher fields,
   // which these matcherless events must ignore. Admission rejects before a turn
   // opens, so only the ACP stop reason is observable and no log is harvested.
-  { name: 'hook-cc-promptsubmit-block', hasModelTurn: false, recorded: false },
-  { name: 'hook-codex-promptsubmit-block', hasModelTurn: false, recorded: false },
+  { name: 'hook-cc-promptsubmit-block', hasModelTurn: false, recorded: false, posixOnly: true },
+  { name: 'hook-codex-promptsubmit-block', hasModelTurn: false, recorded: false, posixOnly: true },
   // Each invalid matcher follows a runnable prompt blocker. Reaching the replay
   // model without any hook audit rows proves config loading is atomic through
   // the real Loader/app path, rather than retaining the earlier valid group.
@@ -525,21 +526,21 @@ const SCENARIOS: Scenario[] = [
   // SessionStart/SubagentStart are excluded because detached injection races log
   // order; SubagentStop writes no transcript, so an expected output could not prove it ran.
   // Unit tests cover those points; the hook-snapshot-matrix Agent Note owns the rationale.
-  { name: 'hook-cc-promptsubmit-context', hasModelTurn: true, recorded: true },
-  { name: 'hook-cc-pretool-deny', hasModelTurn: true, recorded: true },
-  { name: 'hook-cc-pretool-ask', hasModelTurn: true, recorded: true },
-  { name: 'hook-cc-posttool-block', hasModelTurn: true, recorded: true },
-  { name: 'hook-cc-posttool-context', hasModelTurn: true, recorded: true },
-  { name: 'hook-cc-stop-continue', hasModelTurn: true, recorded: true },
-  { name: 'hook-codex-promptsubmit-context', hasModelTurn: true, recorded: true },
-  { name: 'hook-codex-pretool-block', hasModelTurn: true, recorded: true },
-  { name: 'hook-codex-posttool-block', hasModelTurn: true, recorded: true },
-  { name: 'hook-codex-posttool-context', hasModelTurn: true, recorded: true },
-  { name: 'hook-codex-stop-continue', hasModelTurn: true, recorded: true },
+  { name: 'hook-cc-promptsubmit-context', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-cc-pretool-deny', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-cc-pretool-ask', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-cc-posttool-block', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-cc-posttool-context', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-cc-stop-continue', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-codex-promptsubmit-context', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-codex-pretool-block', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-codex-posttool-block', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-codex-posttool-context', hasModelTurn: true, recorded: true, posixOnly: true },
+  { name: 'hook-codex-stop-continue', hasModelTurn: true, recorded: true, posixOnly: true },
   // Code Mode: the registry in `mode: code` — the wire tool list collapses to [run_code], the
   // tools:sdk section rides in the prompt, and the program's tool calls land as
   // tool/code-dispatch events. Each overlay composes and pins its own header class.
-  { name: 'code-mode-turn', hasModelTurn: true, recorded: true, pinsHeader: true, headerClass: 'code', configPath: CODE_MODE_CONFIG },
+  { name: 'code-mode-turn', hasModelTurn: true, recorded: true, pinsHeader: true, headerClass: 'code', configPath: CODE_MODE_CONFIG, posixOnly: true },
   // A nested fs dispatch inside run_code discovers workspace instructions. The
   // projection enters the inbox after the outer result and becomes model-visible
   // on the following step, retaining workspace provenance end to end.
@@ -564,6 +565,7 @@ const SCENARIOS: Scenario[] = [
     pinsHeader: true,
     headerClass: 'both',
     configPath: BOTH_MODE_CONFIG,
+    posixOnly: true,
   },
   // Machine permission scenarios use an explicit deployment policy; there is
   // no session-scoped UI picker on the automation protocol.
@@ -575,21 +577,22 @@ const SCENARIOS: Scenario[] = [
     headerClass: 'sandbox',
     systemPromptSource: 'text-turn',
     toolSchemasSource: 'text-turn',
-    env: { DSH_PERMISSION_MODE: 'workspace-write' },
+    env: { LASMEX_PERMISSION_MODE: 'workspace-write' },
+    posixOnly: true,
   },
   {
     name: 'escalation-rejected',
     hasModelTurn: true,
     recorded: true,
     headerClass: 'sandbox',
-    env: { DSH_PERMISSION_MODE: 'workspace-write' },
+    env: { LASMEX_PERMISSION_MODE: 'workspace-write' },
   },
   {
     name: 'fs-escalation-approved',
     hasModelTurn: true,
     recorded: true,
     headerClass: 'sandbox',
-    env: { DSH_PERMISSION_MODE: 'workspace-write' },
+    env: { LASMEX_PERMISSION_MODE: 'workspace-write' },
   },
   // Unlike ordinary snapshots, this session cwd is outside the platform temp
   // roots that workspace-write always grants. The overlay points the
@@ -602,7 +605,7 @@ const SCENARIOS: Scenario[] = [
     overridden: true,
     headerClass: 'sandbox',
     configPath: SESSION_SANDBOX_ROOT_CONFIG,
-    env: { DSH_PERMISSION_MODE: 'workspace-write' },
+    env: { LASMEX_PERMISSION_MODE: 'workspace-write' },
     workspaceParent: homedir(),
   },
 ]

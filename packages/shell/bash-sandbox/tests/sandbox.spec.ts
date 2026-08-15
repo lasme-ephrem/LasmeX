@@ -10,17 +10,17 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import type { ShellRunResult, CollectedOutput } from '@deepseek-ai/dsh-shell'
-import { SANDBOX_UNAVAILABLE, SandboxProvider, SandboxUnavailableError } from '@deepseek-ai/dsh-sandbox'
-import type { ConfinedArgv, SandboxExecutionPolicy, SandboxMode, SandboxPolicy } from '@deepseek-ai/dsh-sandbox'
-import { SandboxPolicyService } from '@deepseek-ai/dsh-sandbox-policy'
-import { SandboxBashExecutor } from '@deepseek-ai/dsh-bash-sandbox'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import type { SubprocessHandle, SubprocessOutputReader } from '@deepseek-ai/dsh-subprocess'
+import type { ShellRunResult, CollectedOutput } from 'lasmex-shell'
+import { SANDBOX_UNAVAILABLE, SandboxProvider, SandboxUnavailableError } from 'lasmex-sandbox'
+import type { ConfinedArgv, SandboxExecutionPolicy, SandboxMode, SandboxPolicy } from 'lasmex-sandbox'
+import { SandboxPolicyService } from 'lasmex-sandbox-policy'
+import { SandboxBashExecutor } from 'lasmex-bash-sandbox'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import type { SubprocessHandle, SubprocessOutputReader } from 'lasmex-subprocess'
 import { classifyDenial, classifyRunnerFailure, isRunnerSpawnFailure } from '../src/helpers.ts'
-import type { Config } from '@deepseek-ai/dsh-bash-sandbox'
+import type { Config } from 'lasmex-bash-sandbox'
 
-const spillDir = mkdtempSync(join(tmpdir(), 'dsh-bash-sandbox-spec-'))
+const spillDir = mkdtempSync(join(tmpdir(), 'lasmex-bash-sandbox-spec-'))
 
 /** One recorded provider call: the argv handed over and the policy it rode with. */
 interface ConfineCall {
@@ -113,11 +113,11 @@ describe('the provider hand-off', () => {
     const dir = mkdtempSync(join(tmpdir(), 'dsh-bash-env-order-'))
     const hook = join(dir, 'hook.sh')
     const order = join(dir, 'order.txt')
-    writeFileSync(hook, 'printf "hook\\n" >> "$DSH_ORDER_FILE"\n')
+    writeFileSync(hook, 'printf "hook\\n" >> "$LASMEX_ORDER_FILE"\n')
     const runnerScript = [
       'const { appendFileSync } = require("node:fs");',
       'const { spawnSync } = require("node:child_process");',
-      'appendFileSync(process.env.DSH_ORDER_FILE, "runner\\n");',
+      'appendFileSync(process.env.LASMEX_ORDER_FILE, "runner\\n");',
       'const child = spawnSync(process.argv[1], process.argv.slice(2), { env: process.env, stdio: "inherit" });',
       'process.exit(child.status ?? 125);',
     ].join('')
@@ -132,7 +132,7 @@ describe('the provider hand-off', () => {
       const result = await bash.run(bash.resolve({
         command: 'true',
         env: { BASH_ENV: hook },
-        dshEnv: { DSH_ORDER_FILE: order },
+        lasmexEnv: { LASMEX_ORDER_FILE: order },
       }))
       expect(result.exitCode).toBe(0)
       expect(readFileSync(order, 'utf8')).toBe('runner\nhook\n')
@@ -189,7 +189,7 @@ describe('fail closed', () => {
         denialSignatures: UNIX_SIGNATURES,
         runnerFailureRules: RUNNER_FAILURE,
       }))
-      const parent = mkdtempSync(join(tmpdir(), 'dsh-sandbox-missing-cwd-'))
+      const parent = mkdtempSync(join(tmpdir(), 'lasmex-sandbox-missing-cwd-'))
       try {
         const failure = await bash.run(bash.resolve({ command: 'true', workdir: join(parent, 'missing') }))
           .catch((error: unknown) => error)
@@ -203,7 +203,7 @@ describe('fail closed', () => {
 
   it('keeps an invalid workdir ordinary when danger-full-access bypasses the provider', async () => {
     const { bash } = await setup({ mode: 'danger-full-access' })
-    const parent = mkdtempSync(join(tmpdir(), 'dsh-sandbox-missing-cwd-'))
+    const parent = mkdtempSync(join(tmpdir(), 'lasmex-sandbox-missing-cwd-'))
     try {
       const failure = await bash.run(bash.resolve({ command: 'true', workdir: join(parent, 'missing') }))
         .catch((error: unknown) => error)
@@ -268,7 +268,7 @@ describe('fail closed', () => {
       denialSignatures: UNIX_SIGNATURES,
       runnerFailureRules: RUNNER_FAILURE,
     }))
-    const parent = mkdtempSync(join(tmpdir(), 'dsh-sandbox-missing-cwd-'))
+    const parent = mkdtempSync(join(tmpdir(), 'lasmex-sandbox-missing-cwd-'))
     const workdir = join(parent, 'missing')
     const failure = Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT', syscall: `spawn ${runner}`, path: runner })
     vi.spyOn(ctx.subprocess, 'spawn').mockImplementation(() => { throw failure })
@@ -516,7 +516,7 @@ describe('result facts', () => {
 
   it('reports a real permission failure as a sandbox denial with the mode it ran under', async () => {
     const { bash } = await setup()
-    const lockedDir = join(mkdtempSync(join(tmpdir(), 'dsh-sandbox-denied-')), 'locked')
+    const lockedDir = join(mkdtempSync(join(tmpdir(), 'lasmex-sandbox-denied-')), 'locked')
     mkdirSync(lockedDir)
     chmodSync(lockedDir, 0o555)
     const result = await bash.run(bash.resolve({ command: `echo x > ${lockedDir}/f` }))
@@ -539,7 +539,7 @@ describe('background sandbox facts', () => {
       denialSignatures: UNIX_SIGNATURES,
       runnerFailureRules: RUNNER_FAILURE,
     }))
-    const parent = mkdtempSync(join(tmpdir(), 'dsh-sandbox-missing-cwd-'))
+    const parent = mkdtempSync(join(tmpdir(), 'lasmex-sandbox-missing-cwd-'))
     try {
       const task = bash.start(bash.resolve({ command: 'true', workdir: join(parent, 'missing') }))
       await task.done

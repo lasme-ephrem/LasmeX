@@ -8,7 +8,7 @@
  * the snapshot-store machinery lives in the runtime PLUGIN
  * package, and the shell kernel must not value-import any plugin package —
  * the loading page has to work while (and especially when) plugins fail.
- * @module @deepseek-ai/dsh-client-web/src/loader-status
+ * @module lasmex-client-web/src/loader-status
  */
 import type { FiberState } from '@deepseek-ai/cordis'
 
@@ -16,7 +16,7 @@ import type { FiberState } from '@deepseek-ai/cordis'
  * Value mirror of cordis's `FiberState` const enum: a const enum has no
  * runtime object to import (and esbuild-based pipelines cannot inline it
  * across modules), so these values mirror the pinned vendored definition
- * while retaining its type (same rationale as dsh-tool-cordis's mirror).
+ * while retaining its type (same rationale as lasmex-tool-cordis's mirror).
  */
 export const FIBER_STATE = {
   PENDING: 0 as FiberState.PENDING,

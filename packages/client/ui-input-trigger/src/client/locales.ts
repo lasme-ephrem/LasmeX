@@ -24,3 +24,12 @@ export const en = {
   'loading': 'Loading…',
   'suggestions.aria': 'Trigger suggestions',
 } satisfies Record<MenuKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'command': 'Commandes',
+  'skill': 'Compétences',
+  'subagent': 'Sous-agents',
+  'loading': 'Chargement…',
+  'suggestions.aria': 'Suggestions de déclenchement',
+} satisfies Record<MenuKey, string>

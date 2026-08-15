@@ -30,32 +30,34 @@ uv run --project python/sdk pytest
 交互式冒烟测试需要环境变量或仓库根目录 `.env` 中存在 `DEEPSEEK_API_KEY`：
 
 ```python
-from deepseek_harness import DeepSeekHarness
+from lasmex import LasmeX
 
-with DeepSeekHarness() as harness:
-    print(harness.run("say hi").final_response)
+with LasmeX() as lasmex:
+    print(lasmex.run("say hi").final_response)
 ```
 
 ## 针对 Node 源码运行
 
 仓库贡献者可以选择以下任一开发载体：
 
-- 设置 `DSH_RUNTIME_MODE=node`，在系统 Node `>=22.19` 上使用已构建的 Node 载体。构建脚本会刷新该载体，但分发物绝不会包含或自动选择它。
+- 设置 `LASMEX_RUNTIME_MODE=node`，在系统 Node `>=22.19` 上使用已构建的 Node 载体。构建脚本会刷新该载体，但分发物绝不会包含或自动选择它。
 - 将仓库根目录设为 `cwd`，并设置 `launch_args_override=("./node_modules/.bin/tsx", "packages/examples/jsonrpc-demo/src/bin.ts")`，以运行未构建的 TypeScript 源码。默认配置不合适时，请提供 `cordis=...`。
+
+运行时环境接口使用 `LASMEX_*` 命名空间，包括 `LASMEX_RUNTIME_MODE`；公开 Python 名称为 `lasmex-sdk`、`lasmex-runtime-bin`、`lasmex` 与 `lasmex_runtime`。
 
 完整的源码模式调用见 `python/sdk/tests/manual_sdk_agent_smoke.py`。
 
 ## 构建分发包
 
-根目录 `package.json` 的版本是两个 Python 分发包的权威版本。暂存脚本会将该版本注入两个 wheel 包，并将 SDK 固定到同版本的 `deepseek-harness-runtime-bin`。
+根目录 `package.json` 的版本是两个 Python 分发包的权威版本。暂存脚本会将该版本注入两个 wheel 包，并将 SDK 固定到同版本的 `lasmex-runtime-bin`。
 
 纯 SDK wheel 包只需构建一次；每个原生平台分别构建一个运行时 wheel 包：
 
 ```sh
 version="$(node -p "require('./package.json').version")"
 python scripts/build-python-release.py --package sdk --output-dir dist-python
-python scripts/build-python-release.py --package runtime --platform macos-arm64 --runtime-exe dist-exe/dsh-jsonrpc-agent-pkg-macos-arm64 --output-dir dist-python
-pip install --find-links dist-python deepseek-harness-sdk=="$version"
+python scripts/build-python-release.py --package runtime --platform macos-arm64 --runtime-exe dist-exe/lasmex-jsonrpc-agent-pkg-macos-arm64 --output-dir dist-python
+pip install --find-links dist-python lasmex-sdk=="$version"
 ```
 
 运行时分发包仅提供 wheel 包。发布流水线会连同纯 SDK wheel 包一起发布三个平台 wheel 包：Linux x64、Linux arm64 和 macOS 14 或更高版本的 arm64。只有与仓库版本匹配时，才接受 `python-v<repository-version>` 标签；`0.0.1-rc.1` 之类的仓库预发布版本在 wheel 包文件名和元数据中使用规范化的 PEP 440 写法，例如 `0.0.1rc1`。

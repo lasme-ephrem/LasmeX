@@ -1,4 +1,4 @@
-// Real-host smoke: spawn `dsh web` with a real key, walk the full flow
+// Real-host smoke: spawn `lasmex web` with a real key, walk the full flow
 // list in a real chromium, screenshot every screen into .artifacts/ for the
 // figma comparison pass. Self-skips without DEEPSEEK_API_KEY (repo e2e
 // convention); vitest.web.config.ts loads the repo-root .env before this file
@@ -32,10 +32,10 @@ const WEB_SURFACE_PROMPT = fileURLToPath(new URL('./snapshots/web-runtime-contex
 function waitForReadyLine(child: ChildProcess): Promise<string> {
   return new Promise((resolveReady, reject) => {
     let out = ''
-    const timer = setTimeout(() => { reject(new Error(`dsh web not ready in 90s; output:\n${out}`)) }, 90_000)
+    const timer = setTimeout(() => { reject(new Error(`lasmex web not ready in 90s; output:\n${out}`)) }, 90_000)
     const onData = (chunk: Buffer): void => {
       out += chunk.toString()
-      const match = /dsh web: (http:\/\/[^\s]+)/.exec(out)
+      const match = /lasmex web: (http:\/\/[^\s]+)/.exec(out)
       if (match?.[1] !== undefined) {
         clearTimeout(timer)
         resolveReady(match[1])
@@ -45,7 +45,7 @@ function waitForReadyLine(child: ChildProcess): Promise<string> {
     child.stderr?.on('data', onData)
     child.once('exit', (code) => {
       clearTimeout(timer)
-      reject(new Error(`dsh web exited early (code ${code}); output:\n${out}`))
+      reject(new Error(`lasmex web exited early (code ${code}); output:\n${out}`))
     })
   })
 }
@@ -138,7 +138,7 @@ async function detailsTrack(page: Page): Promise<number> {
   return Number(cols.split(' ').pop()!.replace('px', ''))
 }
 
-// Readiness gate: `dsh web` serves every production manifest plugin; until every UI
+// Readiness gate: `lasmex web` serves every production manifest plugin; until every UI
 // plugin's client bundle exists and exports apply, the loader fail-louds and
 // the frame never appears.
 const UI_PLUGIN_DIRS = [
@@ -153,10 +153,10 @@ const notReady = UI_PLUGIN_DIRS.filter((dir) => {
 })
 if (notReady.length > 0) console.warn(`[smoke-real] skipped — client bundles not ready: ${notReady.join(', ')}`)
 
-describe('dsh web keyless CLI smoke', () => {
+describe('lasmex web keyless CLI smoke', () => {
   it('listens on 127.0.0.1 by default', async () => {
     requireDist()
-    const sessionsDir = mkdtempSync(join(tmpdir(), 'dsh-web-keyless-'))
+    const sessionsDir = mkdtempSync(join(tmpdir(), 'lasmex-web-keyless-'))
     const tsxLoader = pathToFileURL(createRequire(join(REPO_ROOT, 'package.json')).resolve('tsx')).href
     const child = spawn(
       process.execPath,
@@ -166,8 +166,8 @@ describe('dsh web keyless CLI smoke', () => {
         env: {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-no-call',
-          DSH_HOME: join(sessionsDir, '.dsh'),
-          DSH_AGENTS_HOME: join(sessionsDir, '.agents'),
+          LASMEX_HOME: join(sessionsDir, '.lasmex'),
+          LASMEX_AGENTS_HOME: join(sessionsDir, '.agents'),
           TSX_TSCONFIG_PATH: join(REPO_ROOT, 'tsconfig.json'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -189,7 +189,7 @@ describe('dsh web keyless CLI smoke', () => {
 
   it('routes web runtime context and workspace instructions through the real CLI request', async () => {
     requireDist()
-    const workspace = mkdtempSync(join(tmpdir(), 'dsh-web-workspace-'))
+    const workspace = mkdtempSync(join(tmpdir(), 'lasmex-web-workspace-'))
     mkdirSync(join(workspace, '.git'))
     writeFileSync(join(workspace, 'AGENTS.md'), 'web-workspace-context-probe\n')
 
@@ -233,8 +233,8 @@ describe('dsh web keyless CLI smoke', () => {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-workspace',
           DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
-          DSH_HOME: join(workspace, '.dsh'),
-          DSH_AGENTS_HOME: join(workspace, '.agents'),
+          LASMEX_HOME: join(workspace, '.lasmex'),
+          LASMEX_AGENTS_HOME: join(workspace, '.agents'),
           TSX_TSCONFIG_PATH: join(REPO_ROOT, 'tsconfig.json'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -277,11 +277,10 @@ describe('dsh web keyless CLI smoke', () => {
           "role": "user",
         }
       `)
-      expect(captured.tools?.map(tool => tool.function?.name)
-        .filter(name => name === 'web_search' || name === 'web_fetch'))
+      expect(captured.tools?.map(tool => tool.function?.name))
         .toMatchInlineSnapshot(`
           [
-            "web_search",
+            "run_code",
           ]
         `)
     } finally {
@@ -297,7 +296,7 @@ describe('dsh web keyless CLI smoke', () => {
 
   it('retries a partial transport failure through the shipped Web composition', async () => {
     requireDist()
-    const workspace = mkdtempSync(join(tmpdir(), 'dsh-web-retry-'))
+    const workspace = mkdtempSync(join(tmpdir(), 'lasmex-web-retry-'))
     const promptMarker = 'WEB_RETRY_REQUEST'
     const recoveredMarker = 'WEB_RETRY_RECOVERED'
     let mainAttempts = 0
@@ -346,7 +345,7 @@ describe('dsh web keyless CLI smoke', () => {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-retry',
           DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
-          DSH_HOME: join(workspace, '.dsh'),
+          LASMEX_HOME: join(workspace, '.lasmex'),
           TSX_TSCONFIG_PATH: join(REPO_ROOT, 'tsconfig.json'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -387,9 +386,9 @@ describe('dsh web keyless CLI smoke', () => {
     }
   }, 30_000)
 
-  it('DSH_TOOLS_MODE=code collapses the provider wire tools to run_code with the SDK prompt section', async () => {
+  it('LASMEX_TOOLS_MODE=code collapses the provider wire tools to run_code with the SDK prompt section', async () => {
     requireDist()
-    const workspace = mkdtempSync(join(tmpdir(), 'dsh-web-code-mode-'))
+    const workspace = mkdtempSync(join(tmpdir(), 'lasmex-web-code-mode-'))
 
     interface CodeModeProviderRequest {
       messages?: { role?: string; content?: string }[]
@@ -428,9 +427,9 @@ describe('dsh web keyless CLI smoke', () => {
           ...process.env,
           DEEPSEEK_API_KEY: 'keyless-web-code-mode',
           DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
-          DSH_TOOLS_MODE: 'code',
-          DSH_HOME: join(workspace, '.dsh'),
-          DSH_AGENTS_HOME: join(workspace, '.agents'),
+          LASMEX_TOOLS_MODE: 'code',
+          LASMEX_HOME: join(workspace, '.lasmex'),
+          LASMEX_AGENTS_HOME: join(workspace, '.agents'),
           TSX_TSCONFIG_PATH: join(REPO_ROOT, 'tsconfig.json'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -476,7 +475,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
 
   beforeAll(async () => {
     requireDist()
-    sessionsDir = mkdtempSync(join(tmpdir(), 'dsh-web-w5-'))
+    sessionsDir = mkdtempSync(join(tmpdir(), 'lasmex-web-w5-'))
     const port = await probeFreePort()
     // tsx boot mirrors the runtime half of the root dsh script. Isolate
     // the host-level Harness and shared-agent homes inside the temp world; tsx
@@ -497,8 +496,8 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
         cwd: sessionsDir,
         env: {
           ...process.env,
-          DSH_HOME: join(sessionsDir, '.dsh'),
-          DSH_AGENTS_HOME: join(sessionsDir, '.agents'),
+          LASMEX_HOME: join(sessionsDir, '.lasmex'),
+          LASMEX_AGENTS_HOME: join(sessionsDir, '.agents'),
           TSX_TSCONFIG_PATH: join(REPO_ROOT, 'tsconfig.json'),
         },
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -525,7 +524,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
   it('cold start: loading page settles into the three-column frame', async () => {
     onTestFailed(() => saveFailureShot(page, 'w5-cold-start'))
     await page.waitForSelector('[class*="frame"]', { timeout: 30_000 })
-    expect(await page.locator('text=Failed to load plugins').count()).toBe(0)
+    expect(await page.locator('text=Échec du chargement des plugins').count()).toBe(0)
     const template = await page.locator('[class*="frame"]').evaluate(el => getComputedStyle(el).gridTemplateColumns)
     expect(template.split(' ').length).toBe(3)
     await screen(page, '01-cold-start')
@@ -533,7 +532,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
 
   it('empty-state first send completes a real model round', async () => {
     onTestFailed(() => saveFailureShot(page, 'w5-first-round'))
-    // This scenario spawns its own server against a fresh $DSH_HOME with the
+    // This scenario spawns its own server against a fresh $LASMEX_HOME with the
     // DeepSeek credential inherited from the environment, so no onboarding
     // step mounts and the page is immediately interactive.
     // Fresh world: connect a Workspace so the composer starts live.
@@ -549,7 +548,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
     await page.waitForFunction(() => document.body.innerText.length > 50, undefined, { timeout: 15_000 })
     expect(pageErrors).toEqual([])
     await page.waitForFunction(
-      () => document.title !== 'DeepSeek Harness' && document.title.endsWith(' — DeepSeek Harness'),
+      () => document.title !== 'LasmeX' && document.title.endsWith(' — LasmeX'),
       undefined,
       { timeout: 15_000 },
     )
@@ -561,7 +560,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY || notReady.length > 0)('web smoke
     if (sessionId === undefined) throw new Error('created Web session was not listed')
     const durableTitle = await waitForProviderTitle(baseUrl, sessionId)
     await page.waitForFunction(
-      expected => document.title === `${expected} — DeepSeek Harness`,
+      expected => document.title === `${expected} — LasmeX`,
       durableTitle,
       { timeout: 15_000 },
     )

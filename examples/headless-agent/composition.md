@@ -8,85 +8,85 @@ The headless snapshot composition combines the real DeepSeek adapter and coding 
 ```mermaid
 flowchart LR
   cfg["examples/headless-agent<br/>cordis.yml"]
-  plugin_headless_settings["settings<br/>@deepseek-ai/dsh-settings-file"]
+  plugin_headless_settings["settings<br/>lasmex-settings-file"]
   cfg --> plugin_headless_settings
-  plugin_headless_credentials["credentials<br/>@deepseek-ai/dsh-credentials-local"]
+  plugin_headless_credentials["credentials<br/>lasmex-credentials-local"]
   cfg --> plugin_headless_credentials
-  plugin_headless_llm_deepseek["llm-deepseek<br/>@deepseek-ai/dsh-llm-deepseek"]
+  plugin_headless_llm_deepseek["llm-deepseek<br/>lasmex-llm-deepseek"]
   cfg --> plugin_headless_llm_deepseek
-  plugin_headless_subprocess["subprocess<br/>@deepseek-ai/dsh-subprocess-local"]
+  plugin_headless_subprocess["subprocess<br/>lasmex-subprocess-local"]
   cfg --> plugin_headless_subprocess
-  plugin_headless_bash["bash<br/>@deepseek-ai/dsh-bash-local"]
+  plugin_headless_bash["bash<br/>lasmex-bash-local"]
   cfg --> plugin_headless_bash
-  plugin_headless_agent_spine["agent-spine<br/>@deepseek-ai/dsh-agent-spine-demo"]
+  plugin_headless_agent_spine["agent-spine<br/>lasmex-agent-spine-demo"]
   cfg --> plugin_headless_agent_spine
-  plugin_headless_persistence["persistence<br/>@deepseek-ai/dsh-session-persistence-jsonl"]
+  plugin_headless_persistence["persistence<br/>lasmex-session-persistence-jsonl"]
   cfg --> plugin_headless_persistence
-  plugin_headless_checkpoint_policy["checkpoint-policy<br/>@deepseek-ai/dsh-session-checkpoint-policy"]
+  plugin_headless_checkpoint_policy["checkpoint-policy<br/>lasmex-session-checkpoint-policy"]
   cfg --> plugin_headless_checkpoint_policy
-  plugin_headless_token_meter["token-meter<br/>@deepseek-ai/dsh-token-meter"]
+  plugin_headless_token_meter["token-meter<br/>lasmex-token-meter"]
   cfg --> plugin_headless_token_meter
-  plugin_headless_compaction_basic["compaction-basic<br/>@deepseek-ai/dsh-compaction-basic"]
+  plugin_headless_compaction_basic["compaction-basic<br/>lasmex-compaction-basic"]
   cfg --> plugin_headless_compaction_basic
-  plugin_headless_session_projection["session-projection<br/>@deepseek-ai/dsh-session-projection"]
+  plugin_headless_session_projection["session-projection<br/>lasmex-session-projection"]
   cfg --> plugin_headless_session_projection
-  plugin_headless_subagent["subagent<br/>@deepseek-ai/dsh-subagent"]
+  plugin_headless_subagent["subagent<br/>lasmex-subagent"]
   cfg --> plugin_headless_subagent
-  plugin_headless_subagent_spawn_in_process["subagent-spawn-in-process<br/>@deepseek-ai/dsh-subagent-spawn-in-process"]
+  plugin_headless_subagent_spawn_in_process["subagent-spawn-in-process<br/>lasmex-subagent-spawn-in-process"]
   cfg --> plugin_headless_subagent_spawn_in_process
-  plugin_headless_subagent_fork_in_process["subagent-fork-in-process<br/>@deepseek-ai/dsh-subagent-fork-in-process"]
+  plugin_headless_subagent_fork_in_process["subagent-fork-in-process<br/>lasmex-subagent-fork-in-process"]
   cfg --> plugin_headless_subagent_fork_in_process
-  plugin_headless_tool_subagent_control["tool-subagent-control<br/>@deepseek-ai/dsh-tool-subagent-control"]
+  plugin_headless_tool_subagent_control["tool-subagent-control<br/>lasmex-tool-subagent-control"]
   cfg --> plugin_headless_tool_subagent_control
-  plugin_headless_tool_subagent_report["tool-subagent-report<br/>@deepseek-ai/dsh-tool-subagent-report"]
+  plugin_headless_tool_subagent_report["tool-subagent-report<br/>lasmex-tool-subagent-report"]
   cfg --> plugin_headless_tool_subagent_report
-  plugin_headless_tool_subagent["tool-subagent<br/>@deepseek-ai/dsh-tool-subagent"]
+  plugin_headless_tool_subagent["tool-subagent<br/>lasmex-tool-subagent"]
   cfg --> plugin_headless_tool_subagent
-  plugin_headless_tool_subagent_fork["tool-subagent-fork<br/>@deepseek-ai/dsh-tool-subagent"]
+  plugin_headless_tool_subagent_fork["tool-subagent-fork<br/>lasmex-tool-subagent"]
   cfg --> plugin_headless_tool_subagent_fork
-  plugin_headless_workflow_worker_thread["workflow-worker-thread<br/>@deepseek-ai/dsh-workflow-worker-thread"]
+  plugin_headless_workflow_worker_thread["workflow-worker-thread<br/>lasmex-workflow-worker-thread"]
   cfg --> plugin_headless_workflow_worker_thread
-  plugin_headless_tool_workflow["tool-workflow<br/>@deepseek-ai/dsh-tool-workflow"]
+  plugin_headless_tool_workflow["tool-workflow<br/>lasmex-tool-workflow"]
   cfg --> plugin_headless_tool_workflow
-  plugin_headless_tool_ralph["tool-ralph<br/>@deepseek-ai/dsh-tool-ralph"]
+  plugin_headless_tool_ralph["tool-ralph<br/>lasmex-tool-ralph"]
   cfg --> plugin_headless_tool_ralph
-  plugin_headless_tool_todo["tool-todo<br/>@deepseek-ai/dsh-tool-todo"]
+  plugin_headless_tool_todo["tool-todo<br/>lasmex-tool-todo"]
   cfg --> plugin_headless_tool_todo
-  plugin_headless_fs_local["fs-local<br/>@deepseek-ai/dsh-fs-local"]
+  plugin_headless_fs_local["fs-local<br/>lasmex-fs-local"]
   cfg --> plugin_headless_fs_local
-  plugin_headless_fs_observation_policy["fs-observation-policy<br/>@deepseek-ai/dsh-fs-observation-policy"]
+  plugin_headless_fs_observation_policy["fs-observation-policy<br/>lasmex-fs-observation-policy"]
   cfg --> plugin_headless_fs_observation_policy
-  plugin_headless_tool_fs["tool-fs<br/>@deepseek-ai/dsh-tool-fs"]
+  plugin_headless_tool_fs["tool-fs<br/>lasmex-tool-fs"]
   cfg --> plugin_headless_tool_fs
 ```
 
 | Plugin id | Package / module |
 | --- | --- |
-| `settings` | `@deepseek-ai/dsh-settings-file` |
-| `credentials` | `@deepseek-ai/dsh-credentials-local` |
-| `llm-deepseek` | `@deepseek-ai/dsh-llm-deepseek` |
-| `subprocess` | `@deepseek-ai/dsh-subprocess-local` |
-| `bash` | `@deepseek-ai/dsh-bash-local` |
-| `agent-spine` | `@deepseek-ai/dsh-agent-spine-demo` |
-| `persistence` | `@deepseek-ai/dsh-session-persistence-jsonl` |
-| `checkpoint-policy` | `@deepseek-ai/dsh-session-checkpoint-policy` |
-| `token-meter` | `@deepseek-ai/dsh-token-meter` |
-| `compaction-basic` | `@deepseek-ai/dsh-compaction-basic` |
-| `session-projection` | `@deepseek-ai/dsh-session-projection` |
-| `subagent` | `@deepseek-ai/dsh-subagent` |
-| `subagent-spawn-in-process` | `@deepseek-ai/dsh-subagent-spawn-in-process` |
-| `subagent-fork-in-process` | `@deepseek-ai/dsh-subagent-fork-in-process` |
-| `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control` |
-| `tool-subagent-report` | `@deepseek-ai/dsh-tool-subagent-report` |
-| `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` |
-| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` |
-| `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` |
-| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` |
-| `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` |
-| `tool-todo` | `@deepseek-ai/dsh-tool-todo` |
-| `fs-local` | `@deepseek-ai/dsh-fs-local` |
-| `fs-observation-policy` | `@deepseek-ai/dsh-fs-observation-policy` |
-| `tool-fs` | `@deepseek-ai/dsh-tool-fs` |
+| `settings` | `lasmex-settings-file` |
+| `credentials` | `lasmex-credentials-local` |
+| `llm-deepseek` | `lasmex-llm-deepseek` |
+| `subprocess` | `lasmex-subprocess-local` |
+| `bash` | `lasmex-bash-local` |
+| `agent-spine` | `lasmex-agent-spine-demo` |
+| `persistence` | `lasmex-session-persistence-jsonl` |
+| `checkpoint-policy` | `lasmex-session-checkpoint-policy` |
+| `token-meter` | `lasmex-token-meter` |
+| `compaction-basic` | `lasmex-compaction-basic` |
+| `session-projection` | `lasmex-session-projection` |
+| `subagent` | `lasmex-subagent` |
+| `subagent-spawn-in-process` | `lasmex-subagent-spawn-in-process` |
+| `subagent-fork-in-process` | `lasmex-subagent-fork-in-process` |
+| `tool-subagent-control` | `lasmex-tool-subagent-control` |
+| `tool-subagent-report` | `lasmex-tool-subagent-report` |
+| `tool-subagent` | `lasmex-tool-subagent` |
+| `tool-subagent-fork` | `lasmex-tool-subagent` |
+| `workflow-worker-thread` | `lasmex-workflow-worker-thread` |
+| `tool-workflow` | `lasmex-tool-workflow` |
+| `tool-ralph` | `lasmex-tool-ralph` |
+| `tool-todo` | `lasmex-tool-todo` |
+| `fs-local` | `lasmex-fs-local` |
+| `fs-observation-policy` | `lasmex-fs-observation-policy` |
+| `tool-fs` | `lasmex-tool-fs` |
 
 Source config: [`examples/headless-agent/cordis.yml`](cordis.yml).
 

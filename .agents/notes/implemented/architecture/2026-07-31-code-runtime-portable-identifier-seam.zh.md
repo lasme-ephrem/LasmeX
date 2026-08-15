@@ -6,13 +6,13 @@ Status: implemented
 
 ## Problem
 
-code-runtime seam 承诺：在一个后端上有效的绑定命名空间列表，在每个后端上都有效，因此 Code Mode 消费方可以把同一组绑定交给任何已注册的运行时，而不必知道它的语言。首个后端 `dsh-code-runtime-worker-thread` 私自拥有了执行这项承诺一部分的标识符规则：一个允许 JS 专有 `$` 的 `IDENTIFIER` 正则、一个只含 ECMAScript 关键字的 `RESERVED_WORDS` 集合，以及一个含三个 JS `Error` 槽位的 `RESERVED_ERROR_PROPERTIES` 集合。这些规则描述的是 worker 自身的语言，而非 seam 的可移植性约定。
+code-runtime seam 承诺：在一个后端上有效的绑定命名空间列表，在每个后端上都有效，因此 Code Mode 消费方可以把同一组绑定交给任何已注册的运行时，而不必知道它的语言。首个后端 `lasmex-code-runtime-worker-thread` 私自拥有了执行这项承诺一部分的标识符规则：一个允许 JS 专有 `$` 的 `IDENTIFIER` 正则、一个只含 ECMAScript 关键字的 `RESERVED_WORDS` 集合，以及一个含三个 JS `Error` 槽位的 `RESERVED_ERROR_PROPERTIES` 集合。这些规则描述的是 worker 自身的语言，而非 seam 的可移植性约定。
 
 一个针对不同语言（CPython）编写的第二后端，要么重新声明自己的规则——让 `lambda` 通过 worker 却在 Python 上失败，或让 `$tools` 通过 worker 却在每个非 JS 后端上失败——要么导入 worker 的规则，从而反转依赖，使一个 Service Provider 伸手进入另一个兄弟 Service Provider。二者都无法让可移植承诺成真：它只对调用方恰好测试过的那个后端成立。
 
 ## Decision
 
-Service Definition 包（`@deepseek-ai/dsh-code-runtime`）以四个具名常量导出可移植标识符排除约定，每个 Service Provider 导入它们而非重新声明：
+Service Definition 包（`lasmex-code-runtime`）以四个具名常量导出可移植标识符排除约定，每个 Service Provider 导入它们而非重新声明：
 
 - `PORTABLE_RESERVED_WORDS`——ECMAScript 与 Python 保留字的联集。任何命名空间 global 或 error-class 名称匹配其中之一，都在所有后端上被拒绝，因此 `lambda` 即便是合法的 JS 参数名也被拒绝。新增一门语言即扩宽此联集，这是对现有绑定名称的一次有意的破坏性复审。
 - `RESERVED_BINDING_GLOBALS`——某个后端在程序命名空间中拥有的 global：`console`（worker 的日志捕获）、`__dsh_main__`/`__builtins__`/`__name__`（Python bootstrap 的包装器与预置模块 global），以及 `__debug__`（不是 seed 的槽位，而是 CPython 编译期常量，赋值会被拒，故以该名注入的 global 不可达——同一种可移植性分裂，只是机制不同）。在所有后端上被拒绝，使命名空间列表无法选到一个在某后端能用、在另一后端冲突的名称。
@@ -25,7 +25,7 @@ Service Definition 同时把可移植标识符子集收窄为 `[A-Za-z_][A-Za-z0
 
 ## Scope
 
-本决策只交付 Service Definition 扩展与 worker 对它的采用。`py-types` 渲染器与 Code Mode 的语言分发归[语言分发 note](../feature/2026-07-31-code-mode-language-dispatch.md) 所有；Python 后端尚不存在。Service Definition README 因此保留仅描述 worker 的措辞：链接到一个不存在的 `dsh-code-runtime-python` README 会破坏死链 gate。
+本决策只交付 Service Definition 扩展与 worker 对它的采用。`py-types` 渲染器与 Code Mode 的语言分发归[语言分发 note](../feature/2026-07-31-code-mode-language-dispatch.md) 所有；Python 后端尚不存在。Service Definition README 因此保留仅描述 worker 的措辞：链接到一个不存在的 `lasmex-code-runtime-python` README 会破坏死链 gate。
 
 `RESERVED_BINDING_GLOBALS` 先于后端本身编码了 Python bootstrap 的具体设计：它恰好 seed `__builtins__`/`__name__`，并把程序包装在 `__dsh_main__` 之下。任何 seed 额外模块 global（`__doc__`、`__loader__`、`__spec__`、`__file__`、`__package__` 等）的 Python 后端必须在同一改动中扩宽此集合，正如新增一门语言即扩宽 `PORTABLE_RESERVED_WORDS`——bootstrap 会 seed 却不在集合中的名称，正是本约定要防止的可移植性分裂。
 

@@ -10,27 +10,26 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, waitFor } from '@testing-library/react'
-import { SlotTestRuntime, usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { apply, inject } from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import { SlotTestRuntime, usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { apply, inject } from 'lasmex-client-ui-sidebar/client'
 
-// The service reads its initial locale from the browser; these specs assert
-// the shipped Chinese copy, so they state the browser they assume.
+// These specs advertise Chinese for their default-locale snapshot.
 usePinnedBrowserLanguages('zh-CN')
 
 afterEach(cleanup)
 
 /**
  * Boot the package over the slot test runtime. The default bench stays on
- * the service's default locale (zh — the fallback chain's base), pinning
- * what an untouched client shows; `locale: 'en'` pins the en copy instead.
+ * the service's browser-derived locale, pinning
+ * what a Chinese browser shows; explicit options pin the French or English copy.
  * The installed face backs the entry's standard `t` seat either way.
  */
-async function bench(options: { locale?: 'en' } = {}) {
+async function bench(options: { locale?: 'fr' | 'en' } = {}) {
   const runtime = await SlotTestRuntime.create()
   runtime.provide('layout', { toggleSidebar: vi.fn() })
   const locale = new LocaleRuntime(runtime.ctx)
-  if (options.locale === 'en') locale.setLocale('en')
+  if (options.locale !== undefined) locale.setLocale(options.locale)
   runtime.provide('locale', locale)
   runtime.slots.installLocale(locale)
   await runtime.declare({ 'sidebar': { kind: 'single', scope: 'root' } })
@@ -39,7 +38,15 @@ async function bench(options: { locale?: 'en' } = {}) {
 }
 
 describe('sidebar shell snapshots', () => {
-  it('renders the expanded column in the default locale (zh, no setLocale)', async () => {
+  it('renders the French-first LasmeX shell', async () => {
+    const { runtime } = await bench({ locale: 'fr' })
+    const slot = runtime.renderSlot('sidebar', { collapsed: false, width: 300 })
+    expect(slot.view.getAllByRole('button', { name: 'Créer une session' })).toHaveLength(2)
+    expect(slot.container).toMatchSnapshot()
+    await runtime.dispose()
+  })
+
+  it('renders the expanded column in the browser locale (zh, no setLocale)', async () => {
     const { runtime } = await bench()
     const slot = runtime.renderSlot('sidebar', { collapsed: false, width: 300 })
     // Wordmark + capsule both start a session in the expanded state.

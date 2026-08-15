@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-directory-picker-native",
+  "name": "lasmex-client-ui-directory-picker-native",
   "description": "Native directory-picker surface: the renderless workspace directory-flow occupant driving the host's OS chooser",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/ui-directory-picker-native"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,11 +24,11 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-workspace"
+        "lasmex-client-runtime",
+        "lasmex-client-ui-workspace"
       ],
       "platform": "web"
     }
@@ -44,18 +39,18 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-workspace": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-workspace": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-workspace": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-ui-workspace": "workspace:^",
+    "lasmex-invariants": "workspace:^",
     "@testing-library/react": "^16.1.0",
     "@types/react": "~18.3.1",
     "@deepseek-ai/cordis": "workspace:^",
@@ -67,5 +62,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-directory-picker-native"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

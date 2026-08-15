@@ -1,9 +1,9 @@
 /**
- * Shared boot glue for the app bins (`dsh`, `dsh-acp-demo`): load the gitignored
+ * Shared boot glue for the app bins (`dsh`, `lasmex-acp-demo`): load the gitignored
  * `.env`, install the fail-loud Loader guards, resolve the config path (snapshot-aware), load the
- * optional user patch layers from the Harness home (`~/.dsh`), expose its path resolver to
+ * optional user patch layers from the Harness home (`~/.lasmex`), expose its path resolver to
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
- * @module @deepseek-ai/dsh-app-boot
+ * @module lasmex-app-boot
  */
 
 import { pathToFileURL } from 'node:url'
@@ -15,16 +15,16 @@ import { Context, type FiberState } from '@deepseek-ai/cordis'
 import Loader, { type Entry, type EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
 import Include, { applyEntryPatches, entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 import Group from '@deepseek-ai/cordis-plugin-group'
-import { dshHomePath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { createLaunchEnvironmentSnapshot, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
+import { lasmexHomePath, resolveLasmexHome } from 'lasmex-home-paths'
+import { createLaunchEnvironmentSnapshot, type LaunchEnvironmentSnapshot } from 'lasmex-launch-environment'
 import type {} from '@deepseek-ai/cordis-plugin-hmr'
 // Side-effect type import: resolves `ctx.get('systemPrompt')` to the service.
-import type {} from '@deepseek-ai/dsh-system-prompt'
+import type {} from 'lasmex-system-prompt'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
     /** Harness-home path resolver available to Loader `!!js` config expressions. */
-    dshHomePath?: typeof dshHomePath
+    lasmexHomePath?: typeof lasmexHomePath
   }
 }
 
@@ -41,9 +41,9 @@ export {
   resolveBundleDir,
   resolveProfileDir,
   writeProfileManifest,
-  type DshBundleManifest,
-  type DshManifestSection,
-  type DshProfileManifest,
+  type LasmeXBundleManifest,
+  type LasmeXManifestSection,
+  type LasmeXProfileManifest,
   type Profile,
   type ProfileLayer,
   type ProfileManifest,
@@ -83,7 +83,7 @@ export function loadEnv(
     process.loadEnvFile(resolve(dir, '.env'))
   } catch (error) {
     if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') {
-      warn(`${binName}: failed to load .env: ${String(error)}\n`)
+      warn(`${binName} : chargement impossible du fichier .env : ${String(error)}\n`)
     }
     // ENOENT (no .env) is fine — rely on the ambient environment.
   }
@@ -114,7 +114,7 @@ const BOOTSTRAP_NAMES = new Set([
 ])
 
 /** Name prefixes no discovered file may set. */
-const BOOTSTRAP_PREFIXES = ['DSH_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
+const BOOTSTRAP_PREFIXES = ['LASMEX_', 'DSH_', 'XDG_', 'DYLD_', 'BASH_FUNC_']
 
 /**
  * Whether a variable may come only from the inherited process environment
@@ -145,7 +145,7 @@ function readEnvLayer(
     content = readFileSync(path, 'utf8')
   } catch (error) {
     if ((error as NodeJS.ErrnoException | null)?.code !== 'ENOENT') {
-      warn(`${binName}: failed to load .env: ${String(error)}\n`)
+      warn(`${binName} : chargement impossible du fichier .env : ${String(error)}\n`)
     }
     // ENOENT (no .env) is fine — rely on the ambient environment.
     return undefined
@@ -155,9 +155,9 @@ function readEnvLayer(
   for (const name of Object.keys(values)) {
     if (!isBootstrapOnly(name)) continue
     throw new Error(
-      `${binName}: ${path} sets "${name}", which only the launching environment may set`
-      + ' (it decides how this process starts, where its code and instructions load from, or how it'
-      + ` reaches the network); export ${name} instead of putting it in a .env file`,
+      `${binName} : ${path} définit "${name}", alors que seul l'environnement de lancement peut le faire`
+      + ' (cette variable détermine le démarrage du processus, la provenance de son code et de ses instructions,'
+      + ` ou son accès au réseau) ; exportez ${name} au lieu de la placer dans un fichier .env`,
     )
   }
   return { path, values }
@@ -178,7 +178,7 @@ export function loadLayeredEnv(
   binName: string, cwd: string = process.cwd(),
   warn: (line: string) => void = line => void process.stderr.write(line),
 ): LaunchEnvironmentSnapshot {
-  const home = resolveDshHome()
+  const home = resolveLasmexHome()
   const inherited = { ...process.env } as Record<string, string>
   // Parse both layers first: a rejection must not leave one file applied.
   const project = readEnvLayer(binName, cwd, warn)
@@ -235,9 +235,9 @@ export async function watchUserPatches(
 ): Promise<() => Promise<void>> {
   const { binName, filename, compose = (patches: PatchOptions[]) => patches } = options
   const hmr = ctx.get('hmr')
-  if (hmr === undefined) throw new Error(`${binName}: user patch-layer watching requires the Cordis HMR service`)
+  if (hmr === undefined) throw new Error(`${binName} : la surveillance des correctifs utilisateur nécessite le service HMR de Cordis`)
   const entry = bootstrapIncludes.get(ctx)
-  if (entry === undefined) throw new Error(`${binName}: user patch-layer watching requires the root Include entry`)
+  if (entry === undefined) throw new Error(`${binName} : la surveillance des correctifs utilisateur nécessite l'entrée Include racine`)
   const register = hmr.registerConfig(filename, async () => {
     // Re-read the include's non-patch options per refresh: a writer that
     // updates the root Include's other options between refreshes (none exists
@@ -281,7 +281,7 @@ export function loadOptionalPatches(binName: string, file: string): PatchOptions
     content = readFileSync(file, 'utf8')
   } catch (error) {
     if ((error as NodeJS.ErrnoException | null)?.code === 'ENOENT') return undefined
-    throw new Error(`${binName}: failed to read patches ${file}: ${String(error)}`)
+    throw new Error(`${binName} : lecture impossible des correctifs ${file} : ${String(error)}`)
   }
   return parsePatchList(binName, file, content, 'patches')
 }
@@ -300,7 +300,7 @@ export function loadOverlayPatches(binName: string, file: string): PatchOptions[
   try {
     content = readFileSync(file, 'utf8')
   } catch (error) {
-    throw new Error(`${binName}: failed to read overlay ${file}: ${String(error)}`)
+    throw new Error(`${binName} : lecture impossible de la surcouche ${file} : ${String(error)}`)
   }
   return parsePatchList(binName, file, content, 'overlay')
 }
@@ -320,18 +320,19 @@ export function loadOverlayPatches(binName: string, file: string): PatchOptions[
 function parsePatchList(
   binName: string, file: string, content: string, label: string,
 ): PatchOptions[] {
+  const displayLabel = label === 'patches' ? 'correctifs' : label === 'overlay' ? 'surcouche' : label
   let parsed: unknown
   try {
     parsed = yaml.load(content, { schema: userPatchesSchema })
   } catch (error) {
-    throw new Error(`${binName}: failed to parse ${label} ${file}: ${String(error)}`)
+    throw new Error(`${binName} : analyse impossible de ${displayLabel} ${file} : ${String(error)}`)
   }
   if (!Array.isArray(parsed)) {
-    throw new Error(`${binName}: ${label} ${file} must be a top-level YAML array of loader patch entries`)
+    throw new Error(`${binName} : ${displayLabel} ${file} doit être un tableau YAML racine d'entrées de correctif du chargeur`)
   }
   parsed.forEach((entry, index) => {
     if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
-      throw new Error(`${binName}: ${label} entry ${index + 1} in ${file} must be a mapping (a loader patch entry)`)
+      throw new Error(`${binName} : l'entrée ${index + 1} de ${displayLabel} dans ${file} doit être une table YAML (une entrée de correctif du chargeur)`)
     }
   })
   return parsed as PatchOptions[]
@@ -386,16 +387,16 @@ export function renderConfigDump(
   try {
     content = readFileSync(absoluteConfigPath, 'utf8')
   } catch (error) {
-    throw new Error(`${binName}: failed to read config ${absoluteConfigPath}: ${String(error)}`)
+    throw new Error(`${binName} : lecture impossible de la configuration ${absoluteConfigPath} : ${String(error)}`)
   }
   let parsed: unknown
   try {
     parsed = yaml.load(content, { schema: entryListSchema })
   } catch (error) {
-    throw new Error(`${binName}: failed to parse config ${absoluteConfigPath}: ${String(error)}`)
+    throw new Error(`${binName} : analyse impossible de la configuration ${absoluteConfigPath} : ${String(error)}`)
   }
   if (!Array.isArray(parsed)) {
-    throw new Error(`${binName}: config ${absoluteConfigPath} must be a top-level YAML array of entries`)
+    throw new Error(`${binName} : la configuration ${absoluteConfigPath} doit être un tableau YAML racine d'entrées`)
   }
   const baseLabel = basename(absoluteConfigPath)
   // YAML parsing yields untyped rows; the include validates each entry
@@ -659,7 +660,7 @@ export function assertEntriesLoaded(ctx: Context, binName: string): void {
   const failed = [...ctx.loader.entries()].filter(entry => entry.fiber === undefined && !entry.disabled)
   if (failed.length > 0) {
     const names = failed.map(entry => entry.options.name).join(', ')
-    throw new Error(`${binName}: plugin(s) failed to load: ${names}; Cordis startup failed because these plugin(s) could not be resolved (see the error(s) logged above)`)
+    throw new Error(`${binName} : échec du chargement des plugins : ${names} ; Cordis n'a pas démarré car ces plugins n'ont pas pu être résolus (consultez les erreurs ci-dessus)`)
   }
 }
 
@@ -710,17 +711,17 @@ export async function assertEntriesActivated(ctx: Context, binName: string): Pro
     if (state === FIBER_PENDING) {
       const missing = Object.keys(fiber.inject).filter(service => fiber.ctx.get(service) === undefined)
       const subject = missing.length === 1 ? 'service' : 'services'
-      failures.push(`${entry.options.name}: pending (waiting for ${subject}: ${missing.join(', ') || 'unknown'})`)
+      failures.push(`${entry.options.name} : en attente (${subject} requis : ${missing.join(', ') || 'inconnu'})`)
     } else {
-      failures.push(`${entry.options.name}: fiber state ${String(state)}`)
+      failures.push(`${entry.options.name} : état de fibre ${String(state)}`)
     }
   }
   if (failures.length > 0) {
     if (rejectionReasons.length > 0) {
       await observeLoaderRejectionCheckpoint(rejectionReasons)
     }
-    const noun = failures.length === 1 ? 'entry' : 'entries'
-    throw new Error(`${binName}: ${String(failures.length)} ${noun} did not activate\n${failures.join('\n')}`)
+    const noun = failures.length === 1 ? "entrée ne s'est pas activée" : 'entrées ne se sont pas activées'
+    throw new Error(`${binName} : ${String(failures.length)} ${noun}\n${failures.join('\n')}`)
   }
 }
 
@@ -764,13 +765,13 @@ export async function boot(
   const ctx = new Context()
   // Two failure labels: `prepare` runs before any config-tree entry mounts,
   // so its failure is host setup, not the plugin tree.
-  let stage = 'host preparation failed'
+  let stage = "échec de la préparation de l'hôte"
   try {
     ctx.baseUrl = pathToFileURL(dirname(absoluteConfigPath)).href + '/'
-    ctx.provide('dshHomePath', dshHomePath)
+    ctx.provide('lasmexHomePath', lasmexHomePath)
     await ctx.plugin(Loader)
     await prepare?.(ctx)
-    stage = 'plugin tree failed to load'
+    stage = "échec du chargement de l'arbre de plugins"
     await mountRootInclude(ctx, absoluteConfigPath, patches, bareModuleBaseUrl)
     // A surface can finish and dispose the whole tree while startup is still
     // in flight, before the last entry settles. The Loader service goes with
@@ -797,7 +798,7 @@ export async function boot(
     let deepest: unknown = cause
     while (deepest instanceof Error && deepest.cause !== undefined) deepest = deepest.cause
     const stack = deepest instanceof Error && deepest !== cause ? `\n${deepest.stack ?? deepest.message}` : ''
-    throw new Error(`${binName}: ${stage}: ${detail}${stack}`, { cause })
+    throw new Error(`${binName} : ${stage} : ${detail}${stack}`, { cause })
   }
 }
 
@@ -807,7 +808,7 @@ export const HARNESS_SOURCE_SECTION = 'harness:source'
 /**
  * Add a global prompt section naming the on-disk harness source checkout while
  * explicitly distinguishing it from the task workspace and current working
- * directory. The self-referential `dsh-tool-cordis` toolset reads and edits this
+ * directory. The self-referential `lasmex-tool-cordis` toolset reads and edits this
  * checkout. Call once on the settled boot context ({@link boot}); the section
  * orders just after the harness identity opener (`-100`) and before the deployment
  * persona (`0`). A booted tree with no `systemPrompt` service has no prompt to
@@ -824,6 +825,6 @@ export function addHarnessSourceSection(ctx: Context, sourceRoot: string): (() =
   return systemPrompt.section({
     name: HARNESS_SOURCE_SECTION,
     order: -99,
-    text: `The DeepSeek Harness implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.`,
+    text: `The LasmeX implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend LasmeX itself.`,
   })
 }

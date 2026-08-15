@@ -6,12 +6,12 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import { usePinnedBrowserLanguages } from '@deepseek-ai/dsh-client-test-runtime'
-import { createScope, scopeOf, SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { apply, inject, InputTriggerService } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
-import type { MenuViewInjected } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+import { LocaleRuntime } from 'lasmex-client-locale/client'
+import { usePinnedBrowserLanguages } from 'lasmex-client-test-runtime'
+import { createScope, scopeOf, SlotRegistry } from 'lasmex-client-runtime/client'
+import type { SessionId } from 'lasmex-client-runtime/client'
+import { apply, inject, InputTriggerService } from 'lasmex-client-ui-input-trigger/client'
+import type { MenuViewInjected } from 'lasmex-client-ui-input-trigger/client'
 
 // The service reads its initial locale from the browser; these specs assert
 // the shipped Chinese copy, so they state the browser they assume.
@@ -46,11 +46,11 @@ describe('apply', () => {
     expect(inject).toEqual(['sessions', 'locale'])
   })
 
-  it('registers the bilingual menu dictionaries (group titles by source name + the pending row)', async () => {
+  it('registers the menu dictionaries (group titles by source name + the pending row)', async () => {
     const { ctx, locale } = await bench()
     await ctx.plugin({ inject: [...inject], apply }).await()
     const t = locale.bind('slash.menu')
-    expect(t('command')).toBe('命令')
+    expect(t('command')).toBe('Commandes')
     locale.setLocale('en')
     expect(t('skill')).toBe('Skills')
     expect(t('subagent')).toBe('Subagents')

@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-14-lasmex-browser-and-export-namespaces.md
+2026-08-14-lasmex-browser-and-export-namespaces.md: 2b472ad9bbf90754c6ed79d2d07c833448687798
+2026-08-14-lasmex-browser-and-export-namespaces.zh.md: c9037e61dc6e9058c34b5649b28fd15fdef130da

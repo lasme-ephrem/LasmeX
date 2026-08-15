@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { resolvePwshPath } from '@deepseek-ai/dsh-pwsh-local'
+import { resolvePwshPath } from 'lasmex-pwsh-local'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   fixtureUserPrompts, launchWebScaffold, seedSession, webSnapshotMode,
@@ -32,7 +32,7 @@ const PROMPT = 'Run a PowerShell command that fails, then stop.'
 const SEED_ID = 'pwsh-terminal-web-e2e'
 const MODE = webSnapshotMode()
 
-// The overlay swaps the shipped bash executor for @deepseek-ai/dsh-pwsh-local;
+// The overlay swaps the shipped bash executor for lasmex-pwsh-local;
 // a host without a usable `pwsh` cannot boot it, so the lane self-skips,
 // mirroring the pwshOnly ACP scenarios. The probe follows the executor's own
 // resolution (Program Files installs on Windows are found even when bare
@@ -51,7 +51,9 @@ describe.skipIf(MODE === 'record' || !HAS_PWSH)('web e2e: pwsh calls use the bas
   beforeAll(async () => {
     const fixture = await readFile(SEED, 'utf8')
     expect(fixtureUserPrompts(fixture), 'seed fixture must carry the single drive prompt').toEqual([PROMPT])
-    scaffold = await launchWebScaffold({ extraOverlayPath: OVERLAY })
+    scaffold = await launchWebScaffold({
+      ...(process.platform === 'win32' ? {} : { extraOverlayPath: OVERLAY }),
+    })
     await seedSession(scaffold, fixture, SEED_ID)
     browser = await chromium.launch()
     page = await newEnglishPage(browser)
@@ -80,8 +82,9 @@ describe.skipIf(MODE === 'record' || !HAS_PWSH)('web e2e: pwsh calls use the bas
     await page.getByRole('tab', { name: 'Chat', exact: true }).waitFor({ timeout: 15_000 })
     // The tool row is expand-gated: the settled row uses the bash layout and carries the
     // shell-family variant, and the terminal card lives in the expanded body.
-    const row = page.locator('[data-tool="pwsh"]').first()
+    const row = page.locator('[data-sample="bash"]').first()
     await row.waitFor({ timeout: 15_000 })
+    await expect.poll(() => row.textContent(), { timeout: 10_000 }).toContain('Pwsh')
     if (await row.getAttribute('aria-expanded') !== 'true') await row.click()
     const card = page.locator('[data-terminal]').first()
     await card.waitFor({ timeout: 15_000 })

@@ -17,14 +17,14 @@
 import type { Context, Fiber } from '@deepseek-ai/cordis'
 import type {
   IApiClient, RpcError, RpcResult, SessionId, SubagentAddress, JobView, WorkspaceId,
-} from '@deepseek-ai/dsh-api-remotes/client'
+} from 'lasmex-api-remotes/client'
 // Value import from the inline-safe wire layer (not the connection plugin):
 // plugin-to-plugin value imports are a bundle purity error.
-import { SESSION_SEARCH_RESULT_LIMIT } from '@deepseek-ai/dsh-host-apiproxy/api'
+import { SESSION_SEARCH_RESULT_LIMIT } from 'lasmex-host-apiproxy/api'
 import type {
   HostObservable, SessionMaybeProvideInfo, SessionProvideInfo,
-} from '@deepseek-ai/dsh-client-ui-slots'
-import type { SessionProjectionMap } from '@deepseek-ai/dsh-session-projection/types'
+} from 'lasmex-client-ui-slots'
+import type { SessionProjectionMap } from 'lasmex-session-projection/types'
 import type { SnapshotStore } from '../contract/store.ts'
 import { createSnapshotStore } from '../contract/store.ts'
 import type { SessionFace } from '../contract/session.ts'
@@ -144,7 +144,7 @@ export interface SessionBinding {
 }
 
 // Scope primitives live in ../agents/scope.ts (the client mirror of host
-// dsh-scope, keyed by Agent identity); re-exported here so existing
+// lasmex-scope, keyed by Agent identity); re-exported here so existing
 // consumers keep their import site.
 export { scopeOf } from '../agents/scope.ts'
 
@@ -283,7 +283,7 @@ export class SessionRuntime implements ISessions {
   ) {
     this.selection = createSnapshotStore<SessionSelection>(
       {},
-      { persist: { name: 'dsh.sessions.current' } })
+      { persist: { name: 'lasmex.sessions.current' } })
     const restored = this.selection.getSnapshot()
     const conversationEvents = rootCtx.get('conversationEvents')
     const conversationViews = rootCtx.get('conversationViews')

@@ -12,7 +12,7 @@ Status: implemented
 
 ## 决策
 
-每个随发行版交付的 Profile 都会通过 base 组合包的宿主平面，把固定的 `codex` 与 `claude-code` 提供方各加载一次。加载任一插件只会注册一个休眠后端；对应的 Codex 或 Claude 进程直到第一次实际委派调用时才启动。Agent Preset 分别通过普通的 `dsh-tool-subagent` 行贡献 `subagent_codex` 与 `subagent_claude_code`，因此一个 preset 可以不暴露任何工具、只暴露其中一个或同时暴露两者，而无需更改提供方注册表。
+每个随发行版交付的 Profile 都会通过 base 组合包的宿主平面，把固定的 `codex` 与 `claude-code` 提供方各加载一次。加载任一插件只会注册一个休眠后端；对应的 Codex 或 Claude 进程直到第一次实际委派调用时才启动。Agent Preset 分别通过普通的 `lasmex-tool-subagent` 行贡献 `subagent_codex` 与 `subagent_claude_code`，因此一个 preset 可以不暴露任何工具、只暴露其中一个或同时暴露两者，而无需更改提供方注册表。
 
 本决策仅取代提供方约定说明所记录的、原先由用户选择启用的组装位置。该说明仍负责每个产品的协议、结果映射、取消、进程树生命周期与证据层级。[Agent Preset 架构](2026-08-03-per-session-agent-presets.md)仍负责宿主与 agent 的划分、preset 创作，以及改动只影响新组装会话的规则。
 

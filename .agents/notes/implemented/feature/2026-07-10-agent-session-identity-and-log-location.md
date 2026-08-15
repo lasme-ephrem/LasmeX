@@ -15,7 +15,7 @@ The boundary must preserve two properties: the owner of a fact decides how to re
 Extend the [`SessionPersistence`](../architecture/2026-06-14-session-persistence.md) seam with a synchronous, side-effect-free location query:
 
 ```ts
-import type { SessionHeader } from '@deepseek-ai/dsh-session'
+import type { SessionHeader } from 'lasmex-session'
 
 interface SessionLocation {
   readonly kind: string
@@ -33,14 +33,14 @@ The model-facing bash package owns a `ctx.shellEnv` registry. A contributor decl
 
 The registry rebuilds a trusted overlay for every foreground and background bash `ToolExecution`:
 
-- `DSH_HOME` is always the absolute configured Harness home. The standalone [`@deepseek-ai/dsh-home-paths`](../../../../packages/util/home-paths/README.md) utility owns its precedence: explicit `dshHome`, then ambient `$DSH_HOME`, then `~/.dsh`.
-- `DSH_SHELL=1` is always present and identifies a model bash child managed by DeepSeek Harness.
-- `DSH_SESSION_ID` is present when the execution has an agent and equals `agent.session.header.id`.
-- The built-in persistence translator contributes `DSH_SESSION_JSONL` only when `ctx.sessionPersistence.locate(header)` returns `kind: 'jsonl'`.
+- `LASMEX_HOME` is always the absolute configured Harness home. The standalone [`lasmex-home-paths`](../../../../packages/util/home-paths/README.md) utility owns its precedence: explicit `lasmexHome`, then ambient `$LASMEX_HOME`, then `~/.lasmex`.
+- `LASMEX_SHELL=1` is always present and identifies a model bash child managed by LasmeX.
+- `LASMEX_SESSION_ID` is present when the execution has an agent and equals `agent.session.header.id`.
+- The built-in persistence translator contributes `LASMEX_SESSION_JSONL` only when `ctx.sessionPersistence.locate(header)` returns `kind: 'jsonl'`.
 
 Session persistence remains the fact owner: JSONL does not depend on tool-bash or register shell variables itself, and hooks continue to consume `locate()` directly. Tool-bash is the translation layer from the persistence fact into a shell convention. Other plugins that need shell-visible facts depend on the registry and register their own keys; they do not modify `process.env`.
 
-The bash seam exports `DSH_ENV_PREFIX` as the single namespace source and derives `DshEnvironmentKey` from its `typeof`. Tool-bash derives built-in names and model guidance from that constant, while executors use it for ambient filtering. The seam carries the managed overlay separately as `ShellExecRequest.dshEnv` / `ShellExecSpec.dshEnv`: ordinary `env` remains the general in-process plugin surface used by hooks, while `dshEnv` is typed to managed keys. The local executor removes every inherited ambient managed key, applies its ordinary scrub/terminal environment/explicit `env`, and finally merges the trusted `dshEnv` snapshot, so an `env` entry can never displace a managed value. This guarantees that a missing value means absent now rather than inherited from an outer or previous harness. The model-facing tool still ignores model-supplied `env`/`stdin` arguments.
+The bash seam exports `LASMEX_ENV_PREFIX` as the single namespace source and derives `LasmexEnvironmentKey` from its `typeof`. Tool-bash derives built-in names and model guidance from that constant, while executors use it for ambient filtering. The seam carries the managed overlay separately as `ShellExecRequest.lasmexEnv` / `ShellExecSpec.lasmexEnv`: ordinary `env` remains the general in-process plugin surface used by hooks, while `lasmexEnv` is typed to managed keys. The local executor removes every inherited ambient managed key, applies its ordinary scrub/terminal environment/explicit `env`, and finally merges the trusted `lasmexEnv` snapshot, so an `env` entry can never displace a managed value. This guarantees that a missing value means absent now rather than inherited from an outer or previous harness. The model-facing tool still ignores model-supplied `env`/`stdin` arguments.
 
 The bash tool description teaches only the durable convention: current harness environment facts are available through managed `$DSH_*` variables and may be inspected when needed. It does not enumerate persistence-specific keys or add a permanent system-prompt section. Tool schemas are already logged in request headers and tool output is logged as `tool/result`, so no new session event is required.
 
@@ -52,17 +52,17 @@ Peer products separate stable identity from physical storage. Codex injects stab
 
 ## Lifecycle and persistence semantics
 
-A fresh session receives its id before the first turn, so its first bash call can read `DSH_SESSION_ID` and a JSONL target. The JSONL file may still be absent until the first successful turn-end checkpoint, and during an open turn it contains only the last flushed prefix. `DSH_SESSION_JSONL` is a location hint, not an authorization credential or freshness guarantee.
+A fresh session receives its id before the first turn, so its first bash call can read `LASMEX_SESSION_ID` and a JSONL target. The JSONL file may still be absent until the first successful turn-end checkpoint, and during an open turn it contains only the last flushed prefix. `LASMEX_SESSION_JSONL` is a location hint, not an authorization credential or freshness guarantee.
 
 Resume reuses the loaded header and therefore the same id and location. Fork and spawn create new session ids and locations. Parent and child calls resolve from their own `ToolExecution.agent`; each command receives an immutable snapshot even when calls overlap. A persistence service replacement affects later collections because the translator queries `ctx.get('sessionPersistence')` at execution time; the registry itself is effect-scoped and HMR-safe.
 
-`dshHome` is session-independent deployment context. Agent-core resolves one value through `@deepseek-ai/dsh-home-paths` and routes it to both tool-bash and local skill discovery; standalone consumers call the same resolver. If top-level `dshHome` and `skills.local.dshHome` are both supplied and resolve differently, composition fails instead of exposing contradictory homes. Persistence may change independently without freezing its facts into the session prefix.
+`lasmexHome` is session-independent deployment context. Agent-core resolves one value through `lasmex-home-paths` and routes it to both tool-bash and local skill discovery; standalone consumers call the same resolver. If top-level `lasmexHome` and `skills.local.lasmexHome` are both supplied and resolve differently, composition fails instead of exposing contradictory homes. Persistence may change independently without freezing its facts into the session prefix.
 
 ## Testing
 
-Unit coverage pins registry declaration validation, effect disposal, per-execution collection, the `dshHome` precedence, and the local executor's `DSH_*` scrub/rebuild order. Request-recording tests cover foreground/background snapshots, no-agent calls, absent/JSONL persistence, ignored model `env`, and parent/child isolation. JSONL/SQLite locator contract tests and both hook bridge suites pin available and unavailable transcript dialects.
+Unit coverage pins registry declaration validation, effect disposal, per-execution collection, the `lasmexHome` precedence, and the local executor's `DSH_*` scrub/rebuild order. Request-recording tests cover foreground/background snapshots, no-agent calls, absent/JSONL persistence, ignored model `env`, and parent/child isolation. JSONL/SQLite locator contract tests and both hook bridge suites pin available and unavailable transcript dialects.
 
-A keyless full-loop integration drives the real agent loop, JSONL persistence, tool-bash, and bash-local on the first turn. The child prints `DSH_HOME`, `DSH_SHELL`, session id, JSONL target, and an inherited stale sentinel; the test verifies current values, absence of the stale variable, pre-flush file absence, and the eventual persisted header. Snapshot coverage pins the generic bash description in the recorded request header. No with-key test is required because the contract is deterministic local execution rather than model choice.
+A keyless full-loop integration drives the real agent loop, JSONL persistence, tool-bash, and bash-local on the first turn. The child prints `LASMEX_HOME`, `LASMEX_SHELL`, session id, JSONL target, and an inherited stale sentinel; the test verifies current values, absence of the stale variable, pre-flush file absence, and the eventual persisted header. Snapshot coverage pins the generic bash description in the recorded request header. No with-key test is required because the contract is deterministic local execution rather than model choice.
 
 ## Alternatives considered
 

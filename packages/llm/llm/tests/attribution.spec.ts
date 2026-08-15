@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
-import { APP_IDENTITY, attributionHeaders, userAgent } from '@deepseek-ai/dsh-llm'
-import type { AppIdentity } from '@deepseek-ai/dsh-llm'
+import { APP_IDENTITY, attributionHeaders, userAgent } from 'lasmex-llm'
+import type { AppIdentity } from 'lasmex-llm'
 
 const manifest = createRequire(import.meta.url)('../package.json') as { version: string }
 
@@ -19,22 +19,24 @@ describe('APP_IDENTITY', () => {
 
   it('carries only static public product facts', () => {
     expect(APP_IDENTITY).toEqual({
-      product: 'deepseek-harness',
+      product: 'lasmex',
       version: manifest.version,
-      url: 'https://github.com/deepseek-ai/deepseek-harness',
+      url: 'https://github.com/lasme-ephrem/LasmeX',
     })
   })
 })
 
 describe('userAgent', () => {
-  it('renders product/version with the +url comment', () => {
-    expect(userAgent()).toBe(
-      `deepseek-harness/${manifest.version} (+https://github.com/deepseek-ai/deepseek-harness)`,
-    )
+  it('renders the LasmeX product, version, and official source home', () => {
+    expect(userAgent()).toBe(`lasmex/${manifest.version} (+https://github.com/lasme-ephrem/LasmeX)`)
   })
 
   it('renders a custom identity', () => {
     expect(userAgent(forkIdentity)).toBe('fork-agent/9.9.9 (+https://example.com/fork-agent)')
+  })
+
+  it('omits the comment when a custom identity has no public home', () => {
+    expect(userAgent({ product: 'private-agent', version: '1.0.0' })).toBe('private-agent/1.0.0')
   })
 })
 

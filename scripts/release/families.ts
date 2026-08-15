@@ -1,7 +1,7 @@
 /**
  * The three independent publish sequences this repository releases from
  * (`packages/` + `apps/`, `vendor/`, and `native/`) and the two this module
- * owns: `dsh` and `vendor`. Each family carries its own version baseline, tag
+ * owns: `lasmex` and `vendor`. Each family carries its own version baseline, tag
  * naming, and publish set, so releasing one never republishes another
  * ([rationale](../../.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md)).
  *
@@ -17,7 +17,7 @@ import { validateTarballPayload } from '../publication-payload.ts'
 const ORDER_SECTIONS = ['dependencies', 'optionalDependencies'] as const
 
 /** The workspace root manifest, which is never a release member. */
-const WORKSPACE_ROOT_PACKAGE = '@deepseek-ai/dsh-root'
+const WORKSPACE_ROOT_PACKAGE = 'lasmex-root'
 
 /** One publishable package of a release family. */
 export interface ReleaseMember {
@@ -77,6 +77,13 @@ export abstract class ReleaseFamily {
   abstract readonly tagPrefix: string
 
   /**
+   * Assert a selected manifest names a member of this family.
+   * @param name - package name from the manifest.
+   * @param manifestPath - normalized repository-relative manifest path.
+   */
+  abstract validateMemberName(name: string, manifestPath: string): void
+
+  /**
    * Discover this family's members.
    * @param root - repository root.
    * @returns Members sorted by directory, with names validated and deduplicated.
@@ -93,7 +100,7 @@ export abstract class ReleaseFamily {
       const name = requireString(manifest, 'name', normalized)
       const version = requireString(manifest, 'version', normalized)
       if (name === WORKSPACE_ROOT_PACKAGE) throw new Error(`${normalized} selected the workspace root`)
-      if (!name.startsWith('@deepseek-ai/')) throw new Error(`${normalized} must name an @deepseek-ai package`)
+      this.validateMemberName(name, normalized)
       if (seen.has(name)) throw new Error(`${name} appears twice in release family ${this.id}`)
       seen.add(name)
       members.push({
@@ -193,11 +200,26 @@ export abstract class ReleaseFamily {
   abstract readonly installedEntry: InstalledEntry | undefined
 }
 
-/** `packages/*` and `apps/*`: one shared version across the whole family. */
-class DshFamily extends ReleaseFamily {
-  readonly id = 'dsh'
-  readonly patterns = ['packages/*/*/package.json', 'apps/*/package.json'] as const
-  readonly tagPrefix = 'dsh-v'
+/** LasmeX packages and its two public apps: one shared version across the whole family. */
+class LasmeXFamily extends ReleaseFamily {
+  readonly id = 'lasmex'
+  readonly patterns = [
+    'packages/*/*/package.json',
+    'apps/cli/package.json',
+    'apps/web/package.json',
+  ] as const
+  readonly tagPrefix = 'lasmex-v'
+
+  /**
+   * Require the public, unscoped LasmeX package namespace.
+   * @param name - package name from the manifest.
+   * @param manifestPath - normalized repository-relative manifest path.
+   */
+  validateMemberName(name: string, manifestPath: string): void {
+    if (!/^lasmex(?:-|$)/.test(name)) {
+      throw new Error(`${manifestPath} must name an unscoped lasmex package`)
+    }
+  }
 
   /**
    * Require one version across the family, the way a single tag can name it.
@@ -207,13 +229,13 @@ class DshFamily extends ReleaseFamily {
     const versions = new Set(members.map(member => member.version))
     if (versions.size !== 1) {
       const detail = members.map(member => `${member.directory}: ${member.version}`).join('\n')
-      throw new Error(`dsh release members must share one version:\n${detail}`)
+      throw new Error(`lasmex release members must share one version:\n${detail}`)
     }
   }
 
   /**
    * The single family prefix: every member shares one version, so one tag names it.
-   * @returns `dsh-v`.
+   * @returns `lasmex-v`.
    */
   tagPrefixFor(): string {
     return this.tagPrefix
@@ -228,7 +250,7 @@ class DshFamily extends ReleaseFamily {
     validateTarballPayload(files, member.name)
   }
 
-  readonly installedEntry = { packageName: '@deepseek-ai/dsh', binPath: 'lib/bin.js' }
+  readonly installedEntry = { packageName: 'lasmex', binPath: 'lib/bin.js' }
 }
 
 /** `vendor/*`: every package keeps its own version line, so every package has its own tag. */
@@ -236,6 +258,17 @@ class VendorFamily extends ReleaseFamily {
   readonly id = 'vendor'
   readonly patterns = ['vendor/*/package.json'] as const
   readonly tagPrefix = 'vendor-'
+
+  /**
+   * Keep the vendored framework in its existing organization scope.
+   * @param name - package name from the manifest.
+   * @param manifestPath - normalized repository-relative manifest path.
+   */
+  validateMemberName(name: string, manifestPath: string): void {
+    if (!name.startsWith('@deepseek-ai/')) {
+      throw new Error(`${manifestPath} must name an @deepseek-ai package`)
+    }
+  }
 
   /**
    * Accept independent versions; only reject a version this repository cannot publish.
@@ -280,7 +313,7 @@ class VendorFamily extends ReleaseFamily {
 
 /** Every release family this module owns, in workflow order. */
 function releaseFamilies(): readonly ReleaseFamily[] {
-  return [new DshFamily(), new VendorFamily()]
+  return [new LasmeXFamily(), new VendorFamily()]
 }
 
 /**

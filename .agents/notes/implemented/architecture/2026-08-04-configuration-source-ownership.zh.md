@@ -6,7 +6,7 @@ Status: implemented
 
 ## Problem
 
-`$DSH_HOME/.env` 刚刚[变成普通环境层](2026-08-04-credentials-yaml-and-user-environment-layer.md)，这使得 harness 解析面向用户的值时面对的是一个压平的 `process.env`，再也说不清某个值来自哪里。由此产生三个后果。
+`$LASMEX_HOME/.env` 刚刚[变成普通环境层](2026-08-04-credentials-yaml-and-user-environment-layer.md)，这使得 harness 解析面向用户的值时面对的是一个压平的 `process.env`，再也说不清某个值来自哪里。由此产生三个后果。
 
 通过 Web 页面存下的密钥仍然被用户自己 `.env` 里更旧的密钥遮蔽，因为凭据提供方是拿「环境」与自己的文件比较，而现在环境包含了那个文件。这次拆分本该消除的迁移死路，只是换了个位置。
 
@@ -23,7 +23,7 @@ explicit for this run     per-operation override, CLI argument
 > user settings           settings.yaml
 > composition             profile bundles, user patch layers, --patch overlays
 > this launch's shell     inherited process environment
-> discovered file         <invocation cwd>/.env, then $DSH_HOME/.env
+> discovered file         <invocation cwd>/.env, then $LASMEX_HOME/.env
 > defaults                schema default, provider public default
 ```
 
@@ -34,9 +34,9 @@ settings 在 composition 之上，因为 [settings seam](2026-07-28-user-setting
 
 ```text
 inherited process environment      (read-only, wins)
-> $DSH_HOME/.credentials.yaml      (provider-managed, writable)
+> $LASMEX_HOME/.credentials.yaml      (provider-managed, writable)
 > <invocation cwd>/.env
-> $DSH_HOME/.env
+> $LASMEX_HOME/.env
 ```
 
 继承环境优先，因为 `DEEPSEEK_API_KEY=… dsh`、CI 机密与容器 `-e` 是运维必须能按次施加、且无需改动机器状态的那一种覆盖；而它无法从进程内部修改，就必须*可见地*只读。配置本应只携带*引用*——解析哪个名字——该名字本身遵循上面的非机密顺序。
@@ -45,7 +45,7 @@ inherited process environment      (read-only, wins)
 
 **信任不延伸到改变 harness 本身。** `loadLayeredEnv` 会在加载时、且在物化任何内容之前，拒绝任何设置了下列变量的 `.env`：决定进程如何启动的（`PATH`、`SHELL`、`NODE_OPTIONS`、`LD_PRELOAD`）、决定运行时在执行被要求运行的程序之前先执行哪些代码的（`BASH_ENV`、`PERL5OPT`、`PYTHONSTARTUP`、`RUBYOPT`、`JAVA_TOOL_OPTIONS`、Git 的钩子命令）、决定模型可见指令从哪里加载的（整个 `DSH_*` 命名空间、`HOME`、`XDG_*`），以及决定网络如何访问以及如何建立信任的（proxy 与 CA 变量）。匹配不区分大小写，因此 `https_proxy` 不是绕过手段。
 
-这条界线在于：它们无需任何用户动作、在任何轮次开始之前、且在权限策略与沙箱之外就生效。`DSH_PERMISSION_MODE` 会关掉让「信任项目」根本成立的那道审批，而 `BASH_ENV` 会在 bash 工具每次发出 `bash -c` 时执行项目指定的文件——项目的代码在 agent（智能体）的策略下运行是约定，项目改写那份策略不是。一个变量一个变量地枚举是必输的游戏，所以整个 `DSH_*` 命名空间被拒绝而不是只拒绝一份经审查的子集，也所以这份清单是按变量*做什么*而不是按哪个运行时拥有它来组织的。不设逃生门：逃生门本身总得从某处读取，而任何被发现的文件能设置的东西，就是那个漏洞本身。
+这条界线在于：它们无需任何用户动作、在任何轮次开始之前、且在权限策略与沙箱之外就生效。`LASMEX_PERMISSION_MODE` 会关掉让「信任项目」根本成立的那道审批，而 `BASH_ENV` 会在 bash 工具每次发出 `bash -c` 时执行项目指定的文件——项目的代码在 agent（智能体）的策略下运行是约定，项目改写那份策略不是。一个变量一个变量地枚举是必输的游戏，所以整个 `DSH_*` 命名空间被拒绝而不是只拒绝一份经审查的子集，也所以这份清单是按变量*做什么*而不是按哪个运行时拥有它来组织的。不设逃生门：逃生门本身总得从某处读取，而任何被发现的文件能设置的东西，就是那个漏洞本身。
 
 **`packages/util/launch-environment` 拥有该快照**，刻意做成 utility 而不是三包能力 seam。快照在 Cordis 启动前就冻结，并由启动器一次性注入，因此不存在需要切换的运行时实现；消费方需要的只是类型和纯函数，而 `util/` 包能提供这些且不必依赖 UI 包。`launchEnvironmentOf(ctx)` 返回启动器的快照，或者返回只含继承环境的那一层——SDK 宿主或裸 `cordis.yml` 从未发现过任何文件，它那唯一一层确实就是它被启动时的环境，因此同样的受信查询在那里原样继续工作。
 

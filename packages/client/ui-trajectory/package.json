@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-trajectory",
+  "name": "lasmex-client-ui-trajectory",
   "description": "Trajectory event ledger with an interactive timing overview: pure-consumer plugin registering into the conversation ViewMap (no service)",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/ui-trajectory"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,12 +24,12 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "lasmex-client-locale",
+        "lasmex-client-runtime",
+        "lasmex-client-ui-conversation"
       ],
       "platform": "web"
     }
@@ -49,28 +44,28 @@
     "diff": "^9.0.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-test-runtime": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-conversation": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@types/react": "~18.3.1",
     "@types/react-dom": "~18.3.0",
     "@deepseek-ai/cordis": "workspace:^",
@@ -82,5 +77,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-trajectory"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

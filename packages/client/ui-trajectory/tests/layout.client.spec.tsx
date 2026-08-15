@@ -7,19 +7,38 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import type {
   ConversationLocation, ConversationSnapshot, RequestView,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import { TrajectoryGroupHeader } from '../src/client/TrajectoryGroupHeader.tsx'
 import { TrajectoryTurn } from '../src/client/TrajectoryTurn.tsx'
 import { TrajectoryTurnHeader } from '../src/client/TrajectoryTurnHeader.tsx'
 import {
-  appendTrajectoryPartialLayout, deriveTrajectoryLayout,
+  appendTrajectoryPartialLayout as appendTrajectoryPartialLayoutImpl,
+  deriveTrajectoryLayout as deriveTrajectoryLayoutImpl,
+  type TrajectoryLayoutInput,
+  type TrajectoryTurnModel,
 } from '../src/client/layout.ts'
+import { COMPACTION_INTERRUPTED_ERROR } from '../src/client/trajectory-contract.ts'
+import { tEn, tFr } from './locale.client.ts'
+
+function deriveTrajectoryLayout(
+  input: Omit<TrajectoryLayoutInput, 't'>,
+): readonly TrajectoryTurnModel[] {
+  return deriveTrajectoryLayoutImpl({ ...input, t: tEn })
+}
+
+function appendTrajectoryPartialLayout(
+  turns: readonly TrajectoryTurnModel[],
+  partial: ConversationSnapshot['partial'],
+  lastIndex: number,
+): readonly TrajectoryTurnModel[] {
+  return appendTrajectoryPartialLayoutImpl(turns, partial, lastIndex, tEn)
+}
 
 afterEach(cleanup)
 
 describe('TrajectoryTurnHeader', () => {
   it('renders Turn N and the four metric column labels', () => {
-    render(<TrajectoryTurnHeader turn={1} />)
+    render(<TrajectoryTurnHeader turn={1} t={tEn} />)
     expect(screen.getByText('Turn 1')).toBeTruthy()
     expect(screen.getByText('Input')).toBeTruthy()
     expect(screen.getByText('Output')).toBeTruthy()
@@ -45,7 +64,7 @@ describe('TrajectoryGroupHeader', () => {
 describe('TrajectoryTurn', () => {
   it('wraps a sticky header and body children', () => {
     render(
-      <TrajectoryTurn turn={3}>
+      <TrajectoryTurn turn={3} t={tEn}>
         <TrajectoryGroupHeader title="Message" description="49s" />
       </TrajectoryTurn>,
     )
@@ -386,6 +405,30 @@ describe('deriveTrajectoryLayout', () => {
         previewMarkdown: 'standalone summary',
       }],
     }])
+  })
+
+  it('renders a derived compaction interruption in the active locale', () => {
+    const request: RequestView = {
+      purpose: 'compaction',
+      startSeq: 3,
+      turn: null,
+      step: 0,
+      startedAt: 3_000,
+      completedAt: 4_000,
+      status: 'error',
+      error: COMPACTION_INTERRUPTED_ERROR,
+    }
+
+    const turns = deriveTrajectoryLayoutImpl({
+      t: tFr,
+      nodes: [],
+      partial: null,
+      runningCalls: [],
+      requests: [request],
+    })
+
+    expect(turns[0]?.groups[0]?.cells[0]?.text)
+      .toBe('La compaction a été interrompue avant la fin.')
   })
 
   it('keeps usage and a meaningful summary when assistant has no text block', () => {

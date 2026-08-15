@@ -1,6 +1,6 @@
 /** Generic unary RPC contracts shared by the Host and Client Connection halves. */
 
-import type { RpcResult } from '@deepseek-ai/dsh-host-apiproxy/api'
+import type { RpcResult } from 'lasmex-host-apiproxy/api'
 
 /** Trust fence applied before a Host RPC channel reaches its handler. */
 export type ConnectionRpcAuthority = 'trusted-host' | 'loopback'
@@ -56,6 +56,13 @@ export interface HostConnectionRpc {
 export interface HostConnectionHandle {
   /** Generic RPC channel registry. */
   readonly rpc: HostConnectionRpc
+  /**
+   * Dispatch one carrier-neutral Fetch request through registered `/api`
+   * interceptors and the API Proxy fallback.
+   * @param request - complete request from a trusted physical carrier.
+   * @returns the protocol response, including streaming SSE bodies.
+   */
+  fetch(request: Request): Promise<Response>
 }
 
 /** Client caller for logical RPC channels carried by the current transport. */

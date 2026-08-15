@@ -46,3 +46,25 @@ export const en = {
   failed: 'Mount failed',
   unloading: 'Unloading',
 } satisfies Record<PluginInventoryLocaleKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  tab: 'Liste des plugins',
+  loading: 'Lecture des plugins…',
+  error: 'Les plugins sont temporairement indisponibles.',
+  retry: 'Réessayer',
+  search: 'Rechercher des plugins',
+  catalog: 'Liste des plugins',
+  empty: 'Aucun plugin disponible.',
+  emptySearch: 'Aucun plugin correspondant.',
+  enabledTag: 'Activé',
+  disabledTag: 'Désactivé',
+  configuration: 'Configuration',
+  cordis: 'État Cordis',
+  unobserved: 'Non monté',
+  pending: 'En attente de dépendances',
+  loadingPhase: 'Chargement',
+  active: 'Monté',
+  failed: 'Échec du montage',
+  unloading: 'Démontage',
+} satisfies Record<PluginInventoryLocaleKey, string>

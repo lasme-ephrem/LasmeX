@@ -2,7 +2,7 @@
  * Projection from the shared managed-process handle to the official Claude
  * Agent SDK's custom-spawn process interface.
  *
- * @module @deepseek-ai/dsh-subagent-claude-code/process
+ * @module lasmex-subagent-claude-code/process
  */
 
 import { EventEmitter } from 'node:events'
@@ -15,9 +15,9 @@ import {
   scrubbedParentEnv,
   type SubprocessHandle,
   type SubprocessSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
+} from 'lasmex-subprocess'
 
-const WINDOWS_BATCH_EXECUTABLE_ENV = 'DSH_CLAUDE_CODE_EXECUTABLE'
+const WINDOWS_BATCH_EXECUTABLE_ENV = 'LASMEX_CLAUDE_CODE_EXECUTABLE'
 
 function thrown(value: unknown): Error {
   /* v8 ignore next -- the subprocess seam rejects with Error. */

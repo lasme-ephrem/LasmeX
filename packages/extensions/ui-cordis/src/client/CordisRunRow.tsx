@@ -3,9 +3,9 @@
 import { useEffect } from 'react'
 import {
   IconCodeOutline16, IconInspectOutline12, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { InjectFace, PropsLocale, PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
-import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
+} from 'lasmex-client-ui-primitives'
+import type { InjectFace, PropsLocale, PropsRenderSlots } from 'lasmex-client-ui-slots'
+import type { ToolCallViewProps } from 'lasmex-client-ui-tool/client'
 import { cordisRunCard } from './card-model.ts'
 import { cordisToolViewKey } from './run-card-index.ts'
 import type { CordisRunCardFace } from './slots.ts'
@@ -105,7 +105,7 @@ export function CordisRunRow({
         <span className={card.errorSummary === null ? css.summary : css.error}>{summary}</span>
         <span className={css.status}>{status}</span>
         {inspect !== undefined && (
-          <button type="button" className={css.inspect} aria-label="Inspect" onClick={inspect}>
+          <button type="button" className={css.inspect} aria-label={t('row.inspect')} onClick={inspect}>
             <IconInspectOutline12 />
           </button>
         )}

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { AttachmentId } from '@deepseek-ai/dsh-attachment'
-import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import { createUserMessage, CallId, CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, LlmError, createMessage } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock, StreamChunk } from '@deepseek-ai/dsh-llm'
+import { AttachmentId } from 'lasmex-attachment'
+import type { AttachmentStore } from 'lasmex-attachment'
+import { createUserMessage, CallId, CONTEXT_WINDOW_EXCEEDED_CODE, EMPTY_RESPONSE_CODE, LlmError, createMessage } from 'lasmex-llm'
+import type { ContentBlock, StreamChunk } from 'lasmex-llm'
 import type { AssistantMessage, AssistantMessageEvent, Usage } from '@earendil-works/pi-ai'
 import { toPiContext } from '../src/context.ts'
 import { toPiReplayState } from '../src/replay.ts'
@@ -210,7 +210,7 @@ describe('toPiContext', () => {
     })
     expect(context.messages[0]).toMatchObject({
       role: 'assistant',
-      api: 'dsh-foreign',
+      api: 'lasmex-foreign',
       provider: 'deepseek',
       model: 'old-model',
     })

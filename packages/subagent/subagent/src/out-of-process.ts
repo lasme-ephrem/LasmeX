@@ -6,14 +6,14 @@
  * session's workspace), the never-reject result settlement, and the standard
  * run-handle publication. Backends compose these with their own wire drivers;
  * the process machinery itself (spawn, env scrub, tree-scoped teardown)
- * belongs to the `dsh-subprocess` seam.
+ * belongs to the `lasmex-subprocess` seam.
  *
- * @module @deepseek-ai/dsh-subagent/out-of-process
+ * @module lasmex-subagent/out-of-process
  */
 
 import { accessSync, constants, statSync } from 'node:fs'
 import { isAbsolute, resolve } from 'node:path'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
+import type { ContentBlock } from 'lasmex-llm'
 import type { SubagentCapabilities, SubagentResult, SubagentRun, SubagentStopReason } from './types.ts'
 
 /**

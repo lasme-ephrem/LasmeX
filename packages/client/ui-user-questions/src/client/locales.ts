@@ -36,3 +36,20 @@ export const en = {
   'plan.decline': 'Refuse',
   'plan.discuss': 'Chat about it',
 } satisfies Record<QuestionKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'error.incomplete': 'Répondez d’abord à cette question.',
+  'error.unanswered': 'Sélectionnez une option ou saisissez une réponse personnalisée.',
+  'nav.prev': 'Question précédente',
+  'nav.next': 'Question suivante',
+  'nav.cancel': 'Ignorer toutes les questions',
+  'option.recommended': 'Recommandé',
+  'custom.placeholder': 'Saisissez votre réponse',
+  'action.skip': 'Ignorer cette question',
+  'action.next': 'Suivant',
+  'plan.header': 'Validation du plan',
+  'plan.approve': 'Approuver',
+  'plan.decline': 'Refuser',
+  'plan.discuss': 'En discuter dans le chat',
+} satisfies Record<QuestionKey, string>

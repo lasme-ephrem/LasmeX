@@ -4,7 +4,7 @@
  * `.agents/notes/implemented/architecture/2026-06-21-mandatory-app-attribution-headers.md`.
  *
  * App-attribution vocabulary for provider requests.
- * @module @deepseek-ai/dsh-llm/attribution
+ * @module lasmex-llm/attribution
  */
 
 import { createRequire } from 'node:module'
@@ -27,8 +27,8 @@ export interface AppIdentity {
   product: string
   /** Product version; sourced from package metadata, never hand-copied. */
   version: string
-  /** Repository home URL of the app, used as the `User-Agent` comment. */
-  url: string
+  /** Public product home, used as the `User-Agent` comment when one exists. */
+  url?: string
 }
 
 /**
@@ -38,20 +38,21 @@ export interface AppIdentity {
  * can suppress attribution entirely.
  */
 export const APP_IDENTITY: AppIdentity = {
-  product: 'deepseek-harness',
+  product: 'lasmex',
   version,
-  url: 'https://github.com/deepseek-ai/deepseek-harness',
+  url: 'https://github.com/lasme-ephrem/LasmeX',
 }
 
 /**
- * The standard `User-Agent` value: `product/version (+url)`. The
- * parenthesized `+url` comment is the conventional self-identification form
- * (RFC 9110 §10.1.5 product + comment syntax).
+ * The standard `User-Agent` value: `product/version`, followed by `(+url)`
+ * when the identity names a public product home. The parenthesized comment
+ * uses RFC 9110 §10.1.5 product and comment syntax.
  * @param identity - the identity to render; defaults to {@link APP_IDENTITY}.
  * @returns the ready-to-send header value.
  */
 export function userAgent(identity: AppIdentity = APP_IDENTITY): string {
-  return `${identity.product}/${identity.version} (+${identity.url})`
+  const base = `${identity.product}/${identity.version}`
+  return identity.url === undefined ? base : `${base} (+${identity.url})`
 }
 
 /**

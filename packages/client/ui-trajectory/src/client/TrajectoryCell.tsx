@@ -5,6 +5,7 @@ import {
   type TrajectoryCellKind,
   type TrajectoryCellProps,
 } from './trajectory-record.ts'
+import type { TrajectoryTranslate } from './locales.ts'
 import css from './TrajectoryCell.module.css'
 
 export { formatElapsedSeconds }
@@ -14,15 +15,9 @@ export type {
   TrajectoryCellProps,
 } from './trajectory-record.ts'
 
-/** Display label per kind (matches the design tags). */
-const KIND_LABEL: Record<TrajectoryCellKind, string> = {
-  system: 'System',
-  user: 'User',
-  context: 'Context',
-  compacted: 'Compacted',
-  message: 'Message',
-  tool: 'Tool',
-  subtool: 'Sub',
+function kindLabel(kind: TrajectoryCellKind, t: TrajectoryTranslate): string {
+  const key = kind === 'message' ? 'kind.assistant' : `kind.${kind}` as const
+  return t(key)
 }
 
 const TAG_CLASS: Record<TrajectoryCellKind, string | undefined> = {
@@ -41,6 +36,7 @@ const TAG_CLASS: Record<TrajectoryCellKind, string | undefined> = {
  * @returns the cell element.
  */
 export function TrajectoryCell({
+  t,
   index,
   kind,
   text,
@@ -64,7 +60,7 @@ export function TrajectoryCell({
   selected = false,
   className,
   ...rest
-}: TrajectoryCellProps) {
+}: TrajectoryCellProps & { t: TrajectoryTranslate }) {
   const rootClass = [
     css.root,
     selected ? css.selected : undefined,
@@ -75,7 +71,7 @@ export function TrajectoryCell({
     <div className={rootClass} data-kind={kind} data-selected={selected || undefined} {...rest}>
       <span className={css.index}>#{index}</span>
       <span className={css.tagSlot}>
-        <span className={[css.tag, TAG_CLASS[kind]].filter((c): c is string => c !== undefined).join(' ')}>{KIND_LABEL[kind]}</span>
+        <span className={[css.tag, TAG_CLASS[kind]].filter((c): c is string => c !== undefined).join(' ')}>{kindLabel(kind, t)}</span>
       </span>
       <span className={css.text}>{text}</span>
       <span className={css.trailing}>

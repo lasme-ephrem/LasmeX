@@ -14,11 +14,11 @@ import { existsSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join, parse } from 'node:path'
 import { Context } from '@deepseek-ai/cordis'
-import { FsError, FsTargetKey } from '@deepseek-ai/dsh-fs'
-import type { FsTarget } from '@deepseek-ai/dsh-fs'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
-import { SandboxedFileSystem } from '@deepseek-ai/dsh-fs-sandbox'
+import { FsError, FsTargetKey } from 'lasmex-fs'
+import type { FsTarget } from 'lasmex-fs'
+import SandboxPolicyService from 'lasmex-sandbox-policy'
+import type { SandboxMode } from 'lasmex-sandbox'
+import { SandboxedFileSystem } from 'lasmex-fs-sandbox'
 
 let base: string
 let workspace: string
@@ -40,7 +40,7 @@ beforeEach(async () => {
   // would be legitimately writable. Sibling dirs under HOME are outside every
   // grant, so containment failures are real denials. (The bwrap e2e roots its
   // workspaces under HOME for the same reason.)
-  base = await mkdtemp(join(homedir(), '.dsh-fssbx-'))
+  base = await mkdtemp(join(homedir(), '.lasmex-fssbx-'))
   workspace = join(base, 'ws')
   outside = join(base, 'out')
   await mkdir(workspace)
@@ -98,7 +98,7 @@ describe('workspace-write containment', () => {
   })
 
   it('a write to the platform temp area lands (parity with the bash runner grant)', async () => {
-    const path = join(await mkdtemp(join(tmpdir(), 'dsh-fssbx-tmp-')), 'temp.txt')
+    const path = join(await mkdtemp(join(tmpdir(), 'lasmex-fssbx-tmp-')), 'temp.txt')
     await fs.writeText(await target(path), 'temp')
     expect(await readFile(path, 'utf8')).toBe('temp')
   })

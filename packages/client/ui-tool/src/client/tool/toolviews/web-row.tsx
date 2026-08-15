@@ -10,22 +10,17 @@
 // summary line alone.
 
 import type { Context } from '@deepseek-ai/cordis'
-import { IconBrowseOutline16, IconGlobeOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { IconBrowseOutline16, IconGlobeOutline14 } from 'lasmex-client-ui-primitives'
+import type { PropsLocale } from 'lasmex-client-ui-slots'
 import type { ToolCallViewProps } from '../../contract/slots.ts'
 import { webCardModel } from '../models/web-card-model.ts'
 import { toolRowModel } from '../models/tool-call-model.ts'
+import { toolRowTitle } from '../models/primitive-card-labels.ts'
 import { ToolRow } from '../components/ToolRow.tsx'
 import { CONVERSATION_NS as NS } from '../../locale.ts'
 
 /** Full row props: the toolview runtime share plus the standard locale seat. */
 type WebRowProps = ToolCallViewProps & PropsLocale<'conversation'>
-
-/** web_fetch reads one URL; web_search queries. Titles are figma literals. */
-const WEB_TITLES: Record<string, string> = {
-  web_search: 'Search',
-  web_fetch: 'Fetch',
-}
 
 /**
  * Web row: icon + Search/Fetch · {summary} in the shared ToolRow chrome, with
@@ -43,7 +38,7 @@ export function WebRow({ toolName, block, inspect, t }: WebRowProps) {
       variant={model.variant}
       toolName={toolName}
       icon={icon}
-      title={WEB_TITLES[toolName] ?? model.title}
+      title={toolRowTitle(t, toolName, model.variant)}
       summary={model.summary}
       body={null}
       output={model.output}

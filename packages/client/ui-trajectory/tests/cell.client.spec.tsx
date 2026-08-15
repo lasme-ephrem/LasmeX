@@ -11,6 +11,7 @@ import {
   type TrajectoryCellKind,
 } from '../src/client/TrajectoryCell.tsx'
 import { formatDurationMillis } from '../src/client/trajectory-record.ts'
+import { tEn } from './locale.client.ts'
 
 afterEach(cleanup)
 
@@ -45,6 +46,7 @@ describe('TrajectoryCell', () => {
   it('renders index, kind tag, text, and time for a Tool row', () => {
     render(
       <TrajectoryCell
+        t={tEn}
         index={6}
         kind="tool"
         text="bash · Read src/index.ts"
@@ -60,6 +62,7 @@ describe('TrajectoryCell', () => {
   it('Message rows expose Input / Output / Think metric columns before time', () => {
     const { container } = render(
       <TrajectoryCell
+        t={tEn}
         index={3}
         kind="message"
         text="Let me now read the actual source files to understa..."
@@ -69,7 +72,7 @@ describe('TrajectoryCell', () => {
         think={155}
       />,
     )
-    expect(screen.getByText('Message')).toBeTruthy()
+    expect(screen.getByText('Assistant')).toBeTruthy()
     expect(screen.getByText('136')).toBeTruthy()
     expect(screen.getByText('381')).toBeTruthy()
     expect(screen.getByText('155')).toBeTruthy()
@@ -82,7 +85,7 @@ describe('TrajectoryCell', () => {
 
   it('selected marks the row for the brand-primary inset ring', () => {
     const { container } = render(
-      <TrajectoryCell index={15} kind="message" text="pictur..." timeSeconds={123.6} selected />,
+      <TrajectoryCell t={tEn} index={15} kind="message" text="pictur..." timeSeconds={123.6} selected />,
     )
     expect(container.firstElementChild?.getAttribute('data-selected')).toBe('true')
   })
@@ -92,7 +95,7 @@ describe('TrajectoryCell', () => {
     ['tool', 'Tool'],
   ] as const)('kind %s shows the %s tag and no metric columns', (kind: TrajectoryCellKind, label: string) => {
     const { container } = render(
-      <TrajectoryCell index={1} kind={kind} text="summary" timeSeconds={kind === 'user' ? 0 : null} input={1} output={2} think={3} />,
+      <TrajectoryCell t={tEn} index={1} kind={kind} text="summary" timeSeconds={kind === 'user' ? 0 : null} input={1} output={2} think={3} />,
     )
     expect(screen.getByText(label)).toBeTruthy()
     expect(container.querySelector('[data-kind]')?.getAttribute('data-kind')).toBe(kind)

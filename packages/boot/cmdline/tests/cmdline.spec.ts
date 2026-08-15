@@ -66,7 +66,7 @@ async function bootFixture(
   resolve: (program: Command) => unknown = resolveDemo,
   options: { objectInject?: boolean; withoutProvider?: boolean } = {},
 ): Promise<Fixture> {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-cmdline-'))
+  const dir = mkdtempSync(join(tmpdir(), 'lasmex-cmdline-'))
   const observed: Observed = { exits: [], out: '' }
   writeFileSync(join(dir, 'reader.mjs'), `
 export const name = 'reader'
@@ -190,7 +190,7 @@ describe('provideCmdline', () => {
   it('refuses at load a program in which no command declares an action', async () => {
     const { ctx } = await bootFixture([], resolveDemo, { withoutProvider: true })
     expect(() => { parseCmdline(ctx, demoCommand()) })
-      .toThrow('no command in the program declares an action')
+      .toThrow('aucune commande du programme ne déclare d’action')
   })
 
   it('routes a pre-registered subcommand rejection through the launcher exit request', () => {
@@ -212,7 +212,7 @@ describe('provideCmdline', () => {
   it('fails loud when a parser runs without the launcher values', () => {
     const ctx = new Context()
     expect(() => { parseCmdline(ctx, demoCommand()) })
-      .toThrow('the launcher must provide ctx.cmdlineArgs and ctx.appExit')
+      .toThrow('le lanceur doit fournir ctx.cmdlineArgs et ctx.appExit')
   })
 
   it('lets multiple parsers read the same immutable snapshot', () => {

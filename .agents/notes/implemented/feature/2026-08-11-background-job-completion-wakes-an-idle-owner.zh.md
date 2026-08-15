@@ -48,7 +48,7 @@ Status: implemented
 
 **在 `JobStart` 上加生产方声明的唤醒位**，对应 Codex 的 `trigger_turn` 与 Kimi 的 `admission` 枚举。从长期看这是更好的形状——`tail -f` 流与两小时构建想要不同答案——但当前没有任何生产方需要区分它们，而仓库要求公共面必须有当下的所有者与需求。加它的自然触发点，是第一个「要让某个任务唤醒而另一个不唤醒」的生产方出现时。
 
-**一个通用的非请求输入队列**并带优先级通道，正如 Claude Code 用来把后台任务、cron、MCP 推送与 hook 合并进同一次排空。DSH 的 inbox 本身就是那个队列——`next-turn`/`next-step` 之上的持久 `agent/inbox/spliced` splice——因此这等于在既有层之上再加一层，只为决定一个 bit。
+**一个通用的非请求输入队列**并带优先级通道，正如 Claude Code 用来把后台任务、cron、MCP 推送与 hook 合并进同一次排空。LasmeX 的 inbox 本身就是那个队列——`next-turn`/`next-step` 之上的持久 `agent/inbox/spliced` splice——因此这等于在既有层之上再加一层，只为决定一个 bit。
 
 **拒绝重开一个已经产出可见答复的轮次**，即 Codex 的 `MailboxDeliveryPhase` 闩锁。那条闩锁正是本决策刻意反转的默认值：在模型已经说完话之后唤醒它就是本特性的全部意义，界由唤醒预算来承担。
 

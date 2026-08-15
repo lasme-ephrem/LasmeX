@@ -1,15 +1,15 @@
-import { createUserMessage, createMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage, createMessage } from 'lasmex-llm'
 import { describe, expect, it, vi } from 'vitest'
 import { Context, type Fiber } from '@deepseek-ai/cordis'
-import SessionStore, { SESSION_FORMAT_VERSION, SessionId } from '@deepseek-ai/dsh-session'
-import type { SessionEvent, SessionHeader, SessionId as SessionIdType } from '@deepseek-ai/dsh-session'
-import SessionPersistence, { SessionPersistenceCorruptionError, SessionPersistenceRevision } from '@deepseek-ai/dsh-session-persistence'
+import SessionStore, { SESSION_FORMAT_VERSION, SessionId } from 'lasmex-session'
+import type { SessionEvent, SessionHeader, SessionId as SessionIdType } from 'lasmex-session'
+import SessionPersistence, { SessionPersistenceCorruptionError, SessionPersistenceRevision } from 'lasmex-session-persistence'
 import SessionQueryEngine, {
   SESSION_QUERY_DEFAULT_PERSISTED_INSPECT_CONCURRENCY,
   type SessionEventSurface,
   type SessionQueryErrorCode,
-} from '@deepseek-ai/dsh-session-query'
-import { SessionTitleProviderId } from '@deepseek-ai/dsh-session-title'
+} from 'lasmex-session-query'
+import { SessionTitleProviderId } from 'lasmex-session-title'
 import { TestSessionQueryEngine } from './test-service.ts'
 
 function header(id: string, createdAt = 1, extra: Partial<SessionHeader> = {}): SessionHeader {

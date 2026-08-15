@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import { createUserMessage, CallId  } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import { STRUCTURED_OUTPUT_TOOL } from '@deepseek-ai/dsh-subagent-in-process-driver'
-import * as spawn from '@deepseek-ai/dsh-subagent-spawn-in-process'
-import WorkerThreadWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
+import type { Agent } from 'lasmex-agent'
+import AgentLoop from 'lasmex-agent-loop'
+import { mountAgentLoopTestDependencies } from 'lasmex-agent-loop-testkit'
+import { createUserMessage, CallId  } from 'lasmex-llm'
+import { SessionId } from 'lasmex-session'
+import SubagentRuntime from 'lasmex-subagent'
+import { STRUCTURED_OUTPUT_TOOL } from 'lasmex-subagent-in-process-driver'
+import * as spawn from 'lasmex-subagent-spawn-in-process'
+import WorkerThreadWorkflowEngine from 'lasmex-workflow-worker-thread'
 import { MockAdapter, maxTokensResponse, textResponse, toolCallResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 import * as toolRalph from '../src/index.ts'
 
@@ -34,7 +34,7 @@ async function mountRalph(script: MockScript, config: toolRalph.Config) {
   return { ctx, adapter, parentHandle, parent: parentHandle.agent }
 }
 
-describe('dsh-tool-ralph over the real spawn and worker-thread stack', () => {
+describe('lasmex-tool-ralph over the real spawn and worker-thread stack', () => {
   it('uses distinct empty-seed children, shared cwd, and only the prior bounded handoff', async () => {
     const firstReport = {
       status: 'continue',

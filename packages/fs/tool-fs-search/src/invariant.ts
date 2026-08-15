@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-tool-fs-search`.
- * @module @deepseek-ai/dsh-tool-fs-search/invariant
+ * Package-owned invariant companion for `lasmex-tool-fs-search`.
+ * @module lasmex-tool-fs-search/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-tool-fs-search'
+const PACKAGE_NAME = 'lasmex-tool-fs-search'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-fs-search-invariant'

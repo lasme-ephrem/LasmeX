@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/cordis-tutorial/06-composition-and-hmr.md
-06-composition-and-hmr.md: 2b53aa28be99851e77a71de76337f2beb4003e8d
-06-composition-and-hmr.zh.md: cd4afa1d5465a5442bfd6b771ebcd61c46fe2983
+06-composition-and-hmr.md: eaf1070df304cd060ad50a09cc207dcf6081391f
+06-composition-and-hmr.zh.md: a89b1e5e2c97229c5498857f1aa128a191bd699c

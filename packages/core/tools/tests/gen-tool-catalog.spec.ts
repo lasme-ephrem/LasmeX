@@ -25,7 +25,7 @@ describe('gen-tool-catalog collectToolCatalog', () => {
   it('boots every shipped tool package and harvests its model-facing schemas', async () => {
     const catalog = await collectToolCatalog()
     const names = catalog.flatMap(entry => entry.schemas.map(s => s.name)).sort()
-    expect(names).toEqual(['ask_user_question', 'bash', 'bash', 'cordis_define', 'cordis_inspect_list', 'cordis_inspect_query', 'cordis_inspect_self', 'cordis_run', 'cordis_stop', 'cordis_undefine', 'create_goal', 'edit', 'exit_plan_mode', 'get_goal', 'glob', 'grep', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents', 'lsp', 'pwsh', 'ralph', 'read', 'read_image', 'report', 'run_code', 'schedule_create', 'schedule_delete', 'schedule_list', 'send_message', 'session_event_read', 'session_event_search', 'session_event_trace', 'session_search', 'session_trace', 'skill', 'str_replace_editor', 'subagent', 'terminal_close', 'terminal_list', 'terminal_open', 'terminal_read', 'terminal_send', 'terminal_signal', 'todo_write', 'update_goal', 'web_fetch', 'web_search', 'workflow', 'write'])
+    expect(names).toEqual(['ask_user_question', 'bash', 'bash', 'cordis_define', 'cordis_inspect_list', 'cordis_inspect_query', 'cordis_inspect_self', 'cordis_run', 'cordis_stop', 'cordis_undefine', 'create_goal', 'edit', 'exit_plan_mode', 'get_goal', 'glob', 'grep', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents', 'lsp', 'memory_forget', 'memory_list', 'memory_read', 'memory_save', 'memory_search', 'pwsh', 'ralph', 'read', 'read_image', 'report', 'run_code', 'schedule_create', 'schedule_delete', 'schedule_list', 'send_message', 'session_event_read', 'session_event_search', 'session_event_trace', 'session_search', 'session_trace', 'skill', 'str_replace_editor', 'subagent', 'terminal_close', 'terminal_list', 'terminal_open', 'terminal_read', 'terminal_send', 'terminal_signal', 'todo_write', 'update_goal', 'web_fetch', 'web_search', 'workflow', 'write'])
     // Every tool carries a JSON-Schema `parameters` object (what the model sees).
     for (const entry of catalog) {
       for (const schema of entry.schemas) {
@@ -47,9 +47,9 @@ describe('gen-tool-catalog collectToolCatalog', () => {
 
   it('attributes each harvested tool with its registering plugin source', async () => {
     const catalog = await collectToolCatalog()
-    const bash = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-tool-bash')
+    const bash = catalog.find(entry => entry.pkg === 'lasmex-tool-bash')
     expect(bash?.sources.bash).toBe('packages/shell/tool-bash/src/index.ts')
-    const control = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-tool-subagent-control')
+    const control = catalog.find(entry => entry.pkg === 'lasmex-tool-subagent-control')
     expect(control?.sources).toEqual({
       interrupt_agent: 'packages/subagent/tool-subagent-control/src/index.ts',
       list_agents: 'packages/subagent/tool-subagent-control/src/list-agents.ts',
@@ -62,7 +62,7 @@ describe('gen-tool-catalog collectToolCatalog', () => {
     try {
       process.env.PATH = ''
       const catalog = await collectToolCatalog()
-      const search = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-tool-fs-search')
+      const search = catalog.find(entry => entry.pkg === 'lasmex-tool-fs-search')
       expect(search?.schemas.map(s => s.name).sort()).toEqual(['glob', 'grep'])
     } finally {
       if (oldPath === undefined) delete process.env.PATH
@@ -74,7 +74,7 @@ describe('gen-tool-catalog collectToolCatalog', () => {
     // `tool-subagent`'s registered name is the load-time `toolName` config, so the shipped
     // agents surface this one package as both `subagent` and `subagent_fork`.
     const catalog = await collectToolCatalog()
-    const subagent = catalog.find(entry => entry.pkg === '@deepseek-ai/dsh-tool-subagent')
+    const subagent = catalog.find(entry => entry.pkg === 'lasmex-tool-subagent')
     expect(subagent?.schemas.map(s => s.name)).toEqual(['subagent'])
     expect(subagent?.note).toMatch(/subagent_fork/)
   })
@@ -95,7 +95,7 @@ describe('gen-tool-catalog assertManifestComplete', () => {
 
 describe('gen-tool-catalog assertToolsHarvested', () => {
   const entry: ToolPackage = {
-    pkg: '@deepseek-ai/dsh-tool-demo',
+    pkg: 'lasmex-tool-demo',
     dir: 'tool-demo',
     source: 'packages/demo/tool-demo/src/index.ts',
     requires: ['ctx.tools', 'ctx.somethingUnmounted'],
@@ -111,7 +111,7 @@ describe('gen-tool-catalog assertToolsHarvested', () => {
     // The failure this guards is silent by construction: the package is in the
     // manifest, its plugin merely stays PENDING on an unmounted service, and the
     // catalog would ship without its tools while every gate stays green.
-    expect(() => { assertToolsHarvested(entry, 0) }).toThrow(/@deepseek-ai\/dsh-tool-demo booted without registering a single tool/)
+    expect(() => { assertToolsHarvested(entry, 0) }).toThrow(/lasmex-tool-demo booted without registering a single tool/)
     expect(() => { assertToolsHarvested(entry, 0) }).toThrow(/ctx.somethingUnmounted/)
   })
 })
@@ -120,7 +120,7 @@ describe('gen-tool-catalog render', () => {
   it('emits a package heading, a tool heading, and a json schema fence', () => {
     const catalog: ToolCatalog = [
       {
-        pkg: '@deepseek-ai/dsh-tool-demo',
+        pkg: 'lasmex-tool-demo',
         sources: { demo: 'packages/demo/tool-demo/src/index.ts' },
         requires: ['ctx.tools'],
         writes: ['tool/result'],
@@ -128,8 +128,8 @@ describe('gen-tool-catalog render', () => {
       },
     ]
     const md = render(catalog)
-    expect(md).toContain('| `@deepseek-ai/dsh-tool-demo` | `demo` | `ctx.tools` | `tool/result` |')
-    expect(md).toContain('## `@deepseek-ai/dsh-tool-demo`')
+    expect(md).toContain('| `lasmex-tool-demo` | `demo` | `ctx.tools` | `tool/result` |')
+    expect(md).toContain('## `lasmex-tool-demo`')
     expect(md).toContain('### `demo`')
     expect(md).toContain('A demo tool.')
     expect(md).toContain('```json')

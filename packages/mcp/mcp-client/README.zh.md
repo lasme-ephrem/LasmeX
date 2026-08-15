@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-mcp-client
+# lasmex-mcp-client
 
 [English](README.md) | 中文
 
@@ -10,7 +10,7 @@ MCP 客户端桥接插件：连接外部 [Model Context Protocol](https://modelc
 
 ```yaml
 - id: mcp-github
-  name: '@deepseek-ai/dsh-mcp-client'
+  name: 'lasmex-mcp-client'
   config:
     serverName: github
     transport: stdio
@@ -20,7 +20,7 @@ MCP 客户端桥接插件：连接外部 [Model Context Protocol](https://modelc
       GITHUB_TOKEN: !!js process.env.GITHUB_TOKEN
 
 - id: mcp-web
-  name: '@deepseek-ai/dsh-mcp-client'
+  name: 'lasmex-mcp-client'
   config:
     serverName: web
     transport: streamable-http
@@ -109,7 +109,7 @@ MCP 客户端桥接插件：连接外部 [Model Context Protocol](https://modelc
 ## 已知限制与暂缓事项
 
 - **只桥接 MCP 的工具能力**：资源和提示词没有 harness 消费接口，暂缓实现。
-- **启动超时继承自 MCP SDK**：DSH 尚未公开连接／发现超时。每次 initialize 请求或分页 `tools/list` 请求都使用 SDK 默认的 60 秒，因此在初始同步完成期间，无响应的 server 或 cursor chain 可能同时延迟激活与 teardown。
+- **启动超时继承自 MCP SDK**：LasmeX 尚未公开连接／发现超时。每次 initialize 请求或分页 `tools/list` 请求都使用 SDK 默认的 60 秒，因此在初始同步完成期间，无响应的 server 或 cursor chain 可能同时延迟激活与 teardown。
 - **重连在传输关闭时触发**：崩溃的 stdio 子进程会触发重连；Streamable HTTP 失败通过每次请求以及 SDK 传输自身的 SSE（Server-Sent Events）流恢复机制暴露，因此不可达的 HTTP 服务器会按调用重试，而非由 supervisor 重新 spawn。
 - **Native 非文本渲染有损**：图片、音频与资源载荷在模型上下文中会变成占位符，即使执行局部的规范值保留了其 JSON 块。更丰富的 Native 多媒体投影暂缓实现。
 - **不强制执行不受支持的 MCP 输出 schema**：已声明 schema 使用 harness 子集之外的词汇时，`structuredContent` 会回退到 `JsonValue`。

@@ -11,7 +11,7 @@ import { pathToFileURL } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
-import { internals, provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { internals, provideCmdline } from 'lasmex-cmdline'
 import { afterEach, describe, expect, it } from 'vitest'
 import { apply, HEADLESS_STARTUP_SERVICE, type HeadlessStartupValues } from '../src/startup.ts'
 
@@ -36,7 +36,7 @@ afterEach(async () => {
  * @returns the resolved service value and observed runner/process effects.
  */
 async function bootStartup(args: string[]): Promise<{ task: HeadlessStartupValues | undefined; observed: Observed }> {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-headless-startup-'))
+  const dir = mkdtempSync(join(tmpdir(), 'lasmex-headless-startup-'))
   const observed: Observed = { exits: [], out: '' }
   writeFileSync(join(dir, 'row.mjs'), 'export function apply(_ctx, config) { globalThis.__headlessStartupObserved.runnerConfig = config }\n')
   // Loader imports through Node's resolver, so this fixture delegates to the
@@ -90,7 +90,7 @@ describe('headless command-line provider', () => {
 
   it.each([{ args: [] }, { args: ['   '] }])('rejects an invocation with no non-whitespace task ($args)', async ({ args }) => {
     const { task, observed } = await bootStartup(args)
-    expect(observed.out).toContain('a task is required')
+    expect(observed.out).toContain('une tâche est requise')
     expect(task).toBeUndefined()
     expect(observed.runnerConfig).toBeUndefined()
     expect(observed.exits).toEqual([1])
@@ -98,7 +98,7 @@ describe('headless command-line provider', () => {
 
   it('prints its own help and leaves the runner pending', async () => {
     const { task, observed } = await bootStartup(['--help'])
-    expect(observed.out).toContain('dsh --profile headless')
+    expect(observed.out).toContain('lasmex --profile headless')
     expect(task).toBeUndefined()
     expect(observed.runnerConfig).toBeUndefined()
     expect(observed.exits).toEqual([0])

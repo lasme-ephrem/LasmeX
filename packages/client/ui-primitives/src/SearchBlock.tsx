@@ -52,6 +52,42 @@ interface SearchBlockCommon {
   maxLines?: number | undefined
   /** Extra class merged onto the wrapper. */
   className?: string | undefined
+  /** User-facing labels supplied by the localized owner. */
+  labels?: SearchBlockLabels | undefined
+}
+
+/** User-facing labels rendered by {@link SearchBlock}. */
+export interface SearchBlockLabels {
+  /** Summary for retained path results. */
+  pathsSummary: (shown: number, total: number, truncated: boolean) => string
+  /** Summary for retained matches grouped across files. */
+  matchesSummary: (shown: number, total: number, files: number, truncated: boolean) => string
+  /** Copy control label. */
+  copy: string
+  /** Copy confirmation label. */
+  copied: string
+  /** Empty-result label. */
+  empty: string
+  /** Accessible label while the full result is visible. */
+  collapseAria: string
+  /** Accessible label while rows are hidden. */
+  expandAria: (hidden: number) => string
+  /** Visible collapse control label. */
+  collapse: string
+  /** Visible expansion control label. */
+  expand: (hidden: number) => string
+}
+
+const DEFAULT_SEARCH_LABELS: SearchBlockLabels = {
+  pathsSummary: (shown, total, truncated) => `${truncated ? `显示 ${shown} / 共 ${total}` : shown} 个路径`,
+  matchesSummary: (shown, total, files, truncated) => `${truncated ? `显示 ${shown} / 共 ${total}` : shown} 处匹配 · ${files} 个文件`,
+  copy: '复制',
+  copied: '复制成功',
+  empty: '无结果',
+  collapseAria: '收起结果',
+  expandAria: hidden => `展开其余 ${hidden} 行结果`,
+  collapse: '收起',
+  expand: hidden => `… 其余 ${hidden} 行`,
 }
 
 /** Props for the grouped-matches (`grep`) shape. */
@@ -122,11 +158,16 @@ function shownCount(props: SearchBlockProps): number {
  * @param total - the pre-cap total the truncation clause reports.
  * @returns the summary text.
  */
-function summaryText(props: SearchBlockProps, shown: number, truncated: boolean, total: number): string {
-  const count = truncated ? `显示 ${shown} / 共 ${total}` : `${shown}`
+function summaryText(
+  props: SearchBlockProps,
+  shown: number,
+  truncated: boolean,
+  total: number,
+  labels: SearchBlockLabels,
+): string {
   return props.kind === 'paths'
-    ? `${count} 个路径`
-    : `${count} 处匹配 · ${props.files.length} 个文件`
+    ? labels.pathsSummary(shown, total, truncated)
+    : labels.matchesSummary(shown, total, props.files.length, truncated)
 }
 
 /**
@@ -171,7 +212,7 @@ function rowKey(row: SearchRow): string {
  * @returns the search block element.
  */
 export function SearchBlock(props: SearchBlockProps) {
-  const { truncated, total, maxLines = DEFAULT_SEARCH_MAX_LINES, className } = props
+  const { truncated, total, maxLines = DEFAULT_SEARCH_MAX_LINES, className, labels = DEFAULT_SEARCH_LABELS } = props
   const [expanded, setExpanded] = useState(false)
   const [collapsed, setCollapsed] = useState<ReadonlySet<number>>(() => new Set())
 
@@ -239,15 +280,15 @@ export function SearchBlock(props: SearchBlockProps) {
   return (
     <div className={clsx(css.block, className)} data-search={props.kind}>
       <div className={css.header}>
-        <span className={css.summary}>{summaryText(props, shown, truncated, total)}</span>
+        <span className={css.summary}>{summaryText(props, shown, truncated, total, labels)}</span>
         {!empty && (
           <button type="button" className={css.copyButton} onClick={onCopy}>
-            {copied ? '复制成功' : '复制'}
+            {copied ? labels.copied : labels.copy}
           </button>
         )}
       </div>
       {empty
-        ? <div className={css.empty}>无结果</div>
+        ? <div className={css.empty}>{labels.empty}</div>
         : (
           <div className={css.body}>
             {head.map(row => (
@@ -258,10 +299,10 @@ export function SearchBlock(props: SearchBlockProps) {
                 type="button"
                 className={css.expand}
                 aria-expanded={expanded}
-                aria-label={expanded ? '收起结果' : `展开其余 ${hidden} 行结果`}
+                aria-label={expanded ? labels.collapseAria : labels.expandAria(hidden)}
                 onClick={onToggle}
               >
-                {expanded ? '收起' : `… 其余 ${hidden} 行`}
+                {expanded ? labels.collapse : labels.expand(hidden)}
               </button>
             )}
             {tailHeader !== undefined && (

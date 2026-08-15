@@ -4,10 +4,10 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke'
+import type { Agent } from 'lasmex-agent'
+import SubagentRuntime from 'lasmex-subagent'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import { resolveExampleLaunch } from 'lasmex-loader-smoke'
 import * as acp from '../src/index.ts'
 
 /**
@@ -31,7 +31,7 @@ const childLaunch = resolveExampleLaunch({
   env: {
     ...process.env.DEEPSEEK_API_KEY !== undefined ? { DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY } : {},
     ...process.env.DEEPSEEK_BASE_URL !== undefined ? { DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL } : {},
-    DSH_PERMISSION_MODE: 'danger-full-access',
+    LASMEX_PERMISSION_MODE: 'danger-full-access',
   },
 })
 
@@ -50,7 +50,7 @@ afterEach(async () => {
 
 describe.skipIf(!process.env.DEEPSEEK_API_KEY)('ACP backend with-key e2e (drive our own acp-agent)', () => {
   it('drives the real acp-agent example process to answer a prompt', async () => {
-    workdir = await mkdtemp(join(tmpdir(), 'dsh-subagent-acp-e2e-'))
+    workdir = await mkdtemp(join(tmpdir(), 'lasmex-subagent-acp-e2e-'))
     ctx = new Context()
     await ctx.plugin(SubagentRuntime)
     await ctx.plugin(LocalSubprocessRuntime)
@@ -80,7 +80,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY)('ACP backend with-key e2e (drive 
   }, 180_000)
 
   it('drives the child to do real file work via its own bash tool', async () => {
-    workdir = await mkdtemp(join(tmpdir(), 'dsh-subagent-acp-e2e-'))
+    workdir = await mkdtemp(join(tmpdir(), 'lasmex-subagent-acp-e2e-'))
     ctx = new Context()
     await ctx.plugin(SubagentRuntime)
     await ctx.plugin(LocalSubprocessRuntime)

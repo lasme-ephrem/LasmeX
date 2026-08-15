@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-15-bounded-turns-and-stable-input-order.md
+2026-08-15-bounded-turns-and-stable-input-order.md: 494646548eb9a04d45fff1f9ccb422f821bf0a5d
+2026-08-15-bounded-turns-and-stable-input-order.zh.md: e417aecd1782efcd9ad9a3a4800e0fb53e08a8e1

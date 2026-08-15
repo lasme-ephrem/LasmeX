@@ -1,11 +1,11 @@
 import { Context } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalFileSystem from '@deepseek-ai/dsh-fs-local'
-import * as FsPolicy from '@deepseek-ai/dsh-fs-observation-policy'
-import * as ToolFs from '@deepseek-ai/dsh-tool-fs'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
+import type { Agent } from 'lasmex-agent'
+import AgentLoop from 'lasmex-agent-loop'
+import { mountAgentLoopTestDependencies } from 'lasmex-agent-loop-testkit'
+import LocalFileSystem from 'lasmex-fs-local'
+import * as FsPolicy from 'lasmex-fs-observation-policy'
+import * as ToolFs from 'lasmex-tool-fs'
+import * as LlmDeepSeek from 'lasmex-llm-deepseek'
 
 /**
  * Build the real fs-tool stack for with-key e2e tests. Agents have no session

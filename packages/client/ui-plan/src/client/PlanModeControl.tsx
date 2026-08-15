@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { IconCloseFill14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { InjectFace, PropsLocale, PropsRuntime } from 'lasmex-client-ui-slots'
+import { IconCloseFill14 } from 'lasmex-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.plan seat and
 // its {locked} owner share).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from 'lasmex-client-ui-conversation/client'
 import type { PlanChipInjected } from './index.ts'
 import css from './PlanModeControl.module.css'
 
@@ -58,14 +58,12 @@ export function PlanChip({ useProjection, locked, exitPlanMode, t }: PlanChipPro
         disabled={locked || leaving}
         onClick={off}
       >
-        {/* Design literal, not copy: the chip wordmark stays 'Plan' in every locale. */}
-        Plan
+        {t('chip.label')}
         <span className={css.close} aria-hidden>
           <IconCloseFill14 size={12} />
         </span>
       </button>
-      {/* Failure copy stays English (error-surface policy: not localized). */}
-      {error !== null && <span className={css.error} role="status" title={error}>failed to exit plan mode</span>}
+      {error !== null && <span className={css.error} role="status" title={error}>{t('chip.exitFailed')}</span>}
     </span>
   )
 }

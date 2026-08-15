@@ -1,21 +1,20 @@
 ---
 name: Research
-about: 形成结论、证据或决策
+about: Produire une conclusion, des preuves ou une décision
 title: ''
-labels: ''
+labels: 'type/research'
 assignees: ''
-type: Research
 ---
 
-<!-- 标题写中文行动或结果句；外露正文不超过 50 单位。 -->
-一句话说明待回答的问题。
+<!-- Rédigez un titre d’action ou de résultat en français. Ne dépassez pas 50 unités visibles. -->
+Résumez la question à résoudre en une phrase.
 
 <details>
-<summary>问题与证据标准</summary>
+<summary>Question et niveau de preuve</summary>
 
-- 核心问题：
-- 证据标准：
-- 交付结论：
-- 可能的后续工作：
+- Question principale :
+- Niveau de preuve attendu :
+- Conclusion à livrer :
+- Suites possibles :
 
 </details>

@@ -8,18 +8,18 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Context } from '@deepseek-ai/cordis'
-import { normalizeSessionLog, scrubRequestHeaders, type NormalizeContext } from '@deepseek-ai/dsh-acp-snapshot'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@deepseek-ai/dsh-loader-smoke'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { normalizeSessionLog, scrubRequestHeaders, type NormalizeContext } from 'lasmex-acp-snapshot'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from 'lasmex-loader-smoke'
+import { createUserMessage } from 'lasmex-llm'
 import SessionStore, {
   SESSION_FORMAT_VERSION,
   SessionId,
   type SessionEvent,
   type SessionHeader,
-} from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import { renderWorkspaceContext } from '@deepseek-ai/dsh-agent-instructions'
-import { resolveConfig, workspaceBaselineIdentity } from '@deepseek-ai/dsh-agent-instructions/src/config.ts'
+} from 'lasmex-session'
+import JsonlSessionPersistence from 'lasmex-session-persistence-jsonl'
+import { renderWorkspaceContext } from 'lasmex-agent-instructions'
+import { resolveConfig, workspaceBaselineIdentity } from 'lasmex-agent-instructions/src/config.ts'
 import { describe, expect, it } from 'vitest'
 
 const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), 'workspace-context-resume-snapshots/offline-edit')
@@ -62,7 +62,7 @@ async function seedVisibleBaseline(
     content: file.content,
   })), { maxBytes: 65536 })
   const config = resolveConfig({
-    dshHome: join(cwd, '.dsh'),
+    lasmexHome: join(cwd, '.lasmex'),
     maxBytes: 65536,
     ...options.instructionFileCandidates === undefined
       ? {}
@@ -117,7 +117,7 @@ describe('agent-instructions resume snapshot', () => {
     let sessionPath = ''
     const result = await runLoaderSmoke({
       label: 'agent-instructions resume headless stream-json snapshot',
-      tempDirPrefix: 'dsh-workspace-context-resume-',
+      tempDirPrefix: 'lasmex-workspace-context-resume-',
       binScript,
       libBinScript: binScript,
       configPath,
@@ -174,7 +174,7 @@ describe('agent-instructions resume snapshot', () => {
     let sessionPath = ''
     const result = await runLoaderSmoke({
       label: 'agent-instructions precedence-change resume snapshot',
-      tempDirPrefix: 'dsh-workspace-context-precedence-',
+      tempDirPrefix: 'lasmex-workspace-context-precedence-',
       binScript,
       libBinScript: binScript,
       configPath,

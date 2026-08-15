@@ -5,10 +5,10 @@
  * declaration, registration, scope, store, inject, rendering, updates, and
  * disposal without hand-building the machinery per suite.
  *
- * Not part of the product plugin graph (no `dsh.client`); feature packages
+ * Not part of the product plugin graph (no `lasmex.client`); feature packages
  * depend on it in devDependencies only. It copies no SlotCore/renderer/store
  * machinery — everything mounts the production implementations.
- * @module @deepseek-ai/dsh-client-test-runtime
+ * @module lasmex-client-test-runtime
  */
 /* oxlint-disable typescript/no-redundant-type-constituents --
  * `keyof SlotMap & string` is the declare-merge key pattern (see ui-slots):
@@ -24,11 +24,11 @@ import type { queries } from '@testing-library/dom'
 import type { BoundFunctions } from '@testing-library/dom'
 import {
   ConversationEventRegistry, ConversationViewRegistry, SlotRegistry,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { createSlotRenderer } from '@deepseek-ai/dsh-client-web-react'
+} from 'lasmex-client-runtime/client'
+import { createSlotRenderer } from 'lasmex-client-web-react'
 import type {
   ChildrenDecl, ComposedProps, OwnerOf, SlotComponent, SlotMap, SlotRendererHost, StoreInstanceLike,
-} from '@deepseek-ai/dsh-client-ui-slots'
+} from 'lasmex-client-ui-slots'
 import { registerDomSnapshotSerializer } from './snapshot.ts'
 import { TestSessions } from './sessions.ts'
 import { TestWorkspaces } from './workspaces.ts'

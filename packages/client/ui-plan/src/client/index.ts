@@ -7,20 +7,20 @@
  * projection pair through the standard-kit `useProjection`; zero client-side
  * plan state.
  */
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type {} from 'lasmex-api-remotes/client'
+import type { ClientContext, SessionId } from 'lasmex-client-runtime/client'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.plan seat).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from 'lasmex-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 // Type-only: pulls the `plan` SessionProjectionMap merge for useProjection.
-import type {} from '@deepseek-ai/dsh-plan-mode/client'
+import type {} from 'lasmex-plan-mode/client'
 import { PlanChip } from './PlanModeControl.tsx'
-import { en, zh, type PlanKey } from './locales.ts'
+import { en, fr, zh, type PlanKey } from './locales.ts'
 
 export type { PlanKey } from './locales.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The composer plan chip's copy. */
     plan: PlanKey
@@ -47,7 +47,7 @@ export const inject = ['slots', 'remote', 'remote.commands', 'locale']
  * @param ctx - client root context.
  */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ui-plan: dictionaries')
+  ctx.effect(() => ctx.locale.register(NS, { fr, en, zh }), 'ui-plan: dictionaries')
 
   ctx.slots.inject('conversation.input.plan', () => ctx.slots.register({
     name: 'conversation.input.plan',

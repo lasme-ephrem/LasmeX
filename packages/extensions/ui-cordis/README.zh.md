@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-cordis
+# lasmex-client-ui-cordis
 
 [English](README.md) | 中文
 
@@ -14,7 +14,7 @@ Cordis 动态插件的浏览器半：一个覆盖整个框架的面板，操作 
 
 两个面都不把运行态放进组件 state——define 调用结算时卡片会在聊天流里换位置并重挂。事实活在「谁能关闭它、就归谁」的观察量里：浏览器侧 runner 拥有开放请求、编排结果（是它发出 resolve，包括别的页面先应答的情形）与本页的 live set及其渲染失败——它是唯一在监视 `slots.onEntryError` 的一方，也是唯一能把崩溃的条目映射回注册它的那个包的一方——而本包拥有自己读来的清单与折叠过的公告。
 
-`/client` 导出面是插件体（`apply`/`inject`）加注入面、运行态、端口与事件载荷类型。
+`/client` 导出面是插件体（`apply`/`inject`）加注入面、运行态、端口与事件载荷类型。所有可见标签与可访问操作名称都跟随当前的法语、英语或简体中文区域设置。
 
 ## 模型体验
 

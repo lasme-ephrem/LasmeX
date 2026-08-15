@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { JsonBlock, MarkdownText, MessageText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { JsonBlock, MarkdownText, MessageText } from 'lasmex-client-ui-primitives'
 import { cjkFriendlyStrong } from '../src/markdown/cjkFriendlyStrong.ts'
 import { mathCompatibility } from '../src/markdown/mathCompatibility.ts'
 
@@ -236,6 +236,11 @@ describe('MarkdownText', () => {
   it('forwards localized labels to fenced code blocks', () => {
     render(<MarkdownText text={'```ts\nconst answer = 42\n```'} codeLabels={{ copyLabel: 'Copy code', copiedLabel: 'Copied' }} />)
     expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy()
+  })
+
+  it('localizes the accessible footnotes heading', () => {
+    render(<MarkdownText text={'Une note[^a].\n\n[^a]: Détail.'} codeLabels={{ footnotesLabel: 'Notes de bas de page' }} />)
+    expect(screen.getByRole('heading', { name: 'Notes de bas de page' })).toBeTruthy()
   })
 
   it('renders absolute HTTP(S) images with bounded presentation', () => {

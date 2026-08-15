@@ -15,7 +15,7 @@ import { gfm } from 'micromark-extension-gfm'
 import type { Nodes } from 'mdast'
 import { docsPages, type DocsLocale, type DocsPage } from '../website/docs.ts'
 
-const REPOSITORY_URL = 'https://github.com/deepseek-ai/deepseek-harness'
+const REPOSITORY_URL = 'https://github.com/lasme-ephrem/LasmeX'
 const root = resolve(import.meta.dirname, '..')
 const generatedRoot = resolve(root, 'website/.generated')
 
@@ -209,7 +209,7 @@ function githubTarget(
   image: boolean,
 ): string {
   const path = repoPath(absPath, repoRoot)
-  if (image) return `https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/${repositoryRef}/${path}${suffix}`
+  if (image) return `https://raw.githubusercontent.com/lasme-ephrem/LasmeX/${repositoryRef}/${path}${suffix}`
   const kind = lstatSync(absPath).isDirectory() ? 'tree' : 'blob'
   const lineSuffix = line === undefined ? suffix : `#L${line}`
   return `${REPOSITORY_URL}/${kind}/${repositoryRef}/${path}${lineSuffix}`
@@ -225,6 +225,7 @@ function githubTarget(
 export function rewriteMarkdown(source: string, options: RewriteMarkdownOptions): string {
   const sourceAbs = resolve(options.repoRoot, options.sourcePath)
   const published = sourceMap(options.pages)
+  const currentPage = options.pages.find(page => page.locale === options.locale && page.route === options.route)
   const tree = fromMarkdown(source, { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] })
   const replacements: Replacement[] = []
 
@@ -236,8 +237,8 @@ export function rewriteMarkdown(source: string, options: RewriteMarkdownOptions)
     const targetPath = repoPath(absPath, options.repoRoot)
     const isLanguageSwitcher = targetPath === counterpartSource(options.sourcePath)
     const targetLocale: DocsLocale = isLanguageSwitcher
-      ? options.locale === 'root' ? 'en' : 'root'
-      : options.locale
+      ? options.locale === 'zh' ? 'en' : 'zh'
+      : options.locale === 'root' && currentPage?.contentLocale === 'en-US' ? 'en' : options.locale
     const page = published.get(targetPath)?.get(targetLocale)
     const nextUrl = page !== undefined
       ? routeTarget(options.route, page.route, suffix)
@@ -328,13 +329,25 @@ function withoutRepositoryChrome(markdown: string): string {
  *
  * @param markdown Rewritten canonical Markdown content.
  * @param page Publication manifest entry for the content.
- * @returns Full Markdown for ordinary pages or frontmatter-only Markdown for a locale home page.
+ * @returns Full Markdown for ordinary pages and document-style home pages, or
+ * frontmatter-only Markdown for a redirecting locale home page.
  */
 export function projectedPageContent(markdown: string, page: DocsPage): string {
-  if (page.sidebar !== null) return withoutRepositoryChrome(markdown)
-  if (!markdown.startsWith('---\n')) {
-    throw new Error(`project-doc-site: locale home source ${JSON.stringify(page.source)} must start with YAML frontmatter.`)
+  if (page.sidebar !== null) {
+    const projected = withoutRepositoryChrome(markdown)
+    if (page.locale !== 'root' || page.contentLocale !== 'en-US') return projected
+
+    const notice = '> [!NOTE]\n> Cette page technique est proposée en anglais. L’interface et les guides utilisateur de LasmeX sont disponibles en français.\n'
+    if (!projected.startsWith('---\n')) return `${notice}\n${projected}`
+    const closingDelimiter = '\n---\n'
+    const closing = projected.indexOf(closingDelimiter, 4)
+    if (closing === -1) {
+      throw new Error(`project-doc-site: page source ${JSON.stringify(page.source)} has unclosed YAML frontmatter.`)
+    }
+    const body = closing + closingDelimiter.length
+    return `${projected.slice(0, body)}\n${notice}${projected.slice(body)}`
   }
+  if (!markdown.startsWith('---\n')) return markdown
   const closingDelimiter = '\n---\n'
   const closing = markdown.indexOf(closingDelimiter, 4)
   if (closing === -1) {

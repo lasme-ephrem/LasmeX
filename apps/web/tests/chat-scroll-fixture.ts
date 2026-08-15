@@ -7,14 +7,14 @@ import {
   createAssistantMessage,
   createToolResultMessage,
   createUserMessage,
-} from '@deepseek-ai/dsh-llm'
+} from 'lasmex-llm'
 import {
   SESSION_FORMAT_VERSION,
   Session,
   SessionId,
-} from '@deepseek-ai/dsh-session'
+} from 'lasmex-session'
 // Carries the session/title event declaration into this fixture builder.
-import type {} from '@deepseek-ai/dsh-session-title'
+import type {} from 'lasmex-session-title'
 
 /** Options for one deterministic long-chat fixture. */
 export interface ChatScrollFixtureOptions {
@@ -47,6 +47,7 @@ export interface ChatScrollFixture {
 const DEFAULT_TURNS = 88
 const TOOL_INTERVAL = 8
 const CODE_INTERVAL = 11
+const SHELL_TOOL = process.platform === 'win32' ? 'pwsh' : 'bash'
 
 function text(value: string): { type: 'text'; text: string }[] {
   return [{ type: 'text', text: value }]
@@ -107,7 +108,9 @@ function appendToolStep(
     const marker = markers.tool(turn, index)
     const callId = CallId(`chat-scroll-${suffix(turn)}-${String(index)}`)
     const args = JSON.stringify({
-      command: `printf '${marker}\\n'`,
+      command: process.platform === 'win32'
+        ? `Write-Output '${marker}'`
+        : `printf '${marker}\\n'`,
       description: marker,
     })
     return { args, callId, marker }
@@ -122,7 +125,7 @@ function appendToolStep(
         ...calls.map(call => ({
           type: 'tool-call' as const,
           id: call.callId,
-          name: 'bash',
+          name: SHELL_TOOL,
           arguments: call.args,
         })),
       ],
@@ -136,7 +139,7 @@ function appendToolStep(
       turn,
       step: 1,
       callId: call.callId,
-      name: 'bash',
+      name: SHELL_TOOL,
       arguments: call.args,
     })
     session.append('tool/result', {

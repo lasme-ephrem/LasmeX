@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import UserQuestionService, { type AskUserQuestionRequest } from '@deepseek-ai/dsh-user-questions'
-import * as toolAskUser from '@deepseek-ai/dsh-tool-ask-user'
+import { CallId } from 'lasmex-llm'
+import AgentRegistry, { type Agent } from 'lasmex-agent'
+import SystemPrompt from 'lasmex-system-prompt'
+import ToolRuntime from 'lasmex-tools'
+import UserQuestionService, { type AskUserQuestionRequest } from 'lasmex-user-questions'
+import * as toolAskUser from 'lasmex-tool-ask-user'
 
 const testToolSignal = new AbortController().signal
 

@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import {
-  createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY, launchEnvironmentOf,
+  createLaunchEnvironmentSnapshot, LASMEX_LAUNCH_ENVIRONMENT_KEY, launchEnvironmentOf,
 } from '../src/index.ts'
 
 const layered = createLaunchEnvironmentSnapshot([
   { source: 'process', values: { SHARED: 'from-process', ONLY_PROCESS: 'p' } },
   { source: 'project-env', path: '/work/.env', values: { SHARED: 'from-project', ONLY_PROJECT: 'j' } },
-  { source: 'user-env', path: '/home/.dsh/.env', values: { SHARED: 'from-user', ONLY_USER: 'u' } },
+  { source: 'user-env', path: '/home/.lasmex/.env', values: { SHARED: 'from-user', ONLY_USER: 'u' } },
 ])
 
 describe('createLaunchEnvironmentSnapshot', () => {
   it('resolves across every layer, most trusted first, and reports the winning source', () => {
     expect(layered.get('SHARED')).toEqual({ value: 'from-process', source: 'process' })
     expect(layered.get('ONLY_PROJECT')).toEqual({ value: 'j', source: 'project-env', path: '/work/.env' })
-    expect(layered.get('ONLY_USER')).toEqual({ value: 'u', source: 'user-env', path: '/home/.dsh/.env' })
+    expect(layered.get('ONLY_USER')).toEqual({ value: 'u', source: 'user-env', path: '/home/.lasmex/.env' })
     expect(layered.get('ABSENT')).toBeUndefined()
   })
 
@@ -53,7 +53,7 @@ describe('createLaunchEnvironmentSnapshot', () => {
 describe('launchEnvironmentOf', () => {
   it('returns the launcher snapshot when the product CLI provided one', () => {
     const ctx = new Context()
-    ctx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, layered)
+    ctx.provide(LASMEX_LAUNCH_ENVIRONMENT_KEY, layered)
     expect(launchEnvironmentOf(ctx)).toBe(layered)
   })
 

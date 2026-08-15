@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-client-ui-conversation",
+  "name": "lasmex-client-ui-conversation",
   "description": "Conversation domain: skeleton, ordered chat flow, composer with the Host-backed busy-Enter preference, and details host",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "packages/client/ui-conversation"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,15 +24,15 @@
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "dsh": {
+  "lasmex": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-ui-layout"
+        "lasmex-client-connection",
+        "lasmex-client-locale",
+        "lasmex-client-runtime",
+        "lasmex-client-ui-settings",
+        "lasmex-api-remotes",
+        "lasmex-client-ui-layout"
       ],
       "platform": "web"
     }
@@ -48,61 +43,61 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-settings": "workspace:^",
+    "lasmex-settings": "workspace:^",
     "clsx": "^2.0.0",
     "@deepseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-attachment": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm-retry": "workspace:^",
-    "@deepseek-ai/dsh-session-stats": "workspace:^",
-    "@deepseek-ai/dsh-token-meter": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-attachment": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-client-connection": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-ui-attachment": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-settings": "workspace:^",
+    "lasmex-client-ui-input-trigger": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm-retry": "workspace:^",
+    "lasmex-session-stats": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-layout": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-attachment": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-compaction": "workspace:^",
-    "@deepseek-ai/dsh-goal": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm-retry": "workspace:^",
-    "@deepseek-ai/dsh-permission-presets": "workspace:^",
-    "@deepseek-ai/dsh-plan-mode": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-session-stats": "workspace:^",
-    "@deepseek-ai/dsh-token-meter": "workspace:^",
-    "@deepseek-ai/dsh-tool-todo": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
+    "lasmex-agent": "workspace:^",
+    "lasmex-api-remotes": "workspace:^",
+    "lasmex-attachment": "workspace:^",
+    "lasmex-brand": "workspace:^",
+    "lasmex-client-connection": "workspace:^",
+    "lasmex-client-locale": "workspace:^",
+    "lasmex-client-runtime": "workspace:^",
+    "lasmex-client-test-runtime": "workspace:^",
+    "lasmex-client-ui-layout": "workspace:^",
+    "lasmex-client-ui-attachment": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-settings": "workspace:^",
+    "lasmex-client-ui-input-trigger": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-commands": "workspace:^",
+    "lasmex-compaction": "workspace:^",
+    "lasmex-goal": "workspace:^",
+    "lasmex-invariants": "workspace:^",
+    "lasmex-llm-retry": "workspace:^",
+    "lasmex-permission-presets": "workspace:^",
+    "lasmex-plan-mode": "workspace:^",
+    "lasmex-session-projection": "workspace:^",
+    "lasmex-session-stats": "workspace:^",
+    "lasmex-token-meter": "workspace:^",
+    "lasmex-tool-todo": "workspace:^",
+    "lasmex-tools": "workspace:^",
     "@types/react": "~18.3.1",
     "react": "^18.2.0"
   },
@@ -111,5 +106,14 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "packages/client/ui-conversation"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
+  }
 }

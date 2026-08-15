@@ -1,5 +1,5 @@
 /**
- * User patch-layer behavior of `dsh-app-boot`: the optional patch-list loader
+ * User patch-layer behavior of `lasmex-app-boot`: the optional patch-list loader
  * (a profile's `cordis.patch.yml`) and `boot()` applying the user layer over
  * a real Loader tree, kept live through transactional HMR.
  */
@@ -37,7 +37,7 @@ const settleChokidarChangeThrottle = (): Promise<void> => new Promise(resolve =>
 
 describe('loadOptionalPatches', () => {
   afterEach(() => {
-    delete process.env.DSH_HOME
+    delete process.env.LASMEX_HOME
   })
 
   it('returns undefined when no user patch file exists', () => {
@@ -48,12 +48,12 @@ describe('loadOptionalPatches', () => {
     const dir = tmp()
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), [
       '- id: agent-loop',
-      "  name: '@deepseek-ai/dsh-agent-loop'",
+      "  name: 'lasmex-agent-loop'",
       '  config:',
       '    model: !!js process.env.DSH_SPEC_MODEL',
       '- insert:',
       '    - id: llm',
-      "      name: '@deepseek-ai/dsh-llm-pi-ai'",
+      "      name: 'lasmex-llm-pi-ai'",
       '',
     ].join('\n'))
     const patches = loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME))
@@ -69,27 +69,27 @@ describe('loadOptionalPatches', () => {
     const dir = tmp()
     mkdirSync(join(dir, PROFILE_PATCH_FILENAME)) // a directory: present, unreadable as a file
     expect(() => loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME)))
-      .toThrow(new RegExp(`^${NAME}: failed to read patches `))
+      .toThrow(new RegExp(`^${NAME} : lecture impossible des correctifs `))
   })
 
   it('fails loud on unparsable YAML and on a !!js tag with no expression body', () => {
     const dir = tmp()
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), 'invalid: [unclosed\n')
     expect(() => loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME)))
-      .toThrow(new RegExp(`^${NAME}: failed to parse patches `))
+      .toThrow(new RegExp(`^${NAME} : analyse impossible de correctifs `))
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), '- id: x\n  config:\n    a: !!js\n')
     expect(() => loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME)))
-      .toThrow(new RegExp(`^${NAME}: failed to parse patches `))
+      .toThrow(new RegExp(`^${NAME} : analyse impossible de correctifs `))
   })
 
   it('fails loud when the file is not a top-level array or an entry is not an object', () => {
     const dir = tmp()
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), 'id: not-a-list\n')
     expect(() => loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME)))
-      .toThrow('must be a top-level YAML array of loader patch entries')
+      .toThrow("doit être un tableau YAML racine d'entrées de correctif du chargeur")
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), '- just-a-string\n')
     expect(() => loadOptionalPatches(NAME, join(dir, PROFILE_PATCH_FILENAME)))
-      .toThrow(`${NAME}: patches entry 1 in`)
+      .toThrow(`${NAME} : l'entrée 1 de correctifs dans`)
   })
 })
 
@@ -374,7 +374,7 @@ describe('boot with user patches', () => {
   it('fails loud when the exact watcher lacks HMR or a root Include', async () => {
     const dir = tmp()
     const withoutHmr = await boot(NAME, writeTree(dir))
-    await expect(watchUserPatches(withoutHmr, { binName: NAME, filename: join(tmp(), PROFILE_PATCH_FILENAME) })).rejects.toThrow('requires the Cordis HMR service')
+    await expect(watchUserPatches(withoutHmr, { binName: NAME, filename: join(tmp(), PROFILE_PATCH_FILENAME) })).rejects.toThrow('nécessite le service HMR de Cordis')
     await withoutHmr.fiber.dispose()
 
     const withoutInclude = new Context()
@@ -382,7 +382,7 @@ describe('boot with user patches', () => {
     await withoutInclude.plugin(Loader)
     await withoutInclude.plugin(Timer)
     await withoutInclude.plugin(Hmr, { root: [], ignored: [], debounce: 0 })
-    await expect(watchUserPatches(withoutInclude, { binName: NAME, filename: join(tmp(), PROFILE_PATCH_FILENAME) })).rejects.toThrow('requires the root Include entry')
+    await expect(watchUserPatches(withoutInclude, { binName: NAME, filename: join(tmp(), PROFILE_PATCH_FILENAME) })).rejects.toThrow("nécessite l'entrée Include racine")
     await withoutInclude.fiber.dispose()
   })
 

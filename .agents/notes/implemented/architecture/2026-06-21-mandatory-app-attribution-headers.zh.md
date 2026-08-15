@@ -28,13 +28,13 @@ LLM（大语言模型）提供方请求应当标识发出请求的产品。这�
 
 OpenRouter 应用归属刻意未实现。`HTTP-Referer`、`X-OpenRouter-Title`、`X-Title` 和 `X-OpenRouter-Categories` 是 OpenRouter 特有的产品展示头部，不是提供方无关的模型请求归属。它们可以后续由 OpenRouter 适配器或显式 OpenRouter 模式提出，附带自己的隐私/产品决策、测试和文档。在此之前，即使请求指向 OpenRouter，也只发送本决策定义的共享 `User-Agent` 归属。
 
-提供方无关的身份由 `dsh-llm`（`packages/llm/llm/src/attribution.ts`）拥有，而非各适配器。`AppIdentity` 仅包含构建 `User-Agent` 所需的公开产品事实，默认的 `APP_IDENTITY` 取值如下：
+提供方无关的身份由 `lasmex-llm`（`packages/llm/llm/src/attribution.ts`）拥有，而非各适配器。[LasmeX 产品基础决策](../feature/2026-08-14-lasmex-product-foundation.md)负责公开产品身份。`AppIdentity` 仅包含构建 `User-Agent` 所需的公开产品事实，默认的 `APP_IDENTITY` 取值如下：
 
-- `User-Agent` 的产品 token：`deepseek-harness`（与 Agent Note 之前的线路值及仓库/组织身份保持连续性）
+- `User-Agent` 的产品 token：`lasmex`
 - 版本：通过 `createRequire` 从所属包的 manifest（元数据清单）读取，绝不手动复制常量
-- 应用 URL：`https://github.com/deepseek-ai/deepseek-harness`——仓库主页
+- 应用 URL：`https://github.com/lasme-ephrem/LasmeX`，即官方公开 fork
 
-默认值是强制的且非空。白标部署通过向 `attributionHeaders(identity)` 传入自己的 `AppIdentity` 来覆盖——覆盖钩子就是函数参数，在有消费方需要之前不做部署配置管道——省略时回退到 harness 默认值而非抑制归属。没有逐请求 API 允许模型、用户提示词、会话 id、cwd、用户邮箱、API key 所有者或本地机器身份影响这些字段。
+默认产品名和版本是强制的且非空。URL 如有提供，必须是真实的公开产品主页，而不是实现来源或上游仓库。白标部署通过向 `attributionHeaders(identity)` 传入自己的 `AppIdentity` 来覆盖——覆盖钩子就是函数参数，在有消费方需要之前不做部署配置管道——省略时回退到 LasmeX 产品名和版本，而非抑制归属。没有逐请求 API 允许模型、用户提示词、会话 id、cwd、用户邮箱、API key 所有者或本地机器身份影响这些字段。
 
 线路映射（`attributionHeaders`；代码中头部名称小写——HTTP 字段名在线路上不区分大小写）：
 
@@ -51,10 +51,10 @@ OpenRouter 应用归属刻意未实现。`HTTP-Referer`、`X-OpenRouter-Title`�
 
 已落地的约定：
 
-- `dsh-llm` 为 `LlmAdapter` 作者文档化了强制的 `User-Agent` 归属约定（`LlmAdapter` JSDoc、包 README，以及 `docs/subsystems/llm-streaming.md` 的适配器约定（adapter contract）章节）。
+- `lasmex-llm` 为 `LlmAdapter` 作者文档化了强制的 `User-Agent` 归属约定（`LlmAdapter` JSDoc、包 README，以及 `docs/subsystems/llm-streaming.md` 的适配器约定（adapter contract）章节）。
 - 共享辅助函数（`attributionHeaders` / `userAgent`）从包元数据构建应用身份和标准 `User-Agent` 值，适配器无需手动复制版本常量。
-- `dsh-llm-deepseek` 在每个请求上发送共享的 `User-Agent`，其 mock 服务器套件断言精确值。
-- `dsh-llm-pi-ai` 通过 pi-ai 的 `StreamOptions.headers` 钩子发送相同的 `User-Agent`，其 mock 服务器套件断言精确值。
+- `lasmex-llm-deepseek` 在每个请求上发送共享的 `User-Agent`，其 mock 服务器套件断言精确值。
+- `lasmex-llm-pi-ai` 通过 pi-ai 的 `StreamOptions.headers` 钩子发送相同的 `User-Agent`，其 mock 服务器套件断言精确值。
 - 本决策下没有适配器发送 OpenRouter 特有的归属头部（`HTTP-Referer`、`X-OpenRouter-Title`、`X-Title`、`X-OpenRouter-Categories`）。
 - 没有应用归属字段携带机密、本地路径、会话 id、提示词文本、模型输出、用户邮箱或逐用户的稳定标识符。
 - 适配器 README 声明了 `User-Agent` 归属策略，并明确避免将 OpenRouter 应用归属记录为已实现的行为。
@@ -71,11 +71,11 @@ OpenRouter 应用归属刻意未实现。`HTTP-Referer`、`X-OpenRouter-Title`�
 
 **仅配置启用的归属。** 否决。默认关闭的设置正是适配器不断漂移的原因。策略是强制默认归属加可覆盖的公开值，而非可选归属。
 
-**以 SDK 命名的 token（`deepseek-harness-sdk`）。** 曾考虑用于 `User-Agent` token，因为受支持的运行时客户端栈使用 SDK 名称。`deepseek-harness` 胜出，因为它命名 DeepSeek Harness 产品、与组织／仓库身份和包 scope 一致，并且在不把完整产品称为 SDK 的前提下保持线路归属稳定。
+**以源实现命名的 token（`deepseek-harness`）。** LasmeX 否决此方案，因为它标识的是上游实现，而不是发出请求的产品。DeepSeek 提供方特有的请求身份字段保持不变，因为它们遵循另一项提供方约定。
 
 ## 后果
 
-**提供方看到流量来自 harness。** 这正是目的，但意味着此前混在通用 SDK 流量中的部署变得可识别。缓解措施：仅发送静态公开产品数据，并允许 fork/白标部署传入自己的 `AppIdentity`。
+**提供方看到流量来自 LasmeX。** 这正是目的，但意味着此前混在通用 SDK 流量中的部署变得可识别。缓解措施：仅发送静态公开产品数据，并允许 fork/白标部署传入自己的 `AppIdentity`。
 
 **不同客户端库的头部支持有差异。** 手写适配器直接设置头部；基于 pi-ai 的适配器依赖 pi-ai 继续尊重 `StreamOptions.headers`（最后合并覆盖提供方默认值）。线路级 mock 服务器测试是守卫：如果 pi-ai 升级后不再投递该头部，套件会变红。这对抽象施加了有益的压力：一个无法设置强制头部的提供方适配器不能完整实现 harness 的 LLM 约定。
 

@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-07-19-zstandard-jsonl-session-logs.md
-2026-07-19-zstandard-jsonl-session-logs.md: 93fc20f931c75552352834b9340e7d38680d4254
-2026-07-19-zstandard-jsonl-session-logs.zh.md: 48dde6018bc022c90735ca351207be46cd0956a2
+2026-07-19-zstandard-jsonl-session-logs.md: 0fefe8cbc7e180653aa1ac8d56feb3d9afbfa8bd
+2026-07-19-zstandard-jsonl-session-logs.zh.md: 8a4c4548538106530193dcc07a0333c711101316

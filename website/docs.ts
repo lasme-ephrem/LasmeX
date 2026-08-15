@@ -2,16 +2,19 @@
  * Canonical publication manifest for the documentation website.
  *
  * Markdown stays in its owning repository tier. This manifest maps each
- * canonical source into matching route trees for both site locales; when a
- * translation is absent, both routes intentionally project the available
- * source instead of copying Markdown.
+ * canonical source into matching route trees for the French, English, and
+ * Chinese site locales. French routes use reviewed `.fr.md` sources when
+ * available and otherwise identify their English fallback explicitly.
  */
 
 /** Locale key used by the VitePress site. */
-export type DocsLocale = 'root' | 'en'
+export type DocsLocale = 'root' | 'en' | 'zh'
 
 /** Sidebar collection rendered for one locale and top-level module. */
 export type DocsSidebar =
+  | 'fr-guide'
+  | 'fr-develop'
+  | 'fr-reference'
   | 'zh-guide'
   | 'zh-develop'
   | 'zh-reference'
@@ -24,7 +27,7 @@ export interface DocsPage {
   /** VitePress locale whose route tree owns this projection. */
   locale: DocsLocale
   /** Language of the canonical source currently projected at this route. */
-  contentLocale: 'zh-CN' | 'en-US'
+  contentLocale: 'fr-FR' | 'zh-CN' | 'en-US'
   /** Repository-relative canonical Markdown source. */
   source: string
   /** VitePress route, including the `.md` suffix. */
@@ -55,11 +58,138 @@ interface MirroredPage {
   sourceAliases?: string[] | Partial<Record<DocsLocale, string[]>>
 }
 
-type PairedPage = Omit<MirroredPage, 'source' | 'contentLocale' | 'sourceAliases'> & {
+/** Existing manifest copy: Chinese and English labels from the paired sources. */
+type BilingualCopy<T> = Record<'root' | 'en', T>
+
+type PairedPage = Omit<MirroredPage, 'source' | 'contentLocale' | 'label' | 'sidebar' | 'section' | 'sourceAliases'> & {
   /** English side of a sibling `foo.md` / `foo.zh.md` pair. */
   source: string
+  /** Reviewed Chinese and English navigation labels. */
+  label: BilingualCopy<string>
+  /** Chinese and English sidebar collections. */
+  sidebar: BilingualCopy<DocsSidebar | null>
+  /** Reviewed Chinese and English section labels. */
+  section: BilingualCopy<string>
   /** Language-neutral repository aliases, such as the directory of an index page. */
   sourceAliases?: string[]
+}
+
+type ReviewedFrenchPage = PairedPage & {
+  /** Reviewed French source projected at the root-locale route. */
+  frenchSource: string
+}
+
+/** Source without a Chinese counterpart; Chinese falls back to English. */
+type FallbackPage = PairedPage & {
+  contentLocale: DocsPage['contentLocale']
+}
+
+/** French navigation copy keyed by the existing English manifest labels. */
+const FRENCH_COPY: Readonly<Record<string, string>> = {
+  '1. Your first plugin': '1. Votre premier plugin',
+  '2. Lifecycle and effects': '2. Cycle de vie et effets',
+  '3. Services': '3. Services',
+  '4. Events': '4. Événements',
+  '5. Configuration': '5. Configuration',
+  '6. Composition and HMR': '6. Composition et HMR',
+  '7. Into the harness': '7. Intégration au harness',
+  'Adding a Conversation Node': 'Ajouter un nœud de conversation',
+  'Adding a package': 'Ajouter un package',
+  'Adding a tool': 'Ajouter un outil',
+  'Adding an LLM adapter': 'Ajouter un adaptateur LLM',
+  'Agent lifecycle': 'Cycle de vie de l’agent',
+  'Approvals': 'Approbations',
+  'Architecture': 'Architecture',
+  'Background jobs': 'Tâches en arrière-plan',
+  'Bash execution': 'Exécution Bash',
+  'Basics': 'Fondamentaux',
+  'Build a tool': 'Créer un outil',
+  'Capability layering': 'Découpage des capacités',
+  'Capability services': 'Services de capacités',
+  'Client modules': 'Modules client',
+  'Code runtime': 'Runtime de code',
+  'Compaction': 'Compression',
+  'Concepts': 'Concepts',
+  'Configure models': 'Configurer les modèles',
+  'Context': 'Contexte',
+  'Cookbook': 'Guides pratiques',
+  'Cordis Core API': 'API principale de Cordis',
+  'Cordis framework tutorial': 'Tutoriel du framework Cordis',
+  'Cordis primer': 'Introduction à Cordis',
+  'Core': 'Noyau',
+  'Core and scopes': 'Noyau et portées',
+  'Event system': 'Système d’événements',
+  'Events': 'Événements',
+  'Execution and tools': 'Exécution et outils',
+  'Extension patterns': 'Modèles d’extension',
+  'Fiber': 'Fiber',
+  'Filesystem': 'Système de fichiers',
+  'Framework': 'Framework',
+  'Generated reference': 'Référence générée',
+  'Goals': 'Objectifs',
+  'Guide': 'Guide',
+  'HTTP server': 'Serveur HTTP',
+  'Home': 'Accueil',
+  'Human commands': 'Commandes utilisateur',
+  'Inherited surface': 'Surface héritée',
+  'LLM adapter': 'Adaptateur LLM',
+  'LLM streaming': 'Streaming LLM',
+  'LSP navigation': 'Navigation LSP',
+  'Model and context': 'Modèles et contexte',
+  'Overview': 'Vue d’ensemble',
+  'PTY sessions': 'Sessions PTY',
+  'Package and install': 'Empaqueter et installer',
+  'Permission presets': 'Préréglages de permissions',
+  'Persistence events': 'Événements de persistance',
+  'Plan mode': 'Mode Plan',
+  'Platform and access': 'Plateforme et accès',
+  'Plugin Registry': 'Registre des plugins',
+  'Plugin configuration': 'Configuration des plugins',
+  'Plugin lifecycle': 'Cycle de vie des plugins',
+  'Policy and interaction': 'Politiques et interaction',
+  'Practice': 'Mise en pratique',
+  'Python': 'Python',
+  'Runtime invariants': 'Invariants du runtime',
+  'SDK': 'SDK',
+  'Sandboxing': 'Bac à sable',
+  'Scheduled reminders': 'Rappels planifiés',
+  'Scopes': 'Portées',
+  'Service': 'Service',
+  'Services and dependencies': 'Services et dépendances',
+  'Session persistence': 'Persistance des sessions',
+  'Session projections': 'Projections de session',
+  'Session query': 'Requêtes de session',
+  'Session references': 'Références de session',
+  'Session titles': 'Titres de session',
+  'SessionTelemetryBackend': 'SessionTelemetryBackend',
+  'Sessions': 'Sessions',
+  'Sessions and persistence': 'Sessions et persistance',
+  'Skills': 'Compétences',
+  'Spill storage': 'Stockage spill',
+  'Storage': 'Stockage',
+  'Subagents': 'Sous-agents',
+  'Subprocesses': 'Sous-processus',
+  'Subsystems': 'Sous-systèmes',
+  'System prompts': 'Prompts système',
+  'Token metering': 'Mesure des tokens',
+  'Tool execution': 'Exécution des outils',
+  'Tool schemas': 'Schémas des outils',
+  'Tools': 'Outils',
+  'Typert': 'Typert',
+  'Use the Web UI': 'Utiliser l’interface Web',
+  'User credentials': 'Identifiants utilisateur',
+  'User interaction': 'Interaction utilisateur',
+  'User settings': 'Paramètres utilisateur',
+  'Web access': 'Accès Web',
+  'Workflows': 'Workflows',
+  'Workspaces': 'Espaces de travail',
+  'Your first Harness plugin': 'Votre premier plugin de harness',
+}
+
+function frenchCopy(english: string): string {
+  const translated = FRENCH_COPY[english]
+  if (translated === undefined) throw new Error(`French documentation navigation copy is missing for ${JSON.stringify(english)}.`)
+  return translated
 }
 
 function localized<T>(value: T | Record<DocsLocale, T>, locale: DocsLocale): T {
@@ -69,7 +199,7 @@ function localized<T>(value: T | Record<DocsLocale, T>, locale: DocsLocale): T {
 }
 
 function mirroredPages(pages: MirroredPage[]): DocsPage[] {
-  return pages.flatMap(page => (['root', 'en'] as const).map((locale) => {
+  return pages.flatMap(page => (['root', 'en', 'zh'] as const).map((locale) => {
     const aliases = page.sourceAliases === undefined
       ? undefined
       : Array.isArray(page.sourceAliases) ? page.sourceAliases : page.sourceAliases[locale]
@@ -77,7 +207,7 @@ function mirroredPages(pages: MirroredPage[]): DocsPage[] {
       locale,
       contentLocale: localized(page.contentLocale, locale),
       source: localized(page.source, locale),
-      route: locale === 'root' ? page.route : `en/${page.route}`,
+      route: locale === 'root' ? page.route : `${locale}/${page.route}`,
       label: page.label[locale],
       sidebar: page.sidebar[locale],
       section: page.section[locale],
@@ -88,57 +218,200 @@ function mirroredPages(pages: MirroredPage[]): DocsPage[] {
   }))
 }
 
+function frenchSidebar(sidebar: DocsSidebar | null): DocsSidebar | null {
+  if (sidebar === null) return null
+  if (!sidebar.startsWith('en-')) throw new Error(`French sidebar cannot derive from ${JSON.stringify(sidebar)}.`)
+  return `fr-${sidebar.slice(3)}` as DocsSidebar
+}
+
 function pairedPages(pages: PairedPage[]): DocsPage[] {
-  return mirroredPages(pages.map((page) => {
+  return pages.flatMap((page) => {
+    if (REVIEWED_FRENCH_SOURCES.has(page.source)) {
+      return reviewedFrenchPages([{ ...page, frenchSource: page.source.replace(/\.md$/, '.fr.md') }])
+    }
+
+    const chineseSource = page.source.replace(/\.md$/, '.zh.md')
+    const sharedAliases = page.sourceAliases ?? []
+    return mirroredPages([{
+      ...page,
+      source: { root: page.source, en: page.source, zh: chineseSource },
+      contentLocale: { root: 'en-US', en: 'en-US', zh: 'zh-CN' },
+      label: { root: frenchCopy(page.label.en), en: page.label.en, zh: page.label.root },
+      sidebar: { root: frenchSidebar(page.sidebar.en), en: page.sidebar.en, zh: page.sidebar.root },
+      section: { root: frenchCopy(page.section.en), en: page.section.en, zh: page.section.root },
+      sourceAliases: {
+        root: [...sharedAliases, chineseSource],
+        en: [...sharedAliases, chineseSource],
+        zh: [...sharedAliases, page.source],
+      },
+    }])
+  })
+}
+
+/** English sources whose root routes have completed French editorial review. */
+const REVIEWED_FRENCH_SOURCES = new Set([
+  'docs/agent-lifecycle.md',
+  'docs/architecture.md',
+  'docs/cookbook/adding-a-conversation-node.md',
+  'docs/cookbook/adding-a-package.md',
+  'docs/cookbook/adding-a-tool.md',
+  'docs/cookbook/adding-an-llm-adapter.md',
+  'docs/cookbook/extension-cookbook.md',
+  'docs/config-catalog.md',
+  'docs/cordis-primer.md',
+  'docs/cordis-api/context.md',
+  'docs/cordis-api/events.md',
+  'docs/cordis-api/fiber.md',
+  'docs/cordis-api/registry.md',
+  'docs/cordis-api/service.md',
+  'docs/cordis-tutorial/05-config.md',
+  'docs/cordis-tutorial/06-composition-and-hmr.md',
+  'docs/cordis-tutorial/07-into-the-harness.md',
+  'docs/cordis-tutorial/01-first-plugin.md',
+  'docs/cordis-tutorial/02-lifecycle-and-effects.md',
+  'docs/cordis-tutorial/03-services.md',
+  'docs/cordis-tutorial/04-events.md',
+  'docs/cordis-tutorial/index.md',
+  'docs/persistence-catalog.md',
+  'docs/subsystems/README.md',
+  'docs/subsystems/approval.md',
+  'docs/subsystems/client-modules.md',
+  'docs/subsystems/code-runtime.md',
+  'docs/subsystems/commands.md',
+  'docs/subsystems/compaction.md',
+  'docs/subsystems/core.md',
+  'docs/subsystems/filesystem.md',
+  'docs/subsystems/invariants.md',
+  'docs/subsystems/jobs.md',
+  'docs/subsystems/credentials.md',
+  'docs/subsystems/llm-streaming.md',
+  'docs/subsystems/lsp.md',
+  'docs/subsystems/goal.md',
+  'docs/subsystems/permission-presets.md',
+  'docs/subsystems/persistence.md',
+  'docs/subsystems/sandbox.md',
+  'docs/subsystems/schedule.md',
+  'docs/subsystems/plan.md',
+  'docs/subsystems/scope.md',
+  'docs/subsystems/session-projection.md',
+  'docs/subsystems/session-reference.md',
+  'docs/subsystems/session-telemetry.md',
+  'docs/subsystems/session-title.md',
+  'docs/subsystems/settings.md',
+  'docs/subsystems/skills.md',
+  'docs/subsystems/spill.md',
+  'docs/subsystems/storage.md',
+  'docs/subsystems/shell.md',
+  'docs/subsystems/subprocess.md',
+  'docs/subsystems/system-prompt.md',
+  'docs/subsystems/token-meter.md',
+  'docs/subsystems/terminal.md',
+  'docs/subsystems/tools.md',
+  'docs/subsystems/typert.md',
+  'docs/subsystems/user-questions.md',
+  'docs/subsystems/web-server.md',
+  'docs/subsystems/web.md',
+  'docs/subsystems/workflow.md',
+  'docs/subsystems/workspace.md',
+  'docs/tool-catalog.md',
+  'docs/tool-execution-pipeline.md',
+  'docs/user/develop/basic/config.md',
+  'docs/user/develop/basic/index.md',
+  'docs/user/develop/basic/publish.md',
+  'docs/user/develop/basic/tool.md',
+  'docs/user/develop/framework/events.md',
+  'docs/user/develop/framework/index.md',
+  'docs/user/develop/framework/service.md',
+  'docs/user/develop/practice/index.md',
+  'docs/user/develop/practice/llm-adapter.md',
+])
+
+function reviewedFrenchPages(pages: ReviewedFrenchPage[]): DocsPage[] {
+  return mirroredPages(pages.map(({ frenchSource, ...page }) => {
     const chineseSource = page.source.replace(/\.md$/, '.zh.md')
     const sharedAliases = page.sourceAliases ?? []
     return {
       ...page,
-      source: { root: chineseSource, en: page.source },
-      contentLocale: { root: 'zh-CN', en: 'en-US' },
+      source: { root: frenchSource, en: page.source, zh: chineseSource },
+      contentLocale: { root: 'fr-FR', en: 'en-US', zh: 'zh-CN' },
+      label: { root: frenchCopy(page.label.en), en: page.label.en, zh: page.label.root },
+      sidebar: { root: frenchSidebar(page.sidebar.en), en: page.sidebar.en, zh: page.sidebar.root },
+      section: { root: frenchCopy(page.section.en), en: page.section.en, zh: page.section.root },
       sourceAliases: {
-        root: [...sharedAliases, page.source],
-        en: [...sharedAliases, chineseSource],
+        root: [...sharedAliases, page.source, chineseSource],
+        en: [...sharedAliases, chineseSource, frenchSource],
+        zh: [...sharedAliases, page.source, frenchSource],
       },
     }
   }))
 }
 
-const homeAndGuide = pairedPages([
-  {
-    source: 'docs/user/index.md',
+function fallbackPages(pages: FallbackPage[]): DocsPage[] {
+  return mirroredPages(pages.map((page) => {
+    const frenchSource = page.source.replace(/\.md$/, '.fr.md')
+    const sharedAliases = page.sourceAliases ?? []
+    return {
+      ...page,
+      source: { root: frenchSource, en: page.source, zh: page.source },
+      contentLocale: { root: 'fr-FR', en: page.contentLocale, zh: page.contentLocale },
+      label: { root: frenchCopy(page.label.en), en: page.label.en, zh: page.label.root },
+      sidebar: { root: frenchSidebar(page.sidebar.en), en: page.sidebar.en, zh: page.sidebar.root },
+      section: { root: frenchCopy(page.section.en), en: page.section.en, zh: page.section.root },
+      sourceAliases: {
+        root: [...sharedAliases, page.source],
+        en: [...sharedAliases, frenchSource],
+        zh: [...sharedAliases, frenchSource],
+      },
+    }
+  }))
+}
+
+const homeAndGuide = [
+  ...mirroredPages([{
+    source: { root: 'docs/user/index.fr.md', en: 'docs/user/index.md', zh: 'docs/user/index.zh.md' },
     route: 'index.md',
-    label: { root: 'DeepSeek Harness', en: 'DeepSeek Harness' },
-    sidebar: { root: null, en: null },
-    section: { root: '首页', en: 'Home' },
+    contentLocale: { root: 'fr-FR', en: 'en-US', zh: 'zh-CN' },
+    label: { root: 'LasmeX', en: 'LasmeX', zh: 'LasmeX' },
+    sidebar: { root: null, en: null, zh: null },
+    section: { root: 'Accueil', en: 'Home', zh: '首页' },
     order: 0,
-  },
-  {
-    source: 'docs/user/guide/index.md',
-    route: 'guide/quickstart.md',
-    label: { root: '使用 Web UI', en: 'Use the Web UI' },
-    sidebar: { root: 'zh-guide', en: 'en-guide' },
-    section: { root: '入门', en: 'Guide' },
-    order: 1,
-    sourceAliases: ['docs/user/guide'],
-  },
-  {
-    source: 'docs/user/guide/providers.md',
-    route: 'guide/providers.md',
-    label: { root: '配置模型', en: 'Configure models' },
-    sidebar: { root: 'zh-guide', en: 'en-guide' },
-    section: { root: '入门', en: 'Guide' },
-    order: 2,
-  },
-  {
-    source: 'docs/user/guide/python-sdk.md',
-    route: 'guide/python-sdk.md',
-    label: { root: 'Python', en: 'Python' },
-    sidebar: { root: 'zh-guide', en: 'en-guide' },
-    section: { root: 'SDK', en: 'SDK' },
-    order: 1,
-  },
-])
+    sourceAliases: {
+      root: ['docs/user/index.md', 'docs/user/index.zh.md'],
+      en: ['docs/user/index.zh.md', 'docs/user/index.fr.md'],
+      zh: ['docs/user/index.md', 'docs/user/index.fr.md'],
+    },
+  }]),
+  ...reviewedFrenchPages([
+    {
+      source: 'docs/user/guide/index.md',
+      frenchSource: 'docs/user/guide/index.fr.md',
+      route: 'guide/quickstart.md',
+      label: { root: '使用 Web UI', en: 'Use the Web UI' },
+      sidebar: { root: 'zh-guide', en: 'en-guide' },
+      section: { root: '入门', en: 'Guide' },
+      order: 1,
+      sourceAliases: ['docs/user/guide'],
+    },
+    {
+      source: 'docs/user/guide/providers.md',
+      frenchSource: 'docs/user/guide/providers.fr.md',
+      route: 'guide/providers.md',
+      label: { root: '配置模型', en: 'Configure models' },
+      sidebar: { root: 'zh-guide', en: 'en-guide' },
+      section: { root: '入门', en: 'Guide' },
+      order: 2,
+    },
+    {
+      source: 'docs/user/guide/python-sdk.md',
+      frenchSource: 'docs/user/guide/python-sdk.fr.md',
+      route: 'guide/python-sdk.md',
+      label: { root: 'Python', en: 'Python' },
+      sidebar: { root: 'zh-guide', en: 'en-guide' },
+      section: { root: 'SDK', en: 'SDK' },
+      order: 1,
+    },
+  ]),
+]
 
 const develop = pairedPages([
   {
@@ -377,9 +650,9 @@ const reference = [
     section: { root: 'Cordis API', en: 'Cordis Core API' },
     order,
   }))),
-  ...mirroredPages(([
+  ...fallbackPages(([
     ['inherited.md', '继承接口面', 'Inherited surface'],
-  ] as const).map(([file, rootLabel, enLabel], order): MirroredPage => ({
+  ] as const).map(([file, rootLabel, enLabel], order): FallbackPage => ({
     source: `docs/cordis-api/${file}`,
     route: `reference/cordis-api/${file}`,
     contentLocale: 'en-US',
@@ -427,16 +700,16 @@ export interface DocsSection {
  */
 const sections: Record<DocsLocale, readonly DocsSection[]> = {
   root: [
-    { label: '入门' }, { label: 'SDK' },
-    { label: '基础' }, { label: '框架能力' }, { label: '实战' }, { label: 'Cordis 框架教程' },
-    { label: '概念' }, { label: '生成参考' }, { label: 'Cordis API' }, { label: '开发手册' },
-    { label: '总览' },
-    { label: '内核与作用域', collapsed: true },
-    { label: '会话与持久化', collapsed: true },
-    { label: '模型与上下文', collapsed: true },
-    { label: '执行与工具', collapsed: true },
-    { label: '策略与交互', collapsed: true },
-    { label: '平台与接入', collapsed: true },
+    { label: 'Guide' }, { label: 'SDK' },
+    { label: 'Fondamentaux' }, { label: 'Framework' }, { label: 'Mise en pratique' }, { label: 'Tutoriel du framework Cordis' },
+    { label: 'Concepts' }, { label: 'Référence générée' }, { label: 'API principale de Cordis' }, { label: 'Guides pratiques' },
+    { label: 'Vue d’ensemble' },
+    { label: 'Noyau et portées', collapsed: true },
+    { label: 'Sessions et persistance', collapsed: true },
+    { label: 'Modèles et contexte', collapsed: true },
+    { label: 'Exécution et outils', collapsed: true },
+    { label: 'Politiques et interaction', collapsed: true },
+    { label: 'Plateforme et accès', collapsed: true },
   ],
   en: [
     { label: 'Guide' }, { label: 'SDK' },
@@ -449,6 +722,18 @@ const sections: Record<DocsLocale, readonly DocsSection[]> = {
     { label: 'Execution and tools', collapsed: true },
     { label: 'Policy and interaction', collapsed: true },
     { label: 'Platform and access', collapsed: true },
+  ],
+  zh: [
+    { label: '入门' }, { label: 'SDK' },
+    { label: '基础' }, { label: '框架能力' }, { label: '实战' }, { label: 'Cordis 框架教程' },
+    { label: '概念' }, { label: '生成参考' }, { label: 'Cordis API' }, { label: '开发手册' },
+    { label: '总览' },
+    { label: '内核与作用域', collapsed: true },
+    { label: '会话与持久化', collapsed: true },
+    { label: '模型与上下文', collapsed: true },
+    { label: '执行与工具', collapsed: true },
+    { label: '策略与交互', collapsed: true },
+    { label: '平台与接入', collapsed: true },
   ],
 }
 

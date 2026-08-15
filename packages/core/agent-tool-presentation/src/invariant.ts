@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-agent-tool-presentation`.
- * @module @deepseek-ai/dsh-agent-tool-presentation/invariant
+ * Package-owned invariant companion for `lasmex-agent-tool-presentation`.
+ * @module lasmex-agent-tool-presentation/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-agent-tool-presentation'
+const PACKAGE_NAME = 'lasmex-agent-tool-presentation'
 
 /** Cordis companion plugin name. */
 export const name = 'tool-presentation-invariant'
@@ -18,7 +18,7 @@ export const inject = ['invariants']
  * No runtime invariant: this package makes exactly one scoped call into
  * `ctx.tools` and owns no event or snapshot of its own; the relation it
  * establishes — which presentation one agent's assembly uses — is the tool
- * registry's to hold, and `dsh-tools` observes it there.
+ * registry's to hold, and `lasmex-tools` observes it there.
  */
 const install: InvariantInstaller = () => {}
 

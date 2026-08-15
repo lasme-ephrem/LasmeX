@@ -1,21 +1,22 @@
 /**
- * Commander adapter for the `dsh` command line.
+ * Commander adapter for the `lasmex` command line.
  *
  * The launcher parses only what it owns — which profile to boot, which extra
  * patch overlays to apply, and the config dumps — and hands **everything after
  * its own flags** to the booted tree verbatim, where injected app plugins parse
  * their own flag families and print their own `--help` (see
- * `@deepseek-ai/dsh-cmdline`). Launcher flags therefore come first: the first
+ * `lasmex-cmdline`). Launcher flags therefore come first: the first
  * token this parser does not recognize starts the inner arguments, so
- * `dsh --profile tui --resume abc` boots the tui profile with `--resume abc`,
- * and `dsh --profile web -h` prints the web app's help, not this one's.
+ * `lasmex --profile tui --resume abc` boots the tui profile with `--resume abc`,
+ * and `lasmex --profile web -h` prints the web app's help, not this one's.
  *
  * `web` is a hardcoded alias for `--profile web`; `plugin` manages a profile's
  * plugin dependencies by forwarding to pnpm.
- * @module @deepseek-ai/dsh/args
+ * @module lasmex/args
  */
 
 import { Command, CommanderError } from 'commander'
+import { configureFrenchCommand } from 'lasmex-cmdline'
 
 /** Boot a named profile and hand it the invocation's inner arguments. */
 interface ProfileInvocation {
@@ -44,8 +45,8 @@ interface PluginInvocation {
   args: string[]
 }
 
-/** The resolved `dsh` invocation. Help, version, and errors exit inside {@link parseDshArgs}. */
-export type DshInvocation = ProfileInvocation | DumpConfigInvocation | PluginInvocation
+/** The resolved LasmeX invocation. Help, version, and errors exit inside {@link parseLasmexArgs}. */
+export type LasmexInvocation = ProfileInvocation | DumpConfigInvocation | PluginInvocation
 
 /** Launcher flags shared by the default command and the `web` alias. */
 interface BootOptions {
@@ -62,13 +63,13 @@ const collect = (value: string, previous: string[] = []): string[] => [...previo
 
 /** The launcher's own help text; each app prints its own. */
 const HELP_EXAMPLES = `
-Examples:
-  dsh --profile web                          boot the web profile (same as: dsh web)
-  dsh --profile headless "run the tests"     answer one task, print the result, and exit
-  dsh --profile tui --patch ./extra.yml      boot a custom profile with one extra overlay
-  dsh --profile tui --resume <session>       arguments after the launcher flags reach the app
-  dsh --profile web --help                   the web app's own flags and help
-  dsh plugin --profile tui add <package>     install a plugin into the tui profile
+Exemples :
+  lasmex --profile web                       lancer le profil Web (identique à lasmex web)
+  lasmex --profile headless "lance les tests" traiter une tâche, afficher le résultat puis quitter
+  lasmex --profile tui --patch ./extra.yml   lancer un profil avec une couche supplémentaire
+  lasmex --profile tui --resume <session>    transmettre les arguments restants à l’application
+  lasmex --profile web --help                afficher l’aide propre à l’application Web
+  lasmex plugin --profile tui add <package>  installer un plugin dans le profil tui
 `
 
 /**
@@ -80,24 +81,24 @@ Examples:
  * @param args - the leftover arguments, in argv order.
  * @returns the resolved invocation.
  */
-function resolveBoot(program: Command, profile: string, options: BootOptions, args: string[]): DshInvocation {
+function resolveBoot(program: Command, profile: string, options: BootOptions, args: string[]): LasmexInvocation {
   const patches = options.patch ?? []
-  if (patches.includes('')) program.error('error: --patch needs a path')
+  if (patches.includes('')) program.error('erreur : --patch exige un chemin')
   if (options.dumpConfig !== true && options.dumpDefaultConfig !== true) {
     return { mode: 'profile', profile, patches, args }
   }
   if (options.dumpConfig === true && options.dumpDefaultConfig === true) {
-    program.error('error: --dump-config and --dump-default-config are mutually exclusive')
+    program.error('erreur : --dump-config et --dump-default-config sont incompatibles')
   }
   // The dump is boot-free: it never runs app command-line providers, so it
   // cannot show what those flags would decide, and printing a tree that differs
   // from the same invocation's boot would mislead.
   if (args.length > 0) {
-    program.error(`error: config dumps take no app arguments, got ${args.map(argument => JSON.stringify(argument)).join(' ')}`)
+    program.error(`erreur : l’affichage de configuration n’accepte aucun argument applicatif ; reçu ${args.map(argument => JSON.stringify(argument)).join(' ')}`)
   }
   const defaultOnly = options.dumpDefaultConfig === true
   if (defaultOnly && patches.length > 0) {
-    program.error('error: --dump-default-config prints the bundle layers and takes no --patch')
+    program.error('erreur : --dump-default-config affiche les couches du profil et n’accepte aucun --patch')
   }
   return { mode: 'dump-config', profile, defaultOnly, patches }
 }
@@ -109,38 +110,38 @@ function resolveBoot(program: Command, profile: string, options: BootOptions, ar
  * @param version - version string printed by `--version`.
  * @returns the resolved invocation.
  */
-export function parseDshArgs(argv: readonly string[], version: string): DshInvocation {
-  let resolved: DshInvocation | undefined
+export function parseLasmexArgs(argv: readonly string[], version: string): LasmexInvocation {
+  let resolved: LasmexInvocation | undefined
   // Annotated, not inferred: the actions below call back into `program`, and an
   // inferred type would be circular through its own chain.
-  const program: Command = new Command()
+  const program: Command = configureFrenchCommand(new Command())
   program
-    .name('dsh')
-    .version(version, '-V, --version', 'output the version number')
-    .description('dsh: boot a DeepSeek Harness profile — an ordered stack of plugin-bundle patch layers under your own overrides.')
+    .name('lasmex')
+    .version(version, '-V, --version', 'afficher le numéro de version')
+    .description('LasmeX : lancer un profil agentique composé de plugins.')
     .addHelpText('after', HELP_EXAMPLES)
     .exitOverride()
     // The launcher's flags come first and end at the first token it does not
     // know; everything from there on belongs to the booted app, including
-    // its -h. `dsh -h` with no profile still prints this help, below.
+    // its -h. `lasmex -h` with no profile still prints this help, below.
     .helpOption(false)
     .allowUnknownOption()
     .passThroughOptions()
     .enablePositionalOptions()
-    .argument('[args...]', 'arguments for the booted profile\'s app (see: dsh --profile <name> --help)')
-    .option('--profile <name>', 'the profile under $DSH_HOME/profiles to boot')
-    .option('--patch <path>', 'extra patch-list overlay applied after the profile layer (repeatable)', collect)
-    .option('--dump-config', 'print the composed profile tree and exit')
-    .option('--dump-default-config', 'print the profile tree without its user layer or --patch overlays and exit')
+    .argument('[args...]', 'arguments transmis à l’application du profil (voir : lasmex --profile <nom> --help)')
+    .option('--profile <name>', 'profil à lancer depuis $LASMEX_HOME/profiles ou ~/.lasmex/profiles')
+    .option('--patch <path>', 'couche de configuration ajoutée après le profil (répétable)', collect)
+    .option('--dump-config', 'afficher la composition effective puis quitter')
+    .option('--dump-default-config', 'afficher la composition sans couche utilisateur ni --patch puis quitter')
     .action((args: string[], options: BootOptions & { profile?: string }) => {
       // With the app owning -h, the launcher's own help is what a bare
-      // `dsh -h` (no profile to hand it to) must print.
+      // `lasmex -h` (no profile to hand it to) must print.
       if (options.profile === undefined) {
         if (args.some(argument => argument === '-h' || argument === '--help')) program.help()
-        program.error('error: --profile <name> is required')
+        program.error('erreur : --profile <nom> est requis')
       }
       const profile = options.profile
-      if (profile === '') program.error('error: --profile needs a name')
+      if (profile === '') program.error('erreur : --profile exige un nom')
       resolved = resolveBoot(program, profile, options, args)
     })
 
@@ -149,34 +150,34 @@ export function parseDshArgs(argv: readonly string[], version: string): DshInvoc
     const parent = program.opts<BootOptions & { profile?: string }>()
     if (parent.profile !== undefined || parent.patch !== undefined
       || parent.dumpConfig !== undefined || parent.dumpDefaultConfig !== undefined) {
-      program.error(`error: ${command} takes none of parent --profile, --patch, --dump-config, or --dump-default-config`)
+      program.error(`erreur : ${command} n’accepte aucune option parente --profile, --patch, --dump-config ou --dump-default-config`)
     }
   }
 
-  const web = program.command('web').description('boot the web profile (alias of --profile web); the web app\'s own flags follow')
+  const web = program.command('web').description('lancer le profil Web (alias de --profile web) ; les options Web suivent')
   web
     .helpOption(false)
     .allowUnknownOption()
     .passThroughOptions()
     .enablePositionalOptions()
-    .argument('[args...]', 'arguments for the web app (see: dsh web --help)')
-    .option('--patch <path>', 'extra patch-list overlay applied after the profile layer (repeatable)', collect)
-    .option('--dump-config', 'print the composed web-profile tree (with the user layer and any --patch) and exit')
-    .option('--dump-default-config', 'print the web profile\'s bundle layers (no user layer) and exit')
+    .argument('[args...]', 'arguments de l’application Web (voir : lasmex web --help)')
+    .option('--patch <path>', 'couche de configuration ajoutée après le profil (répétable)', collect)
+    .option('--dump-config', 'afficher la composition Web effective puis quitter')
+    .option('--dump-default-config', 'afficher les couches Web sans couche utilisateur puis quitter')
     .action((args: string[], options: BootOptions) => {
       rejectParentOptions('web')
       resolved = resolveBoot(web, 'web', options, args)
     })
 
-  const plugin = program.command('plugin').description('manage a profile\'s plugins by forwarding the remaining arguments to pnpm in the profile directory')
+  const plugin = program.command('plugin').description('gérer les plugins d’un profil en transmettant les arguments restants à pnpm')
   plugin
-    .requiredOption('--profile <name>', 'the profile whose plugins to manage (initialized on first use)')
+    .requiredOption('--profile <name>', 'profil à gérer, initialisé lors de la première utilisation')
     .allowUnknownOption()
-    .argument('[args...]', 'pnpm arguments, forwarded verbatim (add <pkg>, remove <pkg>, why <pkg>, ...)')
+    .argument('[args...]', 'arguments pnpm transmis tels quels (add <pkg>, remove <pkg>, why <pkg>, ...)')
     .action((args: string[], options: { profile: string }) => {
       rejectParentOptions('plugin')
-      if (options.profile === '') program.error('error: --profile needs a name')
-      if (args.length === 0) program.error('error: plugin needs pnpm arguments to forward (e.g. add <package>)')
+      if (options.profile === '') program.error('erreur : --profile exige un nom')
+      if (args.length === 0) program.error('erreur : plugin exige des arguments pnpm, par exemple add <package>')
       resolved = { mode: 'plugin', profile: options.profile, args }
     })
 
@@ -186,6 +187,6 @@ export function parseDshArgs(argv: readonly string[], version: string): DshInvoc
     return process.exit(error instanceof CommanderError ? error.exitCode : 1)
   }
   /* v8 ignore next -- an action resolves or Commander throws */
-  if (resolved === undefined) throw new Error('dsh: no invocation resolved')
+  if (resolved === undefined) throw new Error('lasmex : aucune invocation résolue')
   return resolved
 }

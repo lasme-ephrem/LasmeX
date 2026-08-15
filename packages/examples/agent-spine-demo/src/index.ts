@@ -5,37 +5,37 @@
  * deployments still choose the LLM adapter, bash executor, and presentation.
  * The plugin intentionally exposes named exports only because Loader default
  * unwrapping would discard its `Config` schema (see docs/postmortem/0001).
- * @module @deepseek-ai/dsh-agent-spine-demo
+ * @module lasmex-agent-spine-demo
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import Timer from '@deepseek-ai/cordis-plugin-timer'
 import z from '@deepseek-ai/schemastery'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import SessionTitleService, { type Config as SessionTitleConfig } from '@deepseek-ai/dsh-session-title'
-import SystemPrompt, { type Config as SystemPromptConfig } from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { type Config as ToolsConfig } from '@deepseek-ai/dsh-tools'
-import SkillRegistry, { type Config as SkillRegistryConfig } from '@deepseek-ai/dsh-skill'
-import * as SkillFileSystem from '@deepseek-ai/dsh-skill-filesystem'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import GoalService, { type Config as GoalDomainConfig } from '@deepseek-ai/dsh-goal'
-import * as goalSession from '@deepseek-ai/dsh-goal-round-driver'
-import * as toolGoal from '@deepseek-ai/dsh-tool-goal'
-import LocalJobRegistry, { type Config as JobsConfig } from '@deepseek-ai/dsh-jobs-local'
-import InvariantRegistry, { type Config as InvariantConfig } from '@deepseek-ai/dsh-invariants'
-import * as sessionInvariant from '@deepseek-ai/dsh-session/invariant'
-import * as agentInvariant from '@deepseek-ai/dsh-agent/invariant'
-import * as scopeInvariant from '@deepseek-ai/dsh-scope/invariant'
-import * as agentLoopInvariant from '@deepseek-ai/dsh-agent-loop/invariant'
-import * as toolBash from '@deepseek-ai/dsh-tool-bash'
-import * as bashEnv from '@deepseek-ai/dsh-shell-env'
-import * as workspaceContext from '@deepseek-ai/dsh-agent-instructions'
-import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
-import * as toolJobs from '@deepseek-ai/dsh-tool-jobs'
-import AgentLoop, { type Config as AgentLoopConfig } from '@deepseek-ai/dsh-agent-loop'
-import * as llmRetry from '@deepseek-ai/dsh-llm-retry'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import LlmRuntime from 'lasmex-llm'
+import SessionStore from 'lasmex-session'
+import SessionTitleService, { type Config as SessionTitleConfig } from 'lasmex-session-title'
+import SystemPrompt, { type Config as SystemPromptConfig } from 'lasmex-system-prompt'
+import ToolRuntime, { type Config as ToolsConfig } from 'lasmex-tools'
+import SkillRegistry, { type Config as SkillRegistryConfig } from 'lasmex-skill'
+import * as SkillFileSystem from 'lasmex-skill-filesystem'
+import AgentRegistry from 'lasmex-agent'
+import GoalService, { type Config as GoalDomainConfig } from 'lasmex-goal'
+import * as goalSession from 'lasmex-goal-round-driver'
+import * as toolGoal from 'lasmex-tool-goal'
+import LocalJobRegistry, { type Config as JobsConfig } from 'lasmex-jobs-local'
+import InvariantRegistry, { type Config as InvariantConfig } from 'lasmex-invariants'
+import * as sessionInvariant from 'lasmex-session/invariant'
+import * as agentInvariant from 'lasmex-agent/invariant'
+import * as scopeInvariant from 'lasmex-scope/invariant'
+import * as agentLoopInvariant from 'lasmex-agent-loop/invariant'
+import * as toolBash from 'lasmex-tool-bash'
+import * as bashEnv from 'lasmex-shell-env'
+import * as workspaceContext from 'lasmex-agent-instructions'
+import * as toolSkill from 'lasmex-tool-skill'
+import * as toolJobs from 'lasmex-tool-jobs'
+import AgentLoop, { type Config as AgentLoopConfig } from 'lasmex-agent-loop'
+import * as llmRetry from 'lasmex-llm-retry'
+import { resolveLasmexHome } from 'lasmex-home-paths'
 
 export const name = 'agent-spine-demo'
 
@@ -69,11 +69,12 @@ export interface GoalConfig {
 /**
  * Bundle config: each field forwarded verbatim to the child that owns it —
  * `agents` to the agent loop (an app that pre-creates no agents, like the ACP
- * bridge, simply omits it), `includeHarnessIdentity`, `includeRuntimeContext`,
- * `persona`, and `toolOrder` to the system-prompt plugin (the fixed opener,
- * dynamic-context policy, deployment persona, and explicit model-facing tool
- * order), the `tools` object to the tool registry (its presentation `mode`),
- * `dshHome` to bash environment and local skill discovery, `sessionTitle` to
+ * bridge, simply omits it), `includeHarnessIdentity`, `harnessIdentity`,
+ * `includeRuntimeContext`, `persona`, and `toolOrder` to the system-prompt
+ * plugin (the identity switch, product opener, dynamic-context policy,
+ * deployment persona, and explicit model-facing tool order), the `tools`
+ * object to the tool registry (its presentation `mode`),
+ * `lasmexHome` to bash environment and local skill discovery, `sessionTitle` to
  * the fallback title service, `skills` to the
  * skill registry/local provider/tool consumer, `workspaceContext` to the
  * agent-instructions loader, `jobs` to the process-local job provider, and
@@ -90,22 +91,26 @@ export interface GoalConfig {
  * `bash` name.
  */
 export interface Config {
-  /** The agent-loop `agents` list (see dsh-agent-loop's `Config`). */
+  /** The agent-loop `agents` list (see lasmex-agent-loop's `Config`). */
   agents?: AgentLoopConfig['agents']
   /** Agent-loop concurrency cap; `1` is serial. */
   maxParallelToolCalls?: AgentLoopConfig['maxParallelToolCalls']
-  /** Whether the system prompt includes the fixed Harness identity (default true). */
+  /** Agent-loop model-request cap for one turn. */
+  maxStepsPerTurn?: AgentLoopConfig['maxStepsPerTurn']
+  /** Whether the system prompt includes the product identity opener (default true). */
   includeHarnessIdentity?: SystemPromptConfig['includeHarnessIdentity']
+  /** Product identity delivered before the deployment persona. */
+  harnessIdentity?: SystemPromptConfig['harnessIdentity']
   /** Whether model history includes dynamic runtime-context snapshots (default true). */
   includeRuntimeContext?: SystemPromptConfig['includeRuntimeContext']
-  /** The deployment persona (see dsh-system-prompt's `Config`). */
+  /** The deployment persona (see lasmex-system-prompt's `Config`). */
   persona?: SystemPromptConfig['persona']
-  /** The explicit model-facing tool order (see dsh-system-prompt's `Config`). */
+  /** The explicit model-facing tool order (see lasmex-system-prompt's `Config`). */
   toolOrder?: SystemPromptConfig['toolOrder']
-  /** The tool registry's config — its presentation `mode` (see dsh-tools' `Config`). */
+  /** The tool registry's config — its presentation `mode` (see lasmex-tools' `Config`). */
   tools?: ToolsConfig
-  /** DeepSeek Harness home directory shared by shell context and local skill discovery. */
-  dshHome?: string
+  /** LasmeX home directory shared by shell context and local skill discovery. */
+  lasmexHome?: string
   /** Deterministic fallback and accepted-title limits; omission uses the bundle's example policy. */
   sessionTitle?: SessionTitleConfig
   /** Workspace-context loader controls with an explicit byte budget; set `false` for hermetic prompts. */
@@ -162,7 +167,7 @@ export const Config = z.intersect([
   SystemPrompt.Config,
   z.object({
     tools: ToolRuntime.Config,
-    dshHome: z.string(),
+    lasmexHome: z.string(),
     sessionTitle: SessionTitleConfigSchema,
     skills: SkillConfigSchema,
     workspaceContext: z.union([z.const(false), workspaceContext.Config]).required(),
@@ -171,7 +176,7 @@ export const Config = z.intersect([
     toolJobs: z.union([z.const(false), ToolJobsConfigSchema]),
     invariants: InvariantRegistry.Config,
     goals: z.union([z.const(false), GoalConfigSchema]),
-  }) as unknown as z<Pick<Config, 'tools' | 'dshHome' | 'sessionTitle' | 'skills' | 'workspaceContext' | 'toolBash' | 'jobs' | 'toolJobs' | 'invariants' | 'goals'>>,
+  }) as unknown as z<Pick<Config, 'tools' | 'lasmexHome' | 'sessionTitle' | 'skills' | 'workspaceContext' | 'toolBash' | 'jobs' | 'toolJobs' | 'invariants' | 'goals'>>,
 ]) as unknown as z<Config>
 
 /**
@@ -182,12 +187,14 @@ export const Config = z.intersect([
 export function pickSpineConfig(config: Omit<Config, 'agents'>): Omit<Config, 'agents'> {
   return {
     ...config.maxParallelToolCalls !== undefined ? { maxParallelToolCalls: config.maxParallelToolCalls } : {},
+    ...config.maxStepsPerTurn !== undefined ? { maxStepsPerTurn: config.maxStepsPerTurn } : {},
     ...config.includeHarnessIdentity !== undefined ? { includeHarnessIdentity: config.includeHarnessIdentity } : {},
+    ...config.harnessIdentity !== undefined ? { harnessIdentity: config.harnessIdentity } : {},
     ...config.includeRuntimeContext !== undefined ? { includeRuntimeContext: config.includeRuntimeContext } : {},
     ...config.persona !== undefined ? { persona: config.persona } : {},
     ...config.toolOrder !== undefined ? { toolOrder: config.toolOrder } : {},
     ...config.tools !== undefined ? { tools: config.tools } : {},
-    ...config.dshHome !== undefined ? { dshHome: config.dshHome } : {},
+    ...config.lasmexHome !== undefined ? { lasmexHome: config.lasmexHome } : {},
     ...config.sessionTitle !== undefined ? { sessionTitle: config.sessionTitle } : {},
     workspaceContext: config.workspaceContext,
     ...config.skills !== undefined ? { skills: config.skills } : {},
@@ -210,12 +217,12 @@ export function pickSpineConfig(config: Omit<Config, 'agents'>): Omit<Config, 'a
  * seams, then the loop that drives them.
  */
 export function apply(ctx: Context, config: Config): void {
-  const nestedDshHome = config.skills?.filesystem?.dshHome
-  if (config.dshHome !== undefined && nestedDshHome !== undefined
-    && resolveDshHome(config.dshHome) !== resolveDshHome(nestedDshHome)) {
-    throw new Error('agent-spine-demo: dshHome and skills.filesystem.dshHome must resolve to the same directory')
+  const nestedLasmexHome = config.skills?.filesystem?.lasmexHome
+  if (config.lasmexHome !== undefined && nestedLasmexHome !== undefined
+    && resolveLasmexHome(config.lasmexHome) !== resolveLasmexHome(nestedLasmexHome)) {
+    throw new Error('agent-spine-demo: lasmexHome and skills.filesystem.lasmexHome must resolve to the same directory')
   }
-  const dshHome = resolveDshHome(config.dshHome ?? nestedDshHome)
+  const lasmexHome = resolveLasmexHome(config.lasmexHome ?? nestedLasmexHome)
 
   ctx.plugin(Timer)
   ctx.plugin(LlmRuntime)
@@ -224,6 +231,7 @@ export function apply(ctx: Context, config: Config): void {
   // Owner schemas resolve defaults; forward toolOrder only when explicitly set.
   ctx.plugin(SystemPrompt, {
     includeHarnessIdentity: config.includeHarnessIdentity ?? true,
+    ...config.harnessIdentity !== undefined ? { harnessIdentity: config.harnessIdentity } : {},
     includeRuntimeContext: config.includeRuntimeContext ?? true,
     persona: config.persona ?? '',
     ...config.toolOrder !== undefined ? { toolOrder: config.toolOrder } : {},
@@ -232,7 +240,7 @@ export function apply(ctx: Context, config: Config): void {
   const skillsEnabled = config.skills?.enabled ?? true
   if (skillsEnabled) {
     ctx.plugin(SkillRegistry, config.skills?.registry ?? {})
-    ctx.plugin(SkillFileSystem, Object.assign({}, config.skills?.filesystem, { dshHome }))
+    ctx.plugin(SkillFileSystem, Object.assign({}, config.skills?.filesystem, { lasmexHome }))
   }
   ctx.plugin(AgentRegistry)
   ctx.plugin(llmRetry)
@@ -248,18 +256,19 @@ export function apply(ctx: Context, config: Config): void {
   ctx.plugin(scopeInvariant)
   ctx.plugin(agentLoopInvariant)
   if (config.toolBash !== false) {
-    ctx.plugin(bashEnv, { dshHome })
+    ctx.plugin(bashEnv, { lasmexHome })
     ctx.plugin(toolBash, config.toolBash ?? {})
   }
   if (config.workspaceContext !== false) {
     ctx.plugin(workspaceContext, config.workspaceContext)
   }
-  // Both plugins prepend session-prefix messages. Registration order is the
-  // rendered order, so workspace instructions must precede the skill catalog.
+  // Registration order fixes the context producers' relative order; the loop
+  // keeps workspace instructions before the skill catalog and both before the direct prompt.
   if (skillsEnabled) ctx.plugin(toolSkill, config.skills?.tool ?? {})
   if (config.toolJobs !== false) ctx.plugin(toolJobs, config.toolJobs ?? {})
   ctx.plugin(AgentLoop, {
     agents: config.agents ?? [],
     ...config.maxParallelToolCalls !== undefined ? { maxParallelToolCalls: config.maxParallelToolCalls } : {},
+    ...config.maxStepsPerTurn !== undefined ? { maxStepsPerTurn: config.maxStepsPerTurn } : {},
   })
 }

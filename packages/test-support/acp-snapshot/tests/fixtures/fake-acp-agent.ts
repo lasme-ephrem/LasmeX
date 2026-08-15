@@ -1,6 +1,6 @@
 /**
- * Scripted fake ACP agent bin for `dsh-acp-snapshot`'s unit specs. Speaks
- * newline-delimited JSON-RPC on stdio like the real `dsh-acp-agent` bin, but
+ * Scripted fake ACP agent bin for `lasmex-acp-snapshot`'s unit specs. Speaks
+ * newline-delimited JSON-RPC on stdio like the real `lasmex-acp-agent` bin, but
  * every behavior — how prompts settle, whether session/new rejects, which
  * session logs get persisted, what filesystem noise to leave — comes from a
  * `behavior.json` sitting NEXT to the `$DSH_SNAPSHOT_FILE` fixture, so a spec
@@ -150,7 +150,7 @@ async function handlePrompt(id: number | string): Promise<void> {
       childFiles: process.env.DSH_SNAPSHOT_CHILD_FILES ?? null,
       spillRoot: process.env.DSH_SNAPSHOT_SPILL_ROOT ?? null,
       // Scenario-supplied deployment env (the `Scenario.env` layering hook).
-      permissionMode: process.env.DSH_PERMISSION_MODE ?? null,
+      permissionMode: process.env.LASMEX_PERMISSION_MODE ?? null,
     })}`)
   }
   if (behavior.echoWorkspace === true) {

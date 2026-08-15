@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Button, ConnectionBanner, Input, Menu, Modal, Pill } from '@deepseek-ai/dsh-client-ui-primitives'
+import { Button, ConnectionBanner, Input, Menu, Modal, Pill, RiskConfirmation } from 'lasmex-client-ui-primitives'
 import { POINTER_GRACE_MS } from '../src/pointer-grace.ts'
 
 afterEach(cleanup)
@@ -405,6 +405,26 @@ describe('Modal', () => {
     const mask = document.querySelector('[aria-hidden="true"]') as HTMLElement
     fireEvent.click(mask)
     expect(onClose).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('RiskConfirmation', () => {
+  it('uses the localized cancel label for its close affordance', () => {
+    render(<RiskConfirmation
+      open
+      title="Accès complet"
+      description="Cette action est sensible."
+      acknowledgeLabel="Je comprends"
+      cancelLabel="Annuler"
+      confirmLabel="Continuer"
+      acknowledged={false}
+      onAcknowledgedChange={() => {}}
+      onCancel={() => {}}
+      onConfirm={() => {}}
+    />)
+
+    expect(screen.getAllByRole('button', { name: 'Annuler' })).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull()
   })
 })
 

@@ -1,22 +1,21 @@
 ---
 name: Bug
-about: 记录现有预期行为的失效
+about: Signaler un comportement qui ne fonctionne pas comme prévu
 title: ''
-labels: ''
+labels: 'type/bug'
 assignees: ''
-type: Bug
 ---
 
-<!-- 标题写中文行动或结果句；外露正文不超过 50 单位。 -->
-一句话说明错误结果。
+<!-- Rédigez un titre d’action ou de résultat en français. Ne dépassez pas 50 unités visibles. -->
+Résumez le résultat incorrect en une phrase.
 
 <details>
-<summary>复现、预期与验收</summary>
+<summary>Reproduction, résultat attendu et validation</summary>
 
-- 复现步骤：
-- 实际结果：
-- 预期结果：
-- 环境：
-- 验收条件：
+- Étapes de reproduction :
+- Résultat observé :
+- Résultat attendu :
+- Environnement :
+- Critères de validation :
 
 </details>

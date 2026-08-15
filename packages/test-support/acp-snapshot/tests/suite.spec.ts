@@ -82,7 +82,7 @@ const REPLAY_SCENARIOS: Scenario[] = [
     hasModelTurn: true,
     recorded: true,
     headerClass: 'main',
-    env: { DSH_PERMISSION_MODE: 'never' },
+    env: { LASMEX_PERMISSION_MODE: 'never' },
     configPath: AGENT.configPath,
     workspaceParent: tmpdir(),
     pinsChildToolSchemas: [1],
@@ -840,9 +840,41 @@ describe('refreshFixtureReplacements', () => {
     ])
   })
 
+  it('maps Windows cwd values in their forward-slash and JSON-escaped text forms too', () => {
+    const log = (content: string): HarvestedLog => ({ id: 'diagnostic', createdAt: 1, content })
+    const logs = [
+      log('{"type":"session","id":"","cwd":"C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE"}\n'),
+    ]
+    const fixtures = [
+      '{"type":"session","id":"","cwd":"/Users/cty/acp-snap-cwd-ABCDE"}\n',
+    ]
+    expect(refreshFixtureReplacements(logs, fixtures)).toEqual([
+      { from: 'C:\\Users\\runner\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:/Users/runner/acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+      { from: 'C:\\\\\\\\Users\\\\\\\\runner\\\\\\\\acp-snap-cwd-ABCDE', to: '/Users/cty/acp-snap-cwd-ABCDE' },
+    ])
+  })
+
+  it('maps the run cwd when the harvested header already carries {{cwd}}', () => {
+    const log = (content: string): HarvestedLog => ({ id: 'diagnostic', createdAt: 1, content })
+    const logs = [
+      log('{"type":"session","id":"","cwd":"{{cwd}}"}\n'),
+    ]
+    const fixtures = [
+      '{"type":"session","id":"","cwd":"{{cwd}}"}\n',
+    ]
+    expect(refreshFixtureReplacements(logs, fixtures, 'C:\\Users\\runner\\acp-snap-cwd-ABCDE')).toEqual([
+      { from: 'C:\\Users\\runner\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:/Users/runner/acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:\\\\Users\\\\runner\\\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+      { from: 'C:\\\\\\\\Users\\\\\\\\runner\\\\\\\\acp-snap-cwd-ABCDE', to: '{{cwd}}' },
+    ])
+  })
+
   it('stabilizes moved snapshot spill paths by filename while skipping unchanged or unmatched names', () => {
     const spill = (session: string, hash: string, name: string): string =>
-      `/tmp/dsh-acp-snapshot-spill/session-${session}/${hash}-${name}`
+      `/tmp/lasmex-acp-snapshot-spill/session-${session}/${hash}-${name}`
     const record = (text: string): string =>
       `${JSON.stringify({ type: 'session', id: 'same', cwd: '/same' })}\n`
       + `${JSON.stringify({ type: 'tool/result', data: { content: [{ type: 'text', text: `stored at: ${text} ` }] } })}\n`
@@ -1092,8 +1124,8 @@ describe('stabilizeRefreshLog', () => {
   it('preserves normalized volatile fields while accepting fresh semantic fields', () => {
     const freshApprovalId = '11111111-1111-4111-8111-111111111111'
     const existingApprovalId = '22222222-2222-4222-8222-222222222222'
-    const freshSpill = '/tmp/dsh-acp-snap-012345678/session-111111111111/222222222222-bash.txt'
-    const existingSpill = '/tmp/dsh-acp-snap-012345678/session-aaaaaaaaaaaa/bbbbbbbbbbbb-bash.txt'
+    const freshSpill = '/tmp/lasmex-acp-snap-012345678/session-111111111111/222222222222-bash.txt'
+    const existingSpill = '/tmp/lasmex-acp-snap-012345678/session-aaaaaaaaaaaa/bbbbbbbbbbbb-bash.txt'
     const freshEventRead = [
       'Session main — title',
       'Target event seq 4:',

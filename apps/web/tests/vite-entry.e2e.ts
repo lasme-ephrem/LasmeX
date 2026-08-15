@@ -2,7 +2,7 @@
 
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { join } from 'node:path'
-import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { createServer } from 'node:net'
 import { execa } from 'execa'
@@ -27,11 +27,22 @@ async function freePort(): Promise<number> {
 }
 
 describe('Web development entry', () => {
+  it('ships the source shell global styles in the built page', () => {
+    const distRoot = join(WEB_ROOT, 'dist')
+    const html = readFileSync(join(distRoot, 'index.html'), 'utf8')
+    const stylesheets = [...html.matchAll(/href="([^"]+\.css)"/g)]
+      .map(match => readFileSync(join(distRoot, match[1]!.replace(/^\//, '')), 'utf8'))
+      .join('\n')
+    expect(stylesheets).toContain('html,body,#root{height:100%;margin:0}')
+    expect(stylesheets).toContain('font-family:var(--dsw-font-family)')
+  })
+
   it('rejects the package dev alias with the full-host correction', async () => {
     const result = await execa('pnpm', ['run', 'dev'], { cwd: WEB_ROOT, reject: false })
     expect(result.exitCode).not.toBe(0)
     expect(result.stderr).toContain('apps/web is not a standalone application')
-    expect(result.stderr).toContain('dsh web')
+    expect(result.stderr).toContain('pnpm lasmex web')
+    expect(result.stderr).toContain('installed package uses `lasmex web`')
   })
 
   it('rejects the standalone Vite server with the full-host correction', async () => {
@@ -53,7 +64,8 @@ describe('Web development entry', () => {
       expect(result.timedOut).toBe(false)
       expect(result.exitCode).not.toBe(0)
       expect(result.stderr).toContain('apps/web is not a standalone application')
-      expect(result.stderr).toContain('dsh web')
+      expect(result.stderr).toContain('pnpm lasmex web')
+      expect(result.stderr).toContain('installed package uses `lasmex web`')
       expect(result.stderr).toContain('window.__DSH_BOOT__')
       expect(existsSync(marker), 'Vite called Server.listen before rejecting standalone serve mode').toBe(false)
     } finally {

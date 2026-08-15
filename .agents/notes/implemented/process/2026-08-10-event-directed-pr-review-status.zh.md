@@ -4,6 +4,8 @@ Status: implemented
 
 [English](2026-08-10-event-directed-pr-review-status.md) | 中文
 
+> **部分被取代。** [仓库标签驱动的 Issue 生命周期](2026-08-14-personal-repository-issue-label-lifecycle.md) 为 LasmeX 的个人仓库取代 ProjectV2 存储、状态操作者保护和可写的拉取请求工作流触发器。下文从事件到命令的映射及转换意图仍然有效。
+
 ## 问题
 
 Issue 所在 Project 中的状态记录了解决工作的下一步由谁负责。PR（Pull Request）的汇总评审状态可以回答 GitHub 是否认为该 PR 可合并，却无法表示这次交接：作者修复代码并重新请求评审后，先前的 `CHANGES_REQUESTED` 评审仍可能继续生效。

@@ -1,6 +1,7 @@
 /** Incremental full-text index for the trajectory ledger. */
 
 import type { TrajectoryTurnModel } from './layout.ts'
+import type { TrajectoryTranslate } from './locales.ts'
 import type { TrajectoryCellProps } from './trajectory-record.ts'
 import { trajectoryRecordId } from './trajectory-record.ts'
 import { trajectoryPreviewText } from './trajectory-preview.ts'
@@ -40,16 +41,17 @@ function recordSources(
   turn: number | null,
   group: string,
   cell: TrajectoryCellProps,
+  t: TrajectoryTranslate,
 ): readonly string[] {
   const blocks = [
     ...(cell.sourceBlocks ?? []),
     ...(cell.outputBlocks ?? []),
   ]
   return [
-    turn === null ? 'between turns' : `turn ${turn}`,
+    turn === null ? t('group.betweenTurns') : t('group.turn', { turn }),
     group,
     cell.kind,
-    cell.kind === 'message' ? 'assistant' : '',
+    t(cell.kind === 'message' ? 'kind.assistant' : `kind.${cell.kind}`),
     cell.text,
     cell.previewMarkdown ?? '',
     cell.inputDetail ?? '',
@@ -80,9 +82,13 @@ export class TrajectorySearchIndex {
   /**
    * Incrementally synchronize one or more current trajectory layout slices.
    * @param layouts - Finalized and optional streaming layouts from the same view.
+   * @param t - Active trajectory dictionary translator.
    * @returns Whether the indexed layout version changed.
    */
-  update(layouts: readonly (readonly TrajectoryTurnModel[])[]): boolean {
+  update(
+    layouts: readonly (readonly TrajectoryTurnModel[])[],
+    t: TrajectoryTranslate,
+  ): boolean {
     if (this.layouts === layouts) return false
     this.layouts = layouts
     const seen = new Set<string>()
@@ -92,7 +98,7 @@ export class TrajectorySearchIndex {
           for (const cell of group.cells) {
             if (cell.requestOnly === true) continue
             const id = trajectoryRecordId(cell)
-            const sources = recordSources(turn.turn, group.title, cell)
+            const sources = recordSources(turn.turn, group.title, cell, t)
             const previous = this.entries.get(id)
             const entry = previous !== undefined && sameSources(previous.sources, sources)
               ? previous

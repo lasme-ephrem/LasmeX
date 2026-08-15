@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { COMPOSITION_FILE, discoverPresets, scanRoot } from '@deepseek-ai/dsh-agent-presets'
+import { COMPOSITION_FILE, discoverPresets, scanRoot } from 'lasmex-agent-presets'
 
 const fsHarness = vi.hoisted(() => ({
   nextReadError: undefined as NodeJS.ErrnoException | undefined,
@@ -147,7 +147,7 @@ describe('preset discovery', () => {
   it('expands a leading tilde in a root path', async () => {
     // `~` alone resolves to the home directory, which exists but holds no
     // preset directories; the point is that it did not throw on a literal `~`.
-    const found = await scanRoot({ path: '~/.dsh-agent-presets-absent', trust: 'user' })
+    const found = await scanRoot({ path: '~/.lasmex-agent-presets-absent', trust: 'user' })
 
     expect(found).toEqual([])
   })

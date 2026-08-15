@@ -83,6 +83,7 @@
     "apps/web/tests/workflow-run.e2e.ts",
     "apps/web/stress-tests/reasoning-chunks.stress.ts",
     "apps/cli/tests/**/*.ts",
+    "apps/desktop/tests/**/*.ts",
     "examples/*/src/**/*.ts",
     "examples/*/start.ts",
     "examples/*/tests/**/*.ts",
@@ -140,6 +141,7 @@
     { "path": "./packages/session/session-persistence-sqlite" },
     { "path": "./packages/session/session-projection" },
     { "path": "./packages/session/session-projection-cache" },
+    { "path": "./packages/session/session-mission" },
     { "path": "./packages/session/session-stats" },
     { "path": "./packages/session-query/session-query" },
     { "path": "./packages/session-query/session-query-sqlite" },
@@ -152,6 +154,9 @@
     { "path": "./packages/storage/storage-json" },
     { "path": "./packages/storage/storage-sqlite" },
     { "path": "./packages/storage/storage-domain" },
+    { "path": "./packages/memory/memory" },
+    { "path": "./packages/memory/memory-storage-domain" },
+    { "path": "./packages/memory/tool-memory" },
     { "path": "./packages/feedback/message-feedback" },
     { "path": "./packages/workspace/workspace" },
     { "path": "./packages/session/session-title" },
@@ -261,7 +266,7 @@
     { "path": "./packages/subagent/subagent-acp" },
     { "path": "./packages/subagent/subagent-claude-code" },
     { "path": "./packages/subagent/subagent-codex" },
-    { "path": "./packages/subagent/subagent-dsh-sdk" },
+    { "path": "./packages/subagent/subagent-lasmex-sdk" },
     { "path": "./packages/jobs/jobs" },
     { "path": "./packages/jobs/jobs-local" },
     { "path": "./packages/jobs/tool-jobs" },
@@ -293,6 +298,7 @@
     { "path": "./packages/lsp/lsp" },
     { "path": "./packages/lsp/lsp-stdio" },
     { "path": "./packages/lsp/tool-lsp" },
-    { "path": "./apps/cli" }
+    { "path": "./apps/cli" },
+    { "path": "./apps/desktop/tsconfig.host.json" }
   ]
 }

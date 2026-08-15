@@ -3,61 +3,61 @@ import { homedir, tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  DEFAULT_DSH_HOME_DISPLAY,
-  DSH_HOME_DIR_NAME,
+  DEFAULT_LASMEX_HOME_DISPLAY,
+  LASMEX_HOME_DIR_NAME,
   canonicalizeWatchPath,
-  defaultDshHome,
-  dshHomeDisplay,
-  dshHomePath,
+  defaultLasmexHome,
+  lasmexHomeDisplay,
+  lasmexHomePath,
   expandHomePath,
-  resolveDshHome,
-} from '@deepseek-ai/dsh-home-paths'
+  resolveLasmexHome,
+} from 'lasmex-home-paths'
 
 afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-describe('dsh path helpers', () => {
-  it('owns the shared default DSH home directory name', () => {
-    expect(DSH_HOME_DIR_NAME).toBe('.dsh')
-    expect(DEFAULT_DSH_HOME_DISPLAY).toBe('~/.dsh')
-    expect(defaultDshHome()).toBe(join(homedir(), '.dsh'))
+describe('LasmeX path helpers', () => {
+  it('owns the shared default LasmeX home directory name', () => {
+    expect(LASMEX_HOME_DIR_NAME).toBe('.lasmex')
+    expect(DEFAULT_LASMEX_HOME_DISPLAY).toBe('~/.lasmex')
+    expect(defaultLasmexHome()).toBe(join(homedir(), '.lasmex'))
   })
 
   it('expands tilde paths without changing non-tilde paths', () => {
     expect(expandHomePath('~')).toBe(homedir())
-    expect(expandHomePath('~/.dsh')).toBe(join(homedir(), '.dsh'))
-    expect(expandHomePath('~\\.dsh')).toBe(join(homedir(), '.dsh'))
-    expect(expandHomePath('/tmp/.dsh')).toBe('/tmp/.dsh')
-    expect(expandHomePath('~other/.dsh')).toBe('~other/.dsh')
+    expect(expandHomePath('~/.lasmex')).toBe(join(homedir(), '.lasmex'))
+    expect(expandHomePath('~\\.lasmex')).toBe(join(homedir(), '.lasmex'))
+    expect(expandHomePath('/tmp/.lasmex')).toBe('/tmp/.lasmex')
+    expect(expandHomePath('~other/.lasmex')).toBe('~other/.lasmex')
   })
 
-  it('resolves explicit path before DSH_HOME and the default', () => {
-    const envHome = join(homedir(), 'env-dsh')
+  it('resolves explicit path before LASMEX_HOME and the default', () => {
+    const envHome = join(homedir(), 'env-lasmex')
 
-    expect(resolveDshHome('/tmp/explicit-dsh', { DSH_HOME: '~/env-dsh' })).toBe(resolve('/tmp/explicit-dsh'))
-    expect(resolveDshHome(undefined, { DSH_HOME: '~/env-dsh' })).toBe(envHome)
-    expect(resolveDshHome(undefined, {})).toBe(defaultDshHome())
+    expect(resolveLasmexHome('/tmp/explicit-lasmex', { LASMEX_HOME: '~/env-lasmex' })).toBe(resolve('/tmp/explicit-lasmex'))
+    expect(resolveLasmexHome(undefined, { LASMEX_HOME: '~/env-lasmex' })).toBe(envHome)
+    expect(resolveLasmexHome(undefined, {})).toBe(defaultLasmexHome())
   })
 
-  it('treats an empty or whitespace-only DSH_HOME as unset', () => {
-    expect(resolveDshHome(undefined, { DSH_HOME: '' })).toBe(defaultDshHome())
-    expect(resolveDshHome(undefined, { DSH_HOME: '   ' })).toBe(defaultDshHome())
+  it('treats an empty or whitespace-only LASMEX_HOME as unset', () => {
+    expect(resolveLasmexHome(undefined, { LASMEX_HOME: '' })).toBe(defaultLasmexHome())
+    expect(resolveLasmexHome(undefined, { LASMEX_HOME: '   ' })).toBe(defaultLasmexHome())
   })
 
-  it('joins child segments onto the resolved DSH_HOME', () => {
-    vi.stubEnv('DSH_HOME', '~/env-dsh')
-    expect(dshHomePath()).toBe(join(homedir(), 'env-dsh'))
-    expect(dshHomePath('storages', 'cache')).toBe(join(homedir(), 'env-dsh', 'storages', 'cache'))
+  it('joins child segments onto the resolved LASMEX_HOME', () => {
+    vi.stubEnv('LASMEX_HOME', '~/env-lasmex')
+    expect(lasmexHomePath()).toBe(join(homedir(), 'env-lasmex'))
+    expect(lasmexHomePath('storages', 'cache')).toBe(join(homedir(), 'env-lasmex', 'storages', 'cache'))
   })
 
   it('labels a resolved home by whether it is the default root', () => {
-    expect(dshHomeDisplay(resolve(defaultDshHome()))).toBe('~/.dsh')
-    expect(dshHomeDisplay('/some/other/root')).toBe('$DSH_HOME')
+    expect(lasmexHomeDisplay(resolve(defaultLasmexHome()))).toBe('~/.lasmex')
+    expect(lasmexHomeDisplay('/some/other/root')).toBe('$LASMEX_HOME')
   })
 
   it('canonicalizes a watcher ancestor while preserving a missing suffix', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-watch-path-'))
+    const root = await mkdtemp(join(tmpdir(), 'lasmex-watch-path-'))
     const target = join(root, 'target')
     const alias = join(root, 'alias')
     try {

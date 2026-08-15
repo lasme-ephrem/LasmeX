@@ -9,6 +9,8 @@ export const zh = {
   'row.failed': 'skill 加载失败',
   'row.stopped': 'skill 加载已中止',
   'row.instructions': '说明',
+  'row.title': '技能',
+  'row.inspect': '检查',
   'menu.userOnly': '仅用户',
 } satisfies Record<string, string>
 
@@ -21,5 +23,18 @@ export const en = {
   'row.failed': 'Skill load failed',
   'row.stopped': 'Skill load stopped',
   'row.instructions': 'Instructions',
+  'row.title': 'Skill',
+  'row.inspect': 'Inspect',
   'menu.userOnly': 'user-only',
+} satisfies Record<SkillKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'row.running': 'Chargement de la compétence',
+  'row.failed': 'Échec du chargement de la compétence',
+  'row.stopped': 'Chargement de la compétence interrompu',
+  'row.instructions': 'Instructions',
+  'row.title': 'Compétence',
+  'row.inspect': 'Inspecter',
+  'menu.userOnly': 'utilisateur uniquement',
 } satisfies Record<SkillKey, string>

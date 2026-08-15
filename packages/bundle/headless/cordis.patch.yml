@@ -1,13 +1,13 @@
-# The dsh-headless bundle patch: one-shot task mode directly over dsh-base.
+# The lasmex-headless bundle patch: one-shot task mode directly over lasmex-base.
 # It mounts no Host, HTTP server, Web runtime, or browser plugin. An ordinary
 # provider plugin injects `cmdlineArgs`, parses the task positional
-# (`dsh --profile headless "<task>"`) and this app's --help, then the direct
+# (`lasmex --profile headless "<task>"`) and this app's --help, then the direct
 # driver creates an Agent through the core registry and prints its durable result.
 
 - id: system-prompt
   config:
     persona: >-
-      You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.
+      Tu es un agent de développement LasmeX propulsé par le modèle {{model}}. Ton répertoire de travail est {{cwd}}. Réponds en français sauf demande explicite dans une autre langue, vérifie les changements selon leur risque et distingue le résultat, les contrôles exécutés et les éventuels éléments restants.
 
 # The shared module-reload HMR row stays off; the launcher's watch-only
 # fallback still keeps the user patch layers live until the run exits.
@@ -17,19 +17,29 @@
 - id: tools
   config:
     # Keep the same temporary process-wide Code Mode opt-in as the Web surface.
-    mode: !!js process.env.DSH_TOOLS_MODE
+    mode: !!js process.env.LASMEX_TOOLS_MODE
 
 - insert:
     # Code Mode is a core execution capability, not a Web component.
     - id: code-runtime
-      name: '@deepseek-ai/dsh-code-runtime-worker-thread'
+      name: 'lasmex-code-runtime-worker-thread'
+
+    # Unattended one-shot tasks may mutate project memory without a UI prompt;
+    # the policy is explicit so the Consumer never infers authorization.
+    - id: tool-memory
+      name: 'lasmex-tool-memory'
+      config:
+        mutationPolicy: allow
+        defaultResultLimit: 10
+        pinnedContextMaxBytes: 8192
+        pinnedContextMaxItems: 10
 
     - id: headless-startup
-      name: '@deepseek-ai/dsh-headless/startup'
+      name: 'lasmex-headless/startup'
 
     # Reads its task from the ordinary headlessStartup provider.
     - id: headless-runner
-      name: '@deepseek-ai/dsh-headless'
+      name: 'lasmex-headless'
       inject: [headlessStartup]
       config:
         task: !!js ctx.headlessStartup.task

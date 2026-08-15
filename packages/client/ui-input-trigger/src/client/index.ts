@@ -5,12 +5,12 @@
  * contract in ./contract.ts; sources register through ctx.inputTriggers alone.
  */
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type {} from 'lasmex-client-locale/client'
+import type { ClientContext } from 'lasmex-client-runtime/client'
 import { InputTriggerService } from './service.ts'
 import type { MenuViewInjected } from './slots.ts'
 import { MenuView } from './MenuView.tsx'
-import { en, zh, type MenuKey } from './locales.ts'
+import { en, fr, zh, type MenuKey } from './locales.ts'
 
 export { InputTriggerService } from './service.ts'
 export { InputTriggerController } from './controller.ts'
@@ -34,7 +34,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The candidate menu's copy: group titles keyed by source name, the pending row, and the listbox aria. */
     'slash.menu': MenuKey
@@ -54,7 +54,7 @@ export const inject = ['sessions', 'locale']
  */
 export function apply(ctx: ClientContext): void {
   ctx.plugin(InputTriggerService)
-  ctx.effect(() => ctx.locale.register(MENU_NS, { zh, en }), 'ui-input-trigger: menu dictionaries')
+  ctx.effect(() => ctx.locale.register(MENU_NS, { fr, en, zh }), 'ui-input-trigger: menu dictionaries')
   ctx.inject(['slots', 'inputTriggers', 'sessions'], (scope: ClientContext) => {
     const inputTriggers = scope.inputTriggers
     const sessions = scope.sessions

@@ -76,7 +76,7 @@ function startMergeWithFakeNode(
   chmodSync(fakeNode, 0o755)
   git(fixture, [
     'config',
-    'merge.dsh-translation-pairing.driver',
+    'merge.lasmex-translation-pairing.driver',
     `${shellQuote(driverLauncher)} %O %A %B %P`,
   ])
   return spawnSync('git', ['-C', fixture.root, 'merge', '--no-commit', 'master'], {
@@ -103,7 +103,7 @@ function createFixture(attributes = true): Fixture {
   }
   const fixture = { env, root }
   execFileSync('git', ['init', '--quiet', '--initial-branch=master', root], { env })
-  if (attributes) write(root, '.gitattributes', '*.i18n.yaml merge=dsh-translation-pairing\n')
+  if (attributes) write(root, '.gitattributes', '*.i18n.yaml merge=lasmex-translation-pairing\n')
   return fixture
 }
 
@@ -404,7 +404,7 @@ describe('translation pairing merge composition', { timeout: 15_000 }, () => {
     installFixtureRuntime(fixture.root)
     git(fixture, [
       'config',
-      'merge.dsh-translation-pairing.driver',
+      'merge.lasmex-translation-pairing.driver',
       'scripts/merge-translation-pairing-driver.sh %O %A %B %P',
     ])
 
@@ -483,7 +483,7 @@ describe('translation pairing merge composition', { timeout: 15_000 }, () => {
     installFixtureRuntime(fixture.root)
     git(fixture, [
       'config',
-      'merge.dsh-translation-pairing.driver',
+      'merge.lasmex-translation-pairing.driver',
       'scripts/merge-translation-pairing-driver.sh %O %A %B %P',
     ])
     const hooks = join(fixture.root, 'hooks')

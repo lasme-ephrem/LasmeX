@@ -1,20 +1,20 @@
 /**
  * Model-facing Cordis runtime/package inspection, define, run, stop, and remove tools.
- * @module @deepseek-ai/dsh-tool-cordis
+ * @module lasmex-tool-cordis
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
+import type { Agent, PreStepDecision } from 'lasmex-agent'
 import {
   CordisDynamicPackageId, CordisDynamicPluginId,
-} from '@deepseek-ai/dsh-cordis-host-runner'
-import type { DynamicCordisReference } from '@deepseek-ai/dsh-cordis-host-runner'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
-import type { UserMessage } from '@deepseek-ai/dsh-session'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { ToolExecution } from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+} from 'lasmex-cordis-host-runner'
+import type { DynamicCordisReference } from 'lasmex-cordis-host-runner'
+import { createUserMessage } from 'lasmex-llm'
+import type { JsonValue } from 'lasmex-session'
+import type { UserMessage } from 'lasmex-session'
+import { defineTool } from 'lasmex-tools'
+import type { ToolExecution } from 'lasmex-tools'
+import type {} from 'lasmex-system-prompt'
 import { missingServices, providedServices } from './inspect.ts'
 import {
   presentDefineCall, presentInspectListCall, presentInspectQueryCall, presentInspectSelfCall, presentRunCall,
@@ -523,7 +523,7 @@ function renderUnavailableReference(id: string): string {
   return [
     '<cordis_dynamic_plugin_context>',
     `The user explicitly referenced @${id}, but this Plugin is unavailable in the current Session.`,
-    'It may have been removed, belong to another Session, or have been lost when the DSH process restarted.',
+    'It may have been removed, belong to another Session, or have been lost when the LasmeX process restarted.',
     'Do not claim that it was updated or silently create a replacement Plugin. Tell the user that the reference is currently unavailable.',
     '</cordis_dynamic_plugin_context>',
   ].join('\n')

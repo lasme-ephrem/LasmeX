@@ -7,9 +7,9 @@
  */
 import type {
   IApiClient, ModelCatalogFailure, ModelProviderGroup, ModelSelection, SessionId, SessionModels,
-} from '@deepseek-ai/dsh-api-remotes/client'
-import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-api-remotes/client'
+import type { SnapshotStore } from 'lasmex-client-runtime/client'
+import { createSnapshotStore } from 'lasmex-client-runtime/client'
 
 /** Directory snapshot both entries render from. */
 export interface ModelDirectoryState {
@@ -48,11 +48,13 @@ export class ModelDirectory {
    * @param sessions - the session wire face (captured from the plugin's root connection).
    * @param sessionId - the owning session.
    * @param available - whether this session may use Agent-bound model RPCs.
+   * @param unavailableReason - localized failure for a disallowed addressed session.
    */
   constructor(
     private readonly sessions: Pick<IApiClient['sessions'], 'models' | 'selectModel'>,
     private readonly sessionId: SessionId,
     private readonly available: () => boolean,
+    private readonly unavailableReason: () => string,
   ) {}
 
   /**
@@ -148,7 +150,7 @@ export class ModelDirectory {
 
   private assertAvailable(): void {
     if (!this.available()) {
-      throw new Error('model selection is unavailable for addressed subagent sessions')
+      throw new Error(this.unavailableReason())
     }
   }
 }

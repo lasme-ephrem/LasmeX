@@ -1,9 +1,9 @@
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
+import { SettingsProvider, settingsNamespace, type SettingsNamespace } from 'lasmex-settings'
 import {
   LOCALE_SETTINGS_NAMESPACE, apply,
-} from '@deepseek-ai/dsh-client-locale'
+} from 'lasmex-client-locale'
 
 class MemorySettings extends SettingsProvider {
   readonly writable = true
@@ -23,7 +23,9 @@ describe('locale host', () => {
     expect(ctx.settings.get(ns)).toEqual({})
     await ctx.settings.update(ns, { preference: 'en' })
     expect(ctx.settings.get(ns)).toEqual({ preference: 'en' })
-    await expect(ctx.settings.update(ns, { preference: 'fr' })).rejects.toThrow()
+    await ctx.settings.update(ns, { preference: 'fr' })
+    expect(ctx.settings.get(ns)).toEqual({ preference: 'fr' })
+    await expect(ctx.settings.update(ns, { preference: 'de' })).rejects.toThrow()
     await fiber.dispose()
     expect(ctx.settings.describe().map(row => row.ns)).not.toContain(ns)
   })

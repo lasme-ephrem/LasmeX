@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-sandbox-local
+# lasmex-sandbox-local
 
 English | [中文](README.zh.md)
 
-Local implementation of the [`dsh-sandbox`](../sandbox/) seam. It selects and caches one platform runner: Linux prefers a working `bwrap` then Landlock; macOS uses Seatbelt; Windows uses the ACL restricted-token runner. Multiple candidates are probed in order, while a sole candidate is selected directly.
+Local implementation of the [`lasmex-sandbox`](../sandbox/) seam. It selects and caches one platform runner: Linux prefers a working `bwrap` then Landlock; macOS uses Seatbelt; Windows uses the ACL restricted-token runner. Multiple candidates are probed in order, while a sole candidate is selected directly.
 
 The package root exports the default and named `LocalSandboxProvider` plugin and `Config`; platform profile builders stay internal.
 
@@ -18,14 +18,14 @@ The Windows rung keeps one deterministic write SID and standing ACE per workspac
 
 ```yaml
 - id: sandbox
-  name: '@deepseek-ai/dsh-sandbox-local'
+  name: 'lasmex-sandbox-local'
 ```
 
-Consumers: [`@deepseek-ai/dsh-bash-sandbox`](../../shell/bash-sandbox/); see [the acp-agent example](../../../examples/acp-agent/) for the runnable default composition.
+Consumers: [`lasmex-bash-sandbox`](../../shell/bash-sandbox/); see [the acp-agent example](../../../examples/acp-agent/) for the runnable default composition.
 
 ## Model Experience
 
-Indirectly, through [`dsh-bash-sandbox`](../../shell/bash-sandbox/README.md) and [`dsh-tool-bash`](../../shell/tool-bash/README.md), which render this provider's enforcement and denial facts while the [`dsh-sandbox`](../sandbox/README.md) seam owns the `SANDBOX_UNAVAILABLE` text and runner selection and profiles stay outside context.
+Indirectly, through [`lasmex-bash-sandbox`](../../shell/bash-sandbox/README.md) and [`lasmex-tool-bash`](../../shell/tool-bash/README.md), which render this provider's enforcement and denial facts while the [`lasmex-sandbox`](../sandbox/README.md) seam owns the `SANDBOX_UNAVAILABLE` text and runner selection and profiles stay outside context.
 
 #### KV Cache effect
 

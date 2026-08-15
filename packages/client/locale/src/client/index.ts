@@ -12,18 +12,18 @@
 import type { Context } from '@deepseek-ai/cordis'
 import {
   type BoundActions, type LocaleDictOf, type LocaleNamespaceMap, type Translate, type TranslateNS,
-} from '@deepseek-ai/dsh-client-ui-slots'
-import type { ClientContext, SettingsScope } from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-ui-slots'
+import type { ClientContext, SettingsScope } from 'lasmex-client-runtime/client'
 // Type-only: the ctx.settingsScope Context merge and the settings slot types.
 // Cross-plugin collaboration goes through the service, never a value import
 // (client bundle purity gate).
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from 'lasmex-client-ui-settings/client'
 import {
   LOCALE_PREFERENCE_FIELD, LOCALE_SETTINGS_NAMESPACE, type LocaleId, type LocaleSettings,
 } from '../locale-settings.ts'
-import { en, zh, type CommonKey } from '../locales/index.ts'
+import { en, fr, zh, type CommonKey } from '../locales/index.ts'
 import {
-  en as settingsEn, zh as settingsZh, type SettingsLocaleKey,
+  en as settingsEn, fr as settingsFr, zh as settingsZh, type SettingsLocaleKey,
 } from '../locales/settings.ts'
 import type { LanguageRowInjected } from './LanguageRow.tsx'
 import { LanguageRow } from './LanguageRow.tsx'
@@ -37,9 +37,9 @@ export type { LocaleId, LocaleSettings } from '../locale-settings.ts'
 // The translate currency lives in ui-slots (the render machinery synthesizes
 // the seat); re-exported here so dictionary owners import one package.
 // TranslateNS<'model'> is the namespace-addressed developer-facing form.
-export type { Translate, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+export type { Translate, TranslateNS } from 'lasmex-client-ui-slots'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Shared cross-feature vocabulary, consulted by the lookup chain after the entry's own namespace misses. */
     common: CommonKey
@@ -55,7 +55,7 @@ export type LocaleDict = Record<string, string>
 export interface LocaleDefinition {
   /** Locale id (persisted; the setLocale argument). */
   id: LocaleId
-  /** Display name in its own language (中文 / English). */
+  /** Display name in its own language (Français / English / 中文). */
   label: string
 }
 
@@ -87,7 +87,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 /** Fallback locale consulted after the active locale misses (also the last-resort initial locale). */
-export const FALLBACK_LOCALE: LocaleId = 'zh'
+export const FALLBACK_LOCALE: LocaleId = 'fr'
 
 /** Shared namespace for shell-level texts. */
 export const COMMON_NS = 'common'
@@ -95,16 +95,17 @@ export const COMMON_NS = 'common'
 /** Namespace owning this feature's settings-row copy. */
 export const SETTINGS_NS = 'settings.locale'
 
-/** The two shipped locales. */
+/** The shipped locales, with the LasmeX default first. */
 const LOCALES: readonly LocaleDefinition[] = Object.freeze([
-  { id: 'zh', label: '中文' },
+  { id: 'fr', label: 'Français' },
   { id: 'en', label: 'English' },
+  { id: 'zh', label: '中文' },
 ])
 
 /**
  * Dictionary registry plus locale preference. Lookup chain per key: the
- * entry's namespace in the active locale -> that namespace's zh fallback ->
- * the shared common namespace (active, then zh) -> the key itself (missing
+ * entry's namespace in the active locale -> that namespace's French fallback ->
+ * the shared common namespace (active, then French) -> the key itself (missing
  * text stays visible, fail loud in the UI rather than blank). Reads go
  * through {@link getLocale}; writes only through {@link setLocale};
  * continuous sync through the `locale/change` event, or through the
@@ -132,6 +133,7 @@ export class LocaleRuntime {
     this.host = host
     this.provisional = resolveInitialLocale()
     this.snapshot = Object.freeze({ active: this.provisional, locales: LOCALES, revision: 0 })
+    syncDocumentLanguage(this.provisional)
     if (host !== undefined) {
       ctx.effect(() => host.subscribe(() => { this.adopt(host) }), 'locale: settings scope adoption')
       this.adopt(host)
@@ -196,7 +198,7 @@ export class LocaleRuntime {
    * Register a declared namespace's dictionaries, all locales in one call —
    * the typed form: each dictionary is checked against the namespace's
    * {@link LocaleNamespaceMap} key union (a missing or extra key is a
-   * compile error), and every shipped locale is required (bilingual balance
+   * compile error), and every shipped locale is required (translation balance
    * enforced at registration). Duplicate (ns, locale) throws (single occupant; a
    * namespace's texts have one owner). Registration bumps the revision so
    * mounted outlets pick up late-arriving dictionaries.
@@ -299,6 +301,7 @@ export class LocaleRuntime {
       locales: this.snapshot.locales,
       revision: this.snapshot.revision + 1,
     })
+    syncDocumentLanguage(active)
     if (localeChanged) this.ctx.emit('locale/change', this.snapshot)
     for (const fn of [...this.listeners]) {
       try {
@@ -312,29 +315,27 @@ export class LocaleRuntime {
   }
 }
 
+/** Keep browser accessibility metadata aligned with the active catalog. */
+function syncDocumentLanguage(locale: LocaleId): void {
+  if (typeof document !== 'undefined') document.documentElement.lang = locale
+}
+
 /**
- * The browser's own language wins over {@link FALLBACK_LOCALE}; an explicit
- * Host preference may replace this provisional value after plugin activation.
+ * The browser's first shipped language wins; French remains the fallback when
+ * no browser preference matches and an explicit Host preference may replace it.
  */
 function resolveInitialLocale(): LocaleId {
   return detectBrowserLocale() ?? FALLBACK_LOCALE
 }
 
 /**
- * The first shipped locale the browser asks for, matched on the primary
- * subtag so every regional variant lands on its language (`zh-Hans-CN` -> zh,
- * `en-GB` -> en). `window` is the browser test, not `navigator`: Node exposes
- * a global `navigator` reporting the machine's own language, which would
- * otherwise decide the locale for non-browser runs (node e2e booting the
- * client tree). `navigator.language` trails the ordered `languages` list and
- * covers its absence on hosts that expose only the single tag.
+ * Match browser languages on their primary subtag so regional variants map
+ * to the shipped French, English, or Chinese catalog.
  */
 function detectBrowserLocale(): LocaleId | undefined {
   if (typeof window === 'undefined') return undefined
   /* oxlint-disable-next-line typescript/no-unnecessary-condition --
-   * The DOM lib types `languages` as always present; embedders and older
-   * WebViews ship a Navigator without it, and spreading undefined would
-   * throw at boot. */
+   * Older WebViews may expose a Navigator without the ordered languages list. */
   for (const tag of [...(navigator.languages ?? []), navigator.language]) {
     const primary = tag.toLowerCase().split('-')[0]
     const match = LOCALES.find(locale => locale.id === primary)
@@ -355,8 +356,8 @@ export const inject = ['slots', 'connection', 'remote', 'settingsScope']
 export function apply(ctx: ClientContext): void {
   const host = ctx.settingsScope.bind<LocaleSettings>({ namespace: LOCALE_SETTINGS_NAMESPACE })
   const locale = new LocaleRuntime(ctx, host)
-  locale.register(COMMON_NS, { zh, en })
-  locale.register(SETTINGS_NS, { zh: settingsZh, en: settingsEn })
+  locale.register(COMMON_NS, { fr, en, zh })
+  locale.register(SETTINGS_NS, { fr: settingsFr, en: settingsEn, zh: settingsZh })
   ctx.provide('locale', locale)
   // The service IS the LocaleFace (bind + getSnapshot/subscribe): install it
   // so the render machinery can synthesize the `t` standard seat.

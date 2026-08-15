@@ -1,7 +1,7 @@
 /**
  * Default Agent driver over queued turns and step-boundary input. Every request
  * is derived from the session log.
- * @module dsh-agent-loop/agent
+ * @module lasmex-agent-loop/agent
  */
 
 import type {
@@ -14,23 +14,24 @@ import type {
   InboxTarget,
   PreStepDecision,
   RequestErrorAction,
-} from '@deepseek-ai/dsh-agent'
-import { Inbox, agentEvents, assembleContextFor } from '@deepseek-ai/dsh-agent'
-import type { GenerateOptions, LlmCallConfig, Message, PreparedLlmCall } from '@deepseek-ai/dsh-llm'
+} from 'lasmex-agent'
+import { Inbox, agentEvents, assembleContextFor } from 'lasmex-agent'
+import type { GenerateOptions, LlmCallConfig, Message, PreparedLlmCall } from 'lasmex-llm'
 import {
   BlockAssembler,
   LlmError,
   createAssistantMessage,
+  createUserMessage,
   deepFreeze,
   errorChain,
   markAgentLoopRequest,
-} from '@deepseek-ai/dsh-llm'
-import type { Scope } from '@deepseek-ai/dsh-scope'
-import { createScope } from '@deepseek-ai/dsh-scope'
-import type { EpochHeader, RequestContext, Session, SessionId, TurnEndReason, UserMessage } from '@deepseek-ai/dsh-session'
-import { canonicalHeader, headerEquals } from '@deepseek-ai/dsh-session'
-import { joinContextSections, renderContextSections, renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import type { PromptAssembly } from '@deepseek-ai/dsh-system-prompt'
+} from 'lasmex-llm'
+import type { Scope } from 'lasmex-scope'
+import { createScope } from 'lasmex-scope'
+import type { EpochHeader, RequestContext, Session, SessionId, TurnEndReason, UserMessage } from 'lasmex-session'
+import { canonicalHeader, headerEquals } from 'lasmex-session'
+import { joinContextSections, renderContextSections, renderPrompt } from 'lasmex-system-prompt'
+import type { PromptAssembly } from 'lasmex-system-prompt'
 import type { Context } from '@deepseek-ai/cordis'
 import { RuntimeContextProjection } from './runtime-context.ts'
 import { executeToolCalls } from './tool-calls.ts'
@@ -58,6 +59,40 @@ function requestProposal(header: EpochHeader): LlmCallConfig {
   if (header.adapterDefaults.reasoningEffort === true) delete proposal.reasoningEffort
   if (header.adapterDefaults.maxTokens === true) delete proposal.maxTokens
   return proposal
+}
+
+/** Keep context precedence while preserving both groups' producer order and message identities. */
+function orderEnteredMessages(messages: UserMessage[]): UserMessage[] {
+  const context: UserMessage[] = []
+  const direct: UserMessage[] = []
+  for (const message of messages) {
+    if (message.source.kind === 'user') direct.push(message)
+    else context.push(message)
+  }
+  if (context.length === 0 || direct.length === 0) return messages
+  return [...context, ...direct]
+}
+
+/** Keep a result-only continuation attached to the direct request while marking completed calls as satisfied. */
+function continuationAnchor(message: UserMessage, completedTools: readonly string[]): UserMessage {
+  const request = message.content
+    .filter(block => block.type === 'text')
+    .map(block => block.text)
+    .join('')
+  const completed = [...new Set(completedTools)].join(', ') || '(unnamed tool)'
+  return createUserMessage({
+    content: [{
+      type: 'text',
+      text: '<system-reminder>\n'
+        + `Completed tool calls: ${completed}.\n`
+        + 'Do not call those tools again merely to satisfy the quoted request; use their results above. '
+        + 'Complete only the remaining part of the request. If it specifies an exact final response, '
+        + 'reproduce that response verbatim, including punctuation.\n\n'
+        + `<direct-user-request>\n${request}\n</direct-user-request>\n`
+        + '</system-reminder>',
+    }],
+    source: { kind: 'plugin', plugin: 'agent-loop', form: 'notice', summary: 'Continue after tool result' },
+  })
 }
 
 /** Drives one session through turn and step boundaries. */
@@ -239,7 +274,9 @@ export class ReactLoopAgent implements Agent {
       }),
     )
     signal.throwIfAborted()
-    return decision.kind === 'reject' ? decision : { ...decision, assembly }
+    return decision.kind === 'reject'
+      ? decision
+      : { ...decision, messages: orderEnteredMessages(decision.messages), assembly }
   }
 
   /** Open one turn before claiming its first proposed step. */
@@ -259,14 +296,34 @@ export class ReactLoopAgent implements Agent {
     phase.turn = turn
     let turnEnds: TurnEndReason | null = null
     let target: InboxTarget = 'next-turn'
+    let latestDirectMessage: UserMessage | undefined
     try {
       while (true) {
         signal.throwIfAborted()
         const step = phase.step + 1
-        const decision = await this.preStep(target, { turn, step })
+        if (step > this.loopCtx.agentLoop.config.maxStepsPerTurn) {
+          throw new LlmError(
+            `agent "${this.id}" exceeded maxStepsPerTurn (${this.loopCtx.agentLoop.config.maxStepsPerTurn})`,
+            'MAX_STEPS',
+          )
+        }
+        let decision = await this.preStep(target, { turn, step })
         if (decision.kind === 'reject') {
           turnEnds = { kind: 'blocked' }
           return false
+        }
+        const directMessage = decision.messages.findLast(message => message.source.kind === 'user')
+        if (directMessage !== undefined) {
+          latestDirectMessage = directMessage
+        } else if (phase.step > 0 && turnEnds === null && latestDirectMessage !== undefined) {
+          const completedTools = this.session.events
+            .filter(event => event.type === 'tool/call'
+              && event.data.turn === turn)
+            .map(event => event.type === 'tool/call' ? event.data.name : '')
+          decision = {
+            ...decision,
+            messages: [...decision.messages, continuationAnchor(latestDirectMessage, completedTools)],
+          }
         }
         if (turnEnds && decision.messages.length === 0) break
         // A removed waking message or an enter decision rewritten to empty

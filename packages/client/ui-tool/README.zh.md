@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-tool
+# lasmex-client-ui-tool
 
 [English](README.md) | 中文
 
@@ -46,4 +46,4 @@ owner 载荷为 `ToolCallOwnerProps`：`callId`、`toolName`、冻结的 `block`
 
 - Host 不把 `run_code` 暴露为 Code Mode 程序 binding，因此生产事件只产生一层分发；递归的运行时/UI 约定支持嵌套。
 - 第一方工具视图集中在本包，可以通过 keyed slot 独立迁移到各自所属的业务包。
-- 工具文案复用 `ui-conversation` locale namespace。
+- 工具行标题、输入／输出栏、检查操作，以及结构化工具卡片的所有标签、计数、空状态、截断提示和辅助技术控件均来自 `ui-conversation` locale namespace。`grep`、`glob` 和 `pwsh` 等 wire 工具名保持为稳定的技术标识符。

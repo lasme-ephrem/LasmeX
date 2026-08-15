@@ -14,13 +14,13 @@
  * are identical. Every live header is checked against the composed pin, so
  * session-dependent composition must declare a separate class instead of
  * escaping coverage.
- * @module @deepseek-ai/dsh-acp-snapshot/suite
+ * @module lasmex-acp-snapshot/suite
  */
 
 import { readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { isSurfaceEligibleType } from '@deepseek-ai/dsh-session/surface'
+import { isSurfaceEligibleType } from 'lasmex-session/surface'
 import { describe, expect, it } from 'vitest'
 import { type AgentUnderTest, type HarvestedLog, type InputScript, runScenario } from './harness.ts'
 import {
@@ -738,19 +738,47 @@ export function unknownToolCallIds(rawLog: string): string[] {
  *
  * @param logs The freshly harvested logs, in fixture order.
  * @param fixtures The existing fixture contents, in matching order.
+ * @param runCwd The run's own cwd; maps the raw spellings that remain in log
+ *   bodies when a harvested header is already tokenized.
  * @returns Literal replacements from fresh values to the fixture's existing values.
  */
-export function refreshFixtureReplacements(logs: HarvestedLog[], fixtures: string[]): FixtureReplacement[] {
+export function refreshFixtureReplacements(
+  logs: HarvestedLog[],
+  fixtures: string[],
+  runCwd?: string,
+): FixtureReplacement[] {
   const replacements: FixtureReplacement[] = []
   for (let i = 0; i < logs.length; i++) {
     const fresh = parseJsonlRecords((logs[i] as HarvestedLog).content)[0]
     const existing = parseJsonlRecords(fixtures[i] ?? '')[0]
+    const push = (from: string, to: string): void => {
+      if (from.length === 0 || from === to) return
+      // `applyFixtureReplacements` rewrites the raw JSONL text, so cover every
+      // spelling a backslash path can take there: slash form, the JSON-escaped
+      // form, and a policy text that embeds the already-escaped path.
+      const escaped = from.replaceAll('\\', '\\\\')
+      const forms = [...new Set([
+        from,
+        from.replaceAll('\\', '/'),
+        escaped,
+        from.replaceAll('\\', '\\\\'.repeat(2)),
+      ])]
+      for (const form of forms) {
+        if (form === to) continue
+        replacements.push({ from: form, to })
+      }
+    }
     for (const field of ['id', 'cwd'] as const) {
       const from = fresh?.[field]
       const to = existing?.[field]
-      if (typeof from === 'string' && typeof to === 'string' && from.length > 0 && from !== to) {
-        replacements.push({ from, to })
-      }
+      if (typeof from === 'string' && typeof to === 'string') push(from, to)
+    }
+    // The replay pipeline can normalize a harvested header cwd to `{{cwd}}`
+    // already, so the header pair alone leaves raw body paths untouched. The
+    // run cwd still names the raw form those bodies carry.
+    const existingCwd = existing?.cwd
+    if (typeof existingCwd === 'string' && existingCwd.length > 0 && runCwd !== undefined) {
+      push(runCwd, existingCwd)
     }
     // Stabilize snapshot spill paths: match by filename suffix so the raw
     // fixture does not churn on every refresh from a different session run.
@@ -1243,7 +1271,7 @@ export function defineAcpSnapshotSuite(options: SnapshotSuiteOptions): void {
             return existsSync(path) ? readFile(path, 'utf8') : ''
           }))
           const refreshReplacements = REFRESHING
-            ? refreshFixtureReplacements(result.sessionLogs, existingFixtures)
+            ? refreshFixtureReplacements(result.sessionLogs, existingFixtures, result.cwd)
             : []
           const freshFixtures = REFRESHING
             ? result.sessionLogs.map((log, index) => scrub(portableFixture(stabilizeRefreshLog(

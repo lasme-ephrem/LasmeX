@@ -11,11 +11,12 @@ import {
   JsonTree,
   MarkdownText,
   Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from 'lasmex-client-ui-primitives'
+import type { JsonTreeLabels } from 'lasmex-client-ui-primitives'
 import { structuredPatch } from 'diff'
 import type {
   AssistantRequestConfig, ConversationPromptSnapshot,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import type {
   AssistantMetricDetail, TrajectoryCellKind, TrajectoryCellProps, TrajectorySourceBlock,
 } from './trajectory-record.ts'
@@ -25,6 +26,8 @@ import {
 } from './trajectory-virtual-rows.ts'
 import type { TrajectoryVirtualRow } from './trajectory-virtual-rows.ts'
 import type { TrajectoryTurnModel } from './layout.ts'
+import type { TrajectoryTranslate } from './locales.ts'
+import { COMPACTION_INTERRUPTED_ERROR } from './trajectory-contract.ts'
 import { trajectoryPreviewText } from './trajectory-preview.ts'
 import css from './TrajectoryTable.module.css'
 
@@ -35,14 +38,24 @@ const VIRTUALIZATION_THRESHOLD = 100
 const VIRTUAL_OVERSCAN_ROWS = 12
 const VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX = 600
 
-const KIND_LABEL: Record<TrajectoryCellKind, string> = {
-  system: 'SYSTEM',
-  user: 'USER',
-  context: 'CONTEXT',
-  compacted: 'COMPACTED',
-  message: 'ASSISTANT',
-  tool: 'TOOL',
-  subtool: 'SUBTOOL',
+function jsonTreeLabels(t: TrajectoryTranslate): JsonTreeLabels {
+  return {
+    copyValue: t('json.copyValue'),
+    copyJson: t('json.copyJson'),
+    copyPath: t('json.copyPath'),
+    copyPrettyJson: t('json.copyPrettyJson'),
+    copyCompactJson: t('json.copyCompactJson'),
+    copied: t('json.copied'),
+    copyFailed: t('json.copyFailed'),
+    collapseNode: t('json.collapseNode'),
+    expandNode: t('json.expandNode'),
+    copyButtonTitle: action => t('json.copyButtonTitle', { action }),
+  }
+}
+
+function kindLabel(kind: TrajectoryCellKind, t: TrajectoryTranslate): string {
+  const key = kind === 'message' ? 'kind.assistant' : `kind.${kind}` as const
+  return t(key)
 }
 
 function ToolWrenchIcon(): ReactNode {
@@ -120,6 +133,7 @@ interface TableRecord {
   turn: number | null
   section: number
   group: string
+  step?: number
   groupStart: boolean
   turnStart: boolean
   cell: TrajectoryCellProps
@@ -206,20 +220,25 @@ const TOOL_REQUEST_MIN_WIDTH = 180
 const TOOL_REQUEST_MAX_WIDTH = 480
 const DEFAULT_TOOL_REQUEST_SHARE = 0.36
 const DEFAULT_TOOL_REQUEST_OFFSET = 56
-const SYSTEM_PROMPT_TABS: readonly DetailTabItem[] = [
-  { id: 'system-prompt', label: 'System Prompt' },
-  { id: 'tools', label: 'Tools' },
-]
-const SYSTEM_UPDATE_TABS: readonly DetailTabItem[] = [
-  { id: 'diff', label: 'Diff' },
-  ...SYSTEM_PROMPT_TABS,
-]
-const REQUEST_TABS: readonly DetailTabItem[] = [
-  { id: 'overview', label: 'Summary' },
-  { id: 'options', label: 'Options' },
-  { id: 'usage', label: 'Usage' },
-  { id: 'timing', label: 'Timing' },
-]
+function systemPromptTabs(t: TrajectoryTranslate): readonly DetailTabItem[] {
+  return [
+    { id: 'system-prompt', label: t('detail.tab.systemPrompt') },
+    { id: 'tools', label: t('detail.tab.tools') },
+  ]
+}
+
+function systemUpdateTabs(t: TrajectoryTranslate): readonly DetailTabItem[] {
+  return [{ id: 'diff', label: t('detail.tab.diff') }, ...systemPromptTabs(t)]
+}
+
+function requestTabs(t: TrajectoryTranslate): readonly DetailTabItem[] {
+  return [
+    { id: 'overview', label: t('detail.tab.summary') },
+    { id: 'options', label: t('detail.tab.options') },
+    { id: 'usage', label: t('detail.tab.usage') },
+    { id: 'timing', label: t('detail.tab.timing') },
+  ]
+}
 
 type TrajectorySplitStyle = CSSProperties & {
   '--trajectory-tool-request-width': string
@@ -262,8 +281,8 @@ function formatDurationMs(milliseconds: number): string {
   return `${(milliseconds / 1_000).toFixed(milliseconds < 10_000 ? 2 : 1)} s`
 }
 
-function formatStartedAt(timestamp: number | null): string {
-  if (timestamp === null || !Number.isFinite(timestamp)) return 'Not available'
+function formatStartedAt(timestamp: number | null, t: TrajectoryTranslate): string {
+  if (timestamp === null || !Number.isFinite(timestamp)) return t('state.notAvailable')
   const date = new Date(timestamp)
   const two = (value: number) => String(value).padStart(2, '0')
   const three = (value: number) => String(value).padStart(3, '0')
@@ -281,70 +300,72 @@ function clickSelectsText(target: Node): boolean {
     && selection.getRangeAt(0).intersectsNode(target)
 }
 
-function StartedAtValue({ timestamp }: { timestamp: number | null }) {
+function StartedAtValue({ timestamp, t }: { timestamp: number | null; t: TrajectoryTranslate }) {
   const [showUnix, setShowUnix] = useState(false)
-  if (timestamp === null || !Number.isFinite(timestamp)) return <dd>Not available</dd>
+  if (timestamp === null || !Number.isFinite(timestamp)) return <dd>{t('state.notAvailable')}</dd>
   return (
     <dd>
       <button
         type="button"
         className={css.timestampToggle}
-        title={showUnix ? 'Show local time' : 'Show Unix timestamp'}
+        title={showUnix ? t('timing.showLocalTime') : t('timing.showUnixTimestamp')}
         onClick={(event) => {
           if (clickSelectsText(event.currentTarget)) return
           setShowUnix(current => !current)
         }}
       >
-        {showUnix ? (timestamp / 1_000).toFixed(3) : formatStartedAt(timestamp)}
+        {showUnix ? (timestamp / 1_000).toFixed(3) : formatStartedAt(timestamp, t)}
       </button>
     </dd>
   )
 }
 
-function totalTime(metrics: AssistantMetricDetail): string {
-  if (!metrics.timingRecorded) return 'Not recorded'
-  if (metrics.stepStartTime === null) return 'Step start unavailable'
-  if (metrics.completedTime === null) return 'Pending'
+function totalTime(metrics: AssistantMetricDetail, t: TrajectoryTranslate): string {
+  if (!metrics.timingRecorded) return t('state.notRecorded')
+  if (metrics.stepStartTime === null) return t('state.stepStartUnavailable')
+  if (metrics.completedTime === null) return t('state.pending')
   return formatDurationMs(Math.max(0, metrics.completedTime - metrics.stepStartTime))
 }
 
-function ttft(metrics: AssistantMetricDetail): string {
-  if (!metrics.timingRecorded) return 'Not recorded'
-  if (metrics.stepStartTime === null) return 'Step start unavailable'
-  if (metrics.firstTokenTime === null) return 'First token unavailable'
+function ttft(metrics: AssistantMetricDetail, t: TrajectoryTranslate): string {
+  if (!metrics.timingRecorded) return t('state.notRecorded')
+  if (metrics.stepStartTime === null) return t('state.stepStartUnavailable')
+  if (metrics.firstTokenTime === null) return t('state.firstTokenUnavailable')
   return formatDurationMs(Math.max(0, metrics.firstTokenTime - metrics.stepStartTime))
 }
 
-function generationTime(metrics: AssistantMetricDetail): string {
-  if (!metrics.timingRecorded || metrics.firstTokenTime === null) return 'First token unavailable'
-  if (metrics.completedTime === null) return 'Pending'
+function generationTime(metrics: AssistantMetricDetail, t: TrajectoryTranslate): string {
+  if (!metrics.timingRecorded || metrics.firstTokenTime === null) return t('state.firstTokenUnavailable')
+  if (metrics.completedTime === null) return t('state.pending')
   return formatDurationMs(Math.max(0, metrics.completedTime - metrics.firstTokenTime))
 }
 
-function throughput(metrics: AssistantMetricDetail): string {
-  if (!metrics.usageProvided) return 'Usage unavailable'
-  if (metrics.outputTokens === null) return 'Output tokens unavailable'
-  if (!metrics.timingRecorded || metrics.firstTokenTime === null) return 'First token unavailable'
-  if (metrics.completedTime === null) return 'Pending'
+function throughput(metrics: AssistantMetricDetail, t: TrajectoryTranslate): string {
+  if (!metrics.usageProvided) return t('state.usageUnavailable')
+  if (metrics.outputTokens === null) return t('state.outputTokensUnavailable')
+  if (!metrics.timingRecorded || metrics.firstTokenTime === null) return t('state.firstTokenUnavailable')
+  if (metrics.completedTime === null) return t('state.pending')
   const generationSeconds = (metrics.completedTime - metrics.firstTokenTime) / 1_000
-  if (generationSeconds <= 0) return 'Duration too short'
+  if (generationSeconds <= 0) return t('state.durationTooShort')
   return `${(metrics.outputTokens / generationSeconds).toFixed(1)} tok/s`
 }
 
-function AssistantTimingPanel({ metrics }: { metrics: AssistantMetricDetail }) {
+function AssistantTimingPanel({ metrics, t }: { metrics: AssistantMetricDetail; t: TrajectoryTranslate }) {
   return (
     <dl className={css.overview}>
-      <div><dt>Started</dt><StartedAtValue timestamp={metrics.stepStartTime} /></div>
-      <div><dt>Total duration</dt><dd>{totalTime(metrics)}</dd></div>
-      <div><dt>TTFT</dt><dd>{ttft(metrics)}</dd></div>
-      <div><dt>Generation</dt><dd>{generationTime(metrics)}</dd></div>
-      <div><dt>Throughput</dt><dd>{throughput(metrics)}</dd></div>
+      <div><dt>{t('timing.started')}</dt><StartedAtValue timestamp={metrics.stepStartTime} t={t} /></div>
+      <div><dt>{t('timing.totalDuration')}</dt><dd>{totalTime(metrics, t)}</dd></div>
+      <div><dt>{t('timing.ttft')}</dt><dd>{ttft(metrics, t)}</dd></div>
+      <div><dt>{t('timing.generation')}</dt><dd>{generationTime(metrics, t)}</dd></div>
+      <div><dt>{t('timing.throughput')}</dt><dd>{throughput(metrics, t)}</dd></div>
     </dl>
   )
 }
 
 /** Props for the trajectory ledger. */
 export interface TrajectoryTableProps {
+  /** Active trajectory dictionary translator. */
+  t: TrajectoryTranslate
   /** Session-global request numbers for the request groups visible in this context. */
   requestNumbers?: readonly TrajectoryRequestNumber[]
   /** Grouped records in display order. */
@@ -447,6 +468,7 @@ function flattenRecords(turns: readonly TrajectoryTurnModel[]): TableRecord[] {
           turn: turn.turn,
           section,
           group: group.title,
+          ...(group.step === undefined ? {} : { step: group.step }),
           groupStart: index === 0,
           turnStart,
           cell,
@@ -485,12 +507,6 @@ function filterRecords(
   return filtered
 }
 
-function requestStep(group: string): number | undefined {
-  if (!group.startsWith('Step ')) return undefined
-  const value = Number(group.slice('Step '.length))
-  return Number.isInteger(value) && value > 0 ? value : undefined
-}
-
 function requestKey(turn: number | null, group: string): string {
   return `${turn}\u0000${group}`
 }
@@ -500,7 +516,7 @@ function indexRequestBoundaries(records: readonly TableRecord[]): ReadonlyMap<st
   for (const record of records) {
     const key = requestKey(record.turn, record.group)
     if (boundaries.has(key)) continue
-    if (requestStep(record.group) === undefined) {
+    if (record.step === undefined) {
       if (record.groupStart) boundaries.set(key, record.cell.index)
       continue
     }
@@ -510,8 +526,8 @@ function indexRequestBoundaries(records: readonly TableRecord[]): ReadonlyMap<st
   return boundaries
 }
 
-function sectionLabel(turn: number | null): string {
-  return turn === null ? 'Between turns' : `Turn ${turn}`
+function sectionLabel(turn: number | null, t: TrajectoryTranslate): string {
+  return turn === null ? t('group.betweenTurns') : t('group.turn', { turn })
 }
 
 function indexRequestNumbers(
@@ -526,7 +542,7 @@ function indexRequestNumbers(
   let next = Math.max(0, ...numbers.values()) + 1
   const boundaryRecords = records
     .filter(record => boundaries.get(requestKey(record.turn, record.group)) === record.cell.index
-      && requestStep(record.group) !== undefined)
+      && record.step !== undefined)
     .sort((left, right) => left.cell.index - right.cell.index)
   for (const record of boundaryRecords) {
     const key = requestKey(record.turn, record.group)
@@ -543,7 +559,7 @@ function indexRequestBoundaryRuns(records: readonly TableRecord[]): ReadonlyMap<
       indexes.set(record.cell.index, runLength++)
       continue
     }
-    if (runLength > 0 && record.groupStart && requestStep(record.group) !== undefined) {
+    if (runLength > 0 && record.groupStart && record.step !== undefined) {
       indexes.set(record.cell.index, runLength)
     }
     runLength = 0
@@ -551,24 +567,24 @@ function indexRequestBoundaryRuns(records: readonly TableRecord[]): ReadonlyMap<
   return indexes
 }
 
-function summarizeTurn(records: readonly TableRecord[]): string {
+function summarizeTurn(records: readonly TableRecord[], t: TrajectoryTranslate): string {
   const steps = new Set(
     records
-      .map(record => record.group)
-      .filter(group => group.startsWith('Step ')),
+      .flatMap(record => record.step === undefined ? [] : [record.step]),
   ).size
   const toolCalls = records.filter(record =>
     record.cell.kind === 'tool' || record.cell.kind === 'subtool',
   ).length
   return [
-    `${steps} ${steps === 1 ? 'step' : 'steps'}`,
-    `${toolCalls} tool ${toolCalls === 1 ? 'call' : 'calls'}`,
+    t(steps === 1 ? 'group.steps.one' : 'group.steps.many', { count: steps }),
+    t(toolCalls === 1 ? 'group.toolCalls.one' : 'group.toolCalls.many', { count: toolCalls }),
   ].join(' · ')
 }
 
 function collapseTurnRecords(
   records: readonly TableRecord[],
   collapsedTurns: ReadonlySet<number>,
+  t: TrajectoryTranslate,
 ): TableRecord[] {
   const recordsByTurn = new Map<number, TableRecord[]>()
   for (const record of records) {
@@ -592,7 +608,7 @@ function collapseTurnRecords(
         groupStart: false,
         turnStart: false,
         turnEnd: true,
-        collapsedSummary: summarizeTurn(contentRecords.slice(1)),
+        collapsedSummary: summarizeTurn(contentRecords.slice(1), t),
         collapsedSummaryKind: 'turn',
       },
     ]
@@ -615,19 +631,23 @@ function assistantToolCalls(
   return calls
 }
 
-function summarizeAssistantTools(records: readonly TableRecord[]): string {
+function summarizeAssistantTools(
+  records: readonly TableRecord[],
+  t: TrajectoryTranslate,
+): string {
   const names = [...new Set(records.map((record) => {
     const separator = record.cell.text.indexOf(' · ')
     return separator === -1 ? record.cell.text : record.cell.text.slice(0, separator)
   }).filter(name => name !== ''))]
   const count = records.length
-  const summary = `${count} tool ${count === 1 ? 'call' : 'calls'}`
+  const summary = t(count === 1 ? 'group.toolCalls.one' : 'group.toolCalls.many', { count })
   return names.length > 0 ? `${summary} · ${names.join(', ')}` : summary
 }
 
 function collapseAssistantRecords(
   records: readonly TableRecord[],
   collapsedAssistants: ReadonlySet<string>,
+  t: TrajectoryTranslate,
 ): TableRecord[] {
   const out: TableRecord[] = []
   for (let i = 0; i < records.length; i++) {
@@ -656,7 +676,7 @@ function collapseAssistantRecords(
       groupStart: false,
       turnStart: false,
       turnEnd: last?.turnEnd ?? false,
-      collapsedSummary: summarizeAssistantTools(calls),
+      collapsedSummary: summarizeAssistantTools(calls, t),
       collapsedSummaryKind: 'assistant',
     })
     i += calls.length
@@ -674,31 +694,31 @@ function stateOf(record: TableRecord): RecordState {
   return 'complete'
 }
 
-function statusLabel(state: RecordState): string {
-  if (state === 'error') return 'Failed'
-  if (state === 'running') return 'Pending'
-  return 'Completed'
+function statusLabel(state: RecordState, t: TrajectoryTranslate): string {
+  if (state === 'error') return t('state.failed')
+  if (state === 'running') return t('state.pending')
+  return t('state.completed')
 }
 
-function TokenRows({ cell }: { cell: TrajectoryCellProps }) {
+function TokenRows({ cell, t }: { cell: TrajectoryCellProps; t: TrajectoryTranslate }) {
   const content = cell.output !== undefined && cell.think !== undefined
     ? Math.max(0, cell.output - cell.think)
     : undefined
   return (
     <>
       <div>
-        <dt>Tokens</dt>
+        <dt>{t('usage.tokens')}</dt>
         <dd>{cell.output === undefined ? '—' : `${cell.output} tok`}</dd>
       </div>
       {cell.think !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Reasoning</dt>
+          <dt>{t('usage.reasoning')}</dt>
           <dd>{cell.think} tok</dd>
         </div>
       )}
       {content !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Content</dt>
+          <dt>{t('usage.content')}</dt>
           <dd>{content} tok</dd>
         </div>
       )}
@@ -715,8 +735,8 @@ function inputTotal(usage: TrajectoryUsage): number | undefined {
   return (usage.input ?? 0) + (usage.cacheRead ?? 0) + (usage.cacheWrite ?? 0)
 }
 
-function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }) {
-  if (usage === undefined) return <p className={css.noPayload}>Usage not reported</p>
+function UsageRows({ usage, t }: { usage: TrajectoryUsage | undefined; t: TrajectoryTranslate }) {
+  if (usage === undefined) return <p className={css.noPayload}>{t('usage.notReported')}</p>
   const totalInput = inputTotal(usage)
   const otherOutput = usage.output !== undefined && usage.reasoning !== undefined
     ? usage.output - usage.reasoning
@@ -724,38 +744,38 @@ function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }) {
   return (
     <dl className={css.overview}>
       {totalInput !== undefined && (
-        <div><dt>Input</dt><dd>{totalInput} tok</dd></div>
+        <div><dt>{t('usage.input')}</dt><dd>{totalInput} tok</dd></div>
       )}
       {usage.cacheRead !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Cached</dt>
+          <dt>{t('usage.cached')}</dt>
           <dd>{usage.cacheRead} tok</dd>
         </div>
       )}
       {usage.cacheWrite !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Cache created</dt>
+          <dt>{t('usage.cacheCreated')}</dt>
           <dd>{usage.cacheWrite} tok</dd>
         </div>
       )}
       {usage.input !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Other</dt>
+          <dt>{t('usage.other')}</dt>
           <dd>{usage.input} tok</dd>
         </div>
       )}
       {usage.output !== undefined && (
-        <div><dt>Output</dt><dd>{usage.output} tok</dd></div>
+        <div><dt>{t('usage.output')}</dt><dd>{usage.output} tok</dd></div>
       )}
       {usage.reasoning !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Reasoning</dt>
+          <dt>{t('usage.reasoning')}</dt>
           <dd>{usage.reasoning} tok</dd>
         </div>
       )}
       {otherOutput !== undefined && (
         <div className={css.requestTokenDetail}>
-          <dt>Content</dt>
+          <dt>{t('usage.content')}</dt>
           <dd>{otherOutput} tok</dd>
         </div>
       )}
@@ -766,19 +786,21 @@ function UsageRows({ usage }: { usage: TrajectoryUsage | undefined }) {
 function RequestUsagePanel({
   usage,
   cumulative,
+  t,
 }: {
   usage: TrajectoryUsage | undefined
   cumulative: TrajectoryUsage | undefined
+  t: TrajectoryTranslate
 }) {
   return (
     <div className={css.usagePanel}>
       <section className={css.usageGroup}>
-        <h4 className={css.usageHeading}>This request</h4>
-        <UsageRows usage={usage} />
+        <h4 className={css.usageHeading}>{t('usage.thisRequest')}</h4>
+        <UsageRows usage={usage} t={t} />
       </section>
       <section className={css.usageGroup}>
-        <h4 className={css.usageHeading}>Session cumulative</h4>
-        <UsageRows usage={cumulative} />
+        <h4 className={css.usageHeading}>{t('usage.sessionCumulative')}</h4>
+        <UsageRows usage={cumulative} t={t} />
       </section>
     </div>
   )
@@ -787,55 +809,59 @@ function RequestUsagePanel({
 function RequestOptions({
   options,
   preview = false,
+  t,
 }: {
   options: AssistantRequestConfig | undefined
   preview?: boolean
+  t: TrajectoryTranslate
 }) {
   if (options === undefined) {
-    return <p className={css.noPayload}>Options not recorded</p>
+    return <p className={css.noPayload}>{t('request.optionsNotRecorded')}</p>
   }
   return (
     <JsonTree
       data={options}
-      label="Request options JSON"
+      label={t('request.optionsJson')}
+      labels={jsonTreeLabels(t)}
       className={preview ? css.jsonPreview : css.jsonPayload}
     />
   )
 }
 
-function messageSourceLabel(source: unknown): string {
+function messageSourceLabel(source: unknown, t: TrajectoryTranslate): string {
   if (typeof source !== 'object' || source === null || Array.isArray(source)) {
-    return 'Unknown'
+    return t('source.unknown')
   }
   const properties = source as Record<string, unknown>
   const kind = properties.kind
-  if (kind === 'user') return 'User'
+  if (kind === 'user') return t('source.user')
   if (kind === 'plugin') {
     const plugin = properties.plugin
     return typeof plugin === 'string' && plugin !== ''
-      ? `Plugin · ${plugin}`
-      : 'Plugin'
+      ? t('source.pluginNamed', { plugin })
+      : t('source.plugin')
   }
   if (kind === 'goal') {
     const round = properties.round
     return typeof round === 'number' && round > 0
-      ? `Goal · Round ${round}`
-      : 'Goal'
+      ? t('source.goalRound', { round })
+      : t('source.goal')
   }
-  if (typeof kind !== 'string' || kind === '') return 'Unknown'
+  if (typeof kind !== 'string' || kind === '') return t('source.unknown')
   return `${kind[0]?.toUpperCase() ?? ''}${kind.slice(1)}`
 }
 
-function MessageSource({ record }: { record: TableRecord }) {
+function MessageSource({ record, t }: { record: TableRecord; t: TrajectoryTranslate }) {
   const source = record.cell.messageSource
-  if (source === undefined) return <p className={css.noPayload}>Source not recorded</p>
+  if (source === undefined) return <p className={css.noPayload}>{t('source.notRecorded')}</p>
   const data = typeof source === 'object' && source !== null
     ? source
     : { value: source }
   return (
     <JsonTree
       data={data}
-      label="Message source JSON"
+      label={t('source.json')}
+      labels={jsonTreeLabels(t)}
       className={css.jsonPayload}
     />
   )
@@ -891,34 +917,34 @@ function markdownSource(record: TableRecord): string | undefined {
   return undefined
 }
 
-function detailTabs(record: TableRecord): readonly DetailTabItem[] {
+function detailTabs(record: TableRecord, t: TrajectoryTranslate): readonly DetailTabItem[] {
   if (record.cell.kind === 'system') {
     return record.cell.previousPromptDetail === undefined
-      ? SYSTEM_PROMPT_TABS
-      : SYSTEM_UPDATE_TABS
+      ? systemPromptTabs(t)
+      : systemUpdateTabs(t)
   }
   if (record.cell.kind === 'compacted') {
     return [
-      { id: 'overview', label: 'Summary' },
-      { id: 'raw', label: 'Raw Output' },
+      { id: 'overview', label: t('detail.tab.summary') },
+      { id: 'raw', label: t('detail.tab.rawOutput') },
     ]
   }
   if (isMarkdownRecord(record)) {
     return [
-      { id: 'overview', label: 'Summary' },
-      { id: 'rendered', label: 'Preview' },
-      { id: 'raw', label: 'Raw' },
+      { id: 'overview', label: t('detail.tab.summary') },
+      { id: 'rendered', label: t('detail.tab.preview') },
+      { id: 'raw', label: t('detail.tab.raw') },
       ...(record.cell.messageSource === undefined
         ? []
-        : [{ id: 'source', label: 'Source' } as const]),
+        : [{ id: 'source', label: t('detail.tab.source') } as const]),
     ]
   }
   return [
-    { id: 'overview', label: 'Summary' },
-    ...(record.cell.inputDetail ? [{ id: 'input', label: 'Payload' } as const] : []),
-    ...(record.cell.outputDetail ? [{ id: 'output', label: 'Result' } as const] : []),
-    { id: 'schema', label: 'Schema' },
-    { id: 'timing', label: 'Timing' },
+    { id: 'overview', label: t('detail.tab.summary') },
+    ...(record.cell.inputDetail ? [{ id: 'input', label: t('detail.tab.payload') } as const] : []),
+    ...(record.cell.outputDetail ? [{ id: 'output', label: t('detail.tab.result') } as const] : []),
+    { id: 'schema', label: t('detail.tab.schema') },
+    { id: 'timing', label: t('detail.tab.timing') },
   ]
 }
 
@@ -961,7 +987,7 @@ function isToolCallOnly(cell: TrajectoryCellProps): boolean {
   return cell.kind === 'message'
     && !cell.outputDetail
     && !cell.thinkingDetail
-    && cell.text === 'Tool call only'
+    && cell.sourceBlocks?.some(block => block.type === 'tool-call') === true
 }
 
 interface RecordPresentationValue {
@@ -974,9 +1000,11 @@ interface RecordPresentationValue {
 
 function RecordPresentation({
   cell,
+  t,
   children,
 }: {
   cell: TrajectoryCellProps
+  t: TrajectoryTranslate
   children: (value: RecordPresentationValue) => ReactNode
 }) {
   const displayText = useMemo(
@@ -993,7 +1021,7 @@ function RecordPresentation({
   const toolCallOnly = isToolCallOnly(cell)
   const toolCallText = toolCallTextParts(cell.kind, displayText)
   const listDisplayText = toolCallOnly
-    ? '(tool call only)'
+    ? t('content.toolCallOnlyParenthesized')
     : toolCallText === undefined
       ? displayText
       : [toolCallText.name, toolCallText.args].filter(Boolean).join(' ')
@@ -1010,9 +1038,12 @@ function RecordListText({
   displayText,
   toolCallOnly,
   toolCallText,
-}: Pick<RecordPresentationValue, 'displayText' | 'toolCallOnly' | 'toolCallText'>) {
+  t,
+}: Pick<RecordPresentationValue, 'displayText' | 'toolCallOnly' | 'toolCallText'> & {
+  t: TrajectoryTranslate
+}) {
   if (toolCallOnly) {
-    return <span className={css.toolCallOnly}>(tool call only)</span>
+    return <span className={css.toolCallOnly}>{t('content.toolCallOnlyParenthesized')}</span>
   }
   if (toolCallText === undefined) return displayText || '—'
   return (
@@ -1055,9 +1086,11 @@ function MarkdownFragment({
 function SourceBlocks({
   blocks,
   onOpenCall,
+  t,
 }: {
   blocks: readonly TrajectorySourceBlock[]
   onOpenCall: (callId: string) => void
+  t: TrajectoryTranslate
 }) {
   return (
     <div className={css.sourceBlocks}>
@@ -1068,14 +1101,14 @@ function SourceBlocks({
               <button
                 type="button"
                 className={css.sourceBlockJumpTarget}
-                aria-label={`Open Block #${index + 1} tool call summary`}
-                title="Open tool call summary"
+                aria-label={t('content.openBlockToolCallSummary', { index: index + 1 })}
+                title={t('content.openToolCallSummary')}
                 onClick={() => {
                   if (block.callId !== undefined) onOpenCall(block.callId)
                 }}
               >
                 <span className={css.sourceBlockLabel}>
-                  {`Block #${index + 1} ${block.type}`}
+                  {t('content.blockLabel', { index: index + 1, type: block.type })}
                 </span>
                 <IconChevronRightOutline14 className={css.sourceBlockJumpIcon} size={12} />
               </button>
@@ -1083,12 +1116,12 @@ function SourceBlocks({
             : (
               <div className={css.sourceBlockHeader}>
                 <span className={css.sourceBlockLabel}>
-                  {`Block #${index + 1} ${block.type}`}
+                  {t('content.blockLabel', { index: index + 1, type: block.type })}
                 </span>
               </div>
             )}
           {block.imageSrc !== undefined
-            ? <PanelImage block={block} />
+            ? <PanelImage block={block} t={t} />
             : <pre className={css.sourceBlockContent}>{block.content}</pre>}
         </section>
       ))}
@@ -1099,9 +1132,11 @@ function SourceBlocks({
 function PanelImage({
   block,
   preview = false,
+  t,
 }: {
   block: TrajectorySourceBlock
   preview?: boolean
+  t: TrajectoryTranslate
 }) {
   if (block.imageSrc === undefined) return null
   return (
@@ -1110,7 +1145,7 @@ function PanelImage({
       href={block.imageSrc}
       target="_blank"
       rel="noopener noreferrer"
-      title="Open image"
+      title={t('content.openImage')}
     >
       <img
         className={css.panelImage}
@@ -1124,15 +1159,17 @@ function PanelImage({
 function MessageImages({
   blocks,
   preview,
+  t,
 }: {
   blocks: readonly TrajectorySourceBlock[] | undefined
   preview: boolean
+  t: TrajectoryTranslate
 }) {
   const images = blocks?.filter(block => block.imageSrc !== undefined) ?? []
   if (images.length === 0) return null
   return (
     <div className={preview ? `${css.messageImages} ${css.messageImagesPreview}` : css.messageImages}>
-      {images.map((block, index) => <PanelImage block={block} preview={preview} key={index} />)}
+      {images.map((block, index) => <PanelImage block={block} preview={preview} t={t} key={index} />)}
     </div>
   )
 }
@@ -1141,10 +1178,12 @@ function AssistantToolCalls({
   blocks,
   preview,
   onOpenCall,
+  t,
 }: {
   blocks: readonly TrajectorySourceBlock[] | undefined
   preview: boolean
   onOpenCall: (callId: string) => void
+  t: TrajectoryTranslate
 }) {
   const calls = blocks?.filter(block => block.type === 'tool-call') ?? []
   if (calls.length === 0) return null
@@ -1158,7 +1197,7 @@ function AssistantToolCalls({
           <button
             type="button"
             className={css.assistantToolCallButton}
-            title="Open tool call summary"
+            title={t('content.openToolCallSummary')}
             onClick={() => {
               if (call.callId !== undefined) onOpenCall(call.callId)
             }}
@@ -1215,8 +1254,11 @@ function ToolGlyph() {
   )
 }
 
-function ToolCatalog({ tools }: { tools: ConversationPromptSnapshot['tools'] }) {
-  if (tools.length === 0) return <p className={css.noPayload}>No tools in this request</p>
+function ToolCatalog({
+  tools,
+  t,
+}: { tools: ConversationPromptSnapshot['tools']; t: TrajectoryTranslate }) {
+  if (tools.length === 0) return <p className={css.noPayload}>{t('content.noTools')}</p>
   return (
     <div className={css.toolCatalog}>
       {tools.map((tool, index) => (
@@ -1233,7 +1275,8 @@ function ToolCatalog({ tools }: { tools: ConversationPromptSnapshot['tools'] }) 
             )}
             <JsonTree
               data={tool.parameters}
-              label={`${tool.name} parameters JSON`}
+              label={t('content.parametersJson', { name: tool.name })}
+              labels={jsonTreeLabels(t)}
               className={css.toolCatalogTree}
             />
           </div>
@@ -1294,9 +1337,11 @@ function PromptDiffSection({
 function SystemPromptDiff({
   before,
   after,
+  t,
 }: {
   before: ConversationPromptSnapshot
   after: ConversationPromptSnapshot
+  t: TrajectoryTranslate
 }) {
   const toolsBefore = JSON.stringify(before.tools, null, 2)
   const toolsAfter = JSON.stringify(after.tools, null, 2)
@@ -1304,14 +1349,14 @@ function SystemPromptDiff({
     <div className={css.promptDiffSections}>
       {before.system !== after.system && (
         <PromptDiffSection
-          title="System Prompt"
+          title={t('detail.tab.systemPrompt')}
           before={before.system}
           after={after.system}
         />
       )}
       {toolsBefore !== toolsAfter && (
         <PromptDiffSection
-          title="Tools"
+          title={t('detail.tab.tools')}
           before={toolsBefore}
           after={toolsAfter}
         />
@@ -1324,10 +1369,12 @@ function ToolOutputBlocks({
   blocks,
   error,
   preview,
+  t,
 }: {
   blocks: readonly TrajectorySourceBlock[]
   error: boolean
   preview: boolean
+  t: TrajectoryTranslate
 }) {
   return (
     <div className={[
@@ -1338,7 +1385,7 @@ function ToolOutputBlocks({
     >
       {blocks.map((block, index) => (
         block.imageSrc !== undefined
-          ? <PanelImage block={block} preview={preview} key={index} />
+          ? <PanelImage block={block} preview={preview} t={t} key={index} />
           : block.content !== ''
             ? <pre className={css.resultBlockText} key={index}>{block.content}</pre>
             : null
@@ -1354,6 +1401,7 @@ function MarkdownRecordContent({
   thinkingExpanded,
   onThinkingExpandedChange,
   onOpenCall,
+  t,
 }: {
   record: TableRecord
   rendered: boolean
@@ -1361,9 +1409,10 @@ function MarkdownRecordContent({
   thinkingExpanded: boolean
   onThinkingExpandedChange: (expanded: boolean) => void
   onOpenCall: (callId: string) => void
+  t: TrajectoryTranslate
 }) {
   if (!rendered && record.cell.sourceBlocks && record.cell.sourceBlocks.length > 0) {
-    return <SourceBlocks blocks={record.cell.sourceBlocks} onOpenCall={onOpenCall} />
+    return <SourceBlocks blocks={record.cell.sourceBlocks} onOpenCall={onOpenCall} t={t} />
   }
   if (record.cell.thinkingDetail) {
     if (!rendered) {
@@ -1387,7 +1436,7 @@ function MarkdownRecordContent({
             aria-expanded={thinkingExpanded}
             onClick={() => { onThinkingExpandedChange(!thinkingExpanded) }}
           >
-            Thinking
+            {t('content.thinking')}
             <IconChevronRightOutline14 className={css.thinkingChevron} size={12} />
           </button>
           {thinkingExpanded && (
@@ -1411,10 +1460,12 @@ function MarkdownRecordContent({
           blocks={record.cell.sourceBlocks}
           preview={preview}
           onOpenCall={onOpenCall}
+          t={t}
         />
         <MessageImages
           blocks={record.cell.sourceBlocks}
           preview={preview}
+          t={t}
         />
       </div>
     )
@@ -1425,8 +1476,8 @@ function MarkdownRecordContent({
     && record.cell.sourceBlocks?.some(block => block.type === 'tool-call') === true
   if (!source && !hasImages && !hasToolCalls) {
     const emptyLabel = isToolCallOnly(record.cell)
-      ? 'Tool call only'
-      : record.cell.text || 'No content'
+      ? t('layout.toolCallOnly')
+      : record.cell.text || t('content.noContent')
     return <p className={css.noPayload}>{emptyLabel}</p>
   }
   if (!rendered || (!hasImages && !hasToolCalls)) {
@@ -1440,21 +1491,22 @@ function MarkdownRecordContent({
           blocks={record.cell.sourceBlocks}
           preview={preview}
           onOpenCall={onOpenCall}
+          t={t}
         />
       )}
-      <MessageImages blocks={record.cell.sourceBlocks} preview={preview} />
+      <MessageImages blocks={record.cell.sourceBlocks} preview={preview} t={t} />
     </div>
   )
 }
 
-function RecordTiming({ record }: { record: TableRecord }) {
+function RecordTiming({ record, t }: { record: TableRecord; t: TrajectoryTranslate }) {
   return record.cell.kind === 'message' && record.cell.assistantMetrics !== undefined
-    ? <AssistantTimingPanel metrics={record.cell.assistantMetrics} />
+    ? <AssistantTimingPanel metrics={record.cell.assistantMetrics} t={t} />
     : (
       <dl className={css.overview}>
-        <div><dt>Started</dt><StartedAtValue timestamp={record.cell.startedAt ?? null} /></div>
-        <div><dt>Duration</dt><dd>{formatElapsedSeconds(record.cell.timeSeconds)}</dd></div>
-        <div><dt>Timing source</dt><dd>{record.cell.timeSeconds === null ? 'Not available' : 'Session timestamps'}</dd></div>
+        <div><dt>{t('timing.started')}</dt><StartedAtValue timestamp={record.cell.startedAt ?? null} t={t} /></div>
+        <div><dt>{t('timing.duration')}</dt><dd>{formatElapsedSeconds(record.cell.timeSeconds)}</dd></div>
+        <div><dt>{t('timing.source')}</dt><dd>{record.cell.timeSeconds === null ? t('state.notAvailable') : t('timing.sessionTimestamps')}</dd></div>
       </dl>
     )
 }
@@ -1463,23 +1515,25 @@ function RequestTiming({
   assistant,
   anchor,
   request,
+  t,
 }: {
   assistant: TableRecord | undefined
   anchor: TableRecord | undefined
   request: TrajectoryRequestNumber | undefined
+  t: TrajectoryTranslate
 }) {
-  if (assistant !== undefined) return <RecordTiming record={assistant} />
+  if (assistant !== undefined) return <RecordTiming record={assistant} t={t} />
   if (request?.startedAt !== undefined) {
     const duration = request.completedAt === null || request.completedAt === undefined
       ? null
       : Math.max(0, (request.completedAt - request.startedAt) / 1000)
     return (
       <dl className={css.overview}>
-        <div><dt>Started</dt><StartedAtValue timestamp={request.startedAt} /></div>
-        <div><dt>Duration</dt><dd>{formatElapsedSeconds(duration)}</dd></div>
+        <div><dt>{t('timing.started')}</dt><StartedAtValue timestamp={request.startedAt} t={t} /></div>
+        <div><dt>{t('timing.duration')}</dt><dd>{formatElapsedSeconds(duration)}</dd></div>
         <div>
-          <dt>Timing source</dt>
-          <dd>{duration === null ? 'Session timestamps (running)' : 'Session timestamps'}</dd>
+          <dt>{t('timing.source')}</dt>
+          <dd>{duration === null ? t('timing.sessionTimestampsRunning') : t('timing.sessionTimestamps')}</dd>
         </div>
       </dl>
     )
@@ -1487,10 +1541,10 @@ function RequestTiming({
   return (
     <dl className={css.overview}>
       <div>
-        <dt>Started</dt>
-        <StartedAtValue timestamp={anchor?.cell.startedAt ?? null} />
+        <dt>{t('timing.started')}</dt>
+        <StartedAtValue timestamp={anchor?.cell.startedAt ?? null} t={t} />
       </div>
-      <div><dt>Duration</dt><dd>{formatElapsedSeconds(null)}</dd></div>
+      <div><dt>{t('timing.duration')}</dt><dd>{formatElapsedSeconds(null)}</dd></div>
     </dl>
   )
 }
@@ -1499,15 +1553,17 @@ function RecordPayload({
   record,
   direction,
   preview = false,
+  t,
 }: {
   record: TableRecord
   direction: 'input' | 'output'
   preview?: boolean
+  t: TrajectoryTranslate
 }) {
   const value = direction === 'input' ? record.cell.inputDetail : record.cell.outputDetail
   const missing = direction === 'input'
-    ? 'No payload captured'
-    : 'No result captured'
+    ? t('content.noPayloadCaptured')
+    : t('content.noResultCaptured')
   if (!value) return <p className={css.noPayload}>{missing}</p>
   const error = direction === 'output' && record.cell.isError === true
   const payloadClass = preview ? css.jsonPreview : css.jsonPayload
@@ -1521,7 +1577,8 @@ function RecordPayload({
     return (
       <JsonTree
         data={json}
-        label="Result JSON"
+        label={t('content.resultJson')}
+        labels={jsonTreeLabels(t)}
         className={payloadClassName}
       />
     )
@@ -1537,6 +1594,7 @@ function RecordPayload({
         blocks={record.cell.outputBlocks}
         error={error}
         preview={preview}
+        t={t}
       />
     )
   }
@@ -1562,7 +1620,8 @@ function RecordPayload({
     return (
       <JsonTree
         data={json}
-        label={`${direction === 'input' ? 'Payload' : 'Result'} JSON`}
+        label={direction === 'input' ? t('content.payloadJson') : t('content.resultJson')}
+        labels={jsonTreeLabels(t)}
         className={payloadClassName}
       />
     )
@@ -1572,7 +1631,7 @@ function RecordPayload({
       css.payload,
       preview ? css.payloadPreview : undefined,
       error ? css.errorPayload : undefined,
-      value === 'No output' ? css.noOutputText : undefined,
+      value === t('layout.noOutput') ? css.noOutputText : undefined,
     ].filter((value): value is string => value !== undefined).join(' ')}
     >
       {value}
@@ -1583,12 +1642,14 @@ function RecordPayload({
 function RecordSchema({
   record,
   preview = false,
+  t,
 }: {
   record: TableRecord
   preview?: boolean
+  t: TrajectoryTranslate
 }) {
   if (!record.cell.schemaDetail) {
-    return <p className={css.noPayload}>Schema unavailable</p>
+    return <p className={css.noPayload}>{t('content.schemaUnavailable')}</p>
   }
   const schema = parseToolSchema(record.cell.schemaDetail)
   if (schema !== undefined) {
@@ -1599,10 +1660,11 @@ function RecordSchema({
           <p className={css.schemaDescription}>{schema.description}</p>
         </header>
         <section className={css.schemaParameters}>
-          <h4 className={css.schemaParametersTitle}>Parameters</h4>
+          <h4 className={css.schemaParametersTitle}>{t('content.parameters')}</h4>
           <JsonTree
             data={schema.parameters}
-            label={`${schema.name} parameters JSON`}
+            label={t('content.parametersJson', { name: schema.name })}
+            labels={jsonTreeLabels(t)}
             className={css.schemaTree}
           />
         </section>
@@ -1691,6 +1753,7 @@ function OverviewSection({
  * @returns The ledger and an optional local record inspector.
  */
 export function TrajectoryTable({
+  t,
   requestNumbers: sessionRequestNumbers,
   turns,
   streamingCells = [],
@@ -1761,11 +1824,11 @@ export function TrajectoryTable({
     if (searchMatchIndexes !== null) return filterRecords(allRecords, searchMatchIndexes)
     const turnRecords = collapsedTurns.size === 0
       ? allRecords
-      : collapseTurnRecords(allRecords, collapsedTurns)
+      : collapseTurnRecords(allRecords, collapsedTurns, t)
     return collapsedAssistants.size === 0
       ? turnRecords
-      : collapseAssistantRecords(turnRecords, collapsedAssistants)
-  }, [allRecords, collapsedAssistants, collapsedTurns, searchMatchIndexes])
+      : collapseAssistantRecords(turnRecords, collapsedAssistants, t)
+  }, [allRecords, collapsedAssistants, collapsedTurns, searchMatchIndexes, t])
   const projectedVirtualRows = useMemo(
     () => groupTrajectoryVirtualRows(records),
     [records],
@@ -1916,8 +1979,8 @@ export function TrajectoryTable({
     ? selected?.section
     : selectedRequestRecords[0]?.section
   const selectedTabs = selectedRequest !== null
-    ? REQUEST_TABS.filter(tab => tab.id !== 'options' || selectedRequestOptions !== undefined)
-    : selected === undefined ? [] : detailTabs(selected)
+    ? requestTabs(t).filter(tab => tab.id !== 'options' || selectedRequestOptions !== undefined)
+    : selected === undefined ? [] : detailTabs(selected, t)
   const selectedParents: ParentRecords = selected === undefined
     ? {}
     : parentRecords(allRecords, selected)
@@ -1970,11 +2033,11 @@ export function TrajectoryTable({
     setSelectedRequest(null)
     setSelectedRecordId(record === undefined ? null : trajectoryRecordId(record.cell))
     if (record === undefined) return
-    const tabs = detailTabs(record)
+    const tabs = detailTabs(record, t)
     const available = new Set(tabs.map(tab => tab.id))
     const recent = [...tabHistory.current].reverse().find(tab => available.has(tab))
     setActiveTab(recent ?? tabs[0]?.id ?? 'overview')
-  }, [allRecords, onRecordSelect])
+  }, [allRecords, onRecordSelect, t])
   useEffect(() => {
     if (
       recordSelection === null
@@ -2213,7 +2276,7 @@ export function TrajectoryTable({
           <div className={css.historyLoading} role="status" aria-live="polite">
             <span className={css.historyLoadingBar}>
               <span className={css.historyLoadingSpinner} aria-hidden="true" />
-              Loading trajectory…
+              {t('history.loadingTrajectory')}
             </span>
           </div>
         )}
@@ -2239,8 +2302,8 @@ export function TrajectoryTable({
                     className={css.historyLoadButton}
                     disabled={olderBusy || onLoadOlder === undefined}
                     aria-label={olderBusy
-                      ? 'Loading earlier history…'
-                      : 'Load earlier history'}
+                      ? t('history.loadingEarlier')
+                      : t('history.loadEarlier')}
                     onClick={() => {
                       const pane = tablePaneRef.current
                       if (pane !== null) requestOlder(pane, false)
@@ -2250,10 +2313,10 @@ export function TrajectoryTable({
                       <span className={css.historyLoadingSpinner} aria-hidden="true" />
                     )}
                     <span aria-hidden="true">
-                      {olderBusy ? 'Loading earlier history…' : 'Load earlier history'}
+                      {olderBusy ? t('history.loadingEarlier') : t('history.loadEarlier')}
                     </span>
                     <span className={css.visuallyHidden} role="status" aria-live="polite">
-                      {olderBusy ? 'Loading earlier history…' : ''}
+                      {olderBusy ? t('history.loadingEarlier') : ''}
                     </span>
                   </button>
                 </td>
@@ -2273,6 +2336,7 @@ export function TrajectoryTable({
               <RecordPresentation
                 key={trajectoryVirtualRecordKey(record)}
                 cell={record.cell}
+                t={t}
               >
                 {({ displayText, listDisplayText, resultText, toolCallOnly, toolCallText }) => {
                   const isCollapsedSummary = record.collapsedSummary !== undefined
@@ -2296,7 +2360,9 @@ export function TrajectoryTable({
                   }
                   const requestLabel = request === undefined
                     ? undefined
-                    : `Request #${request}${requestInfo?.purpose === 'compaction' ? ' · Compaction' : ''}`
+                    : t(requestInfo?.purpose === 'compaction'
+                      ? 'request.compactionBoundary'
+                      : 'request.boundary', { number: request })
                   const requestSelected = request !== undefined
                 && selectedRequest?.turn === record.turn
                 && selectedRequest.group === record.group
@@ -2308,10 +2374,18 @@ export function TrajectoryTable({
                       tabIndex={isRequestOnly ? -1 : 0}
                       aria-rowindex={position + 1 + historyRowOffset}
                       aria-label={isCollapsedSummary
-                        ? `Collapsed ${record.collapsedSummaryKind} summary, ${record.collapsedSummary}`
+                        ? t(record.collapsedSummaryKind === 'turn'
+                          ? 'request.collapsedTurnSummary'
+                          : 'request.collapsedAssistantSummary', { summary: record.collapsedSummary })
                         : isRequestOnly
-                          ? `Request ${request ?? ''}, compaction`
-                          : `${request === undefined ? '' : `Request ${request}, `}${KIND_LABEL[record.cell.kind]}, ${listDisplayText || 'no content'}`}
+                          ? t('request.ariaCompaction', { number: request ?? '' })
+                          : t(request === undefined
+                            ? 'request.ariaRecordWithoutNumber'
+                            : 'request.ariaRecord', {
+                            number: request ?? '',
+                            kind: kindLabel(record.cell.kind, t),
+                            content: listDisplayText || t('request.noContent'),
+                          })}
                       aria-selected={!isCollapsedSummary && !isRequestOnly && selectedIndex === record.cell.index}
                       data-kind={record.cell.kind}
                       data-trajectory-row-key={trajectoryVirtualRecordKey(record)}
@@ -2416,14 +2490,14 @@ export function TrajectoryTable({
                             className={sectionActive
                               ? `${css.turnLabel} ${css.turnLabelActive}`
                               : css.turnLabel}
-                            aria-label={sectionLabel(record.turn)}
+                            aria-label={sectionLabel(record.turn, t)}
                           >
                             {record.turn === null
-                              ? sectionLabel(record.turn)
+                              ? sectionLabel(record.turn, t)
                               : (
                                 <>
                                   <span className={css.turnLabelFull} aria-hidden="true">
-                                    {sectionLabel(record.turn)}
+                                    {sectionLabel(record.turn, t)}
                                   </span>
                                   <span className={css.turnLabelCompact} aria-hidden="true">
                                     #{record.turn}
@@ -2456,7 +2530,7 @@ export function TrajectoryTable({
                                 data-role-kind={record.cell.kind}
                               >
                                 <Tooltip
-                                  label={KIND_LABEL[record.cell.kind]}
+                                  label={kindLabel(record.cell.kind, t)}
                                   side="right"
                                 >
                                   <span className={css.kindTagIcon} aria-hidden="true">
@@ -2464,7 +2538,7 @@ export function TrajectoryTable({
                                   </span>
                                 </Tooltip>
                                 <span className={css.kindTagLabel}>
-                                  {KIND_LABEL[record.cell.kind]}
+                                  {kindLabel(record.cell.kind, t).toLocaleUpperCase()}
                                 </span>
                               </span>
                             </span>
@@ -2493,12 +2567,13 @@ export function TrajectoryTable({
                                     displayText={displayText}
                                     toolCallOnly={toolCallOnly}
                                     toolCallText={toolCallText}
+                                    t={t}
                                   />
                                 </span>
                                 {resultText !== undefined && (
                                   <span className={record.cell.isError ? `${css.inlineResult} ${css.error}` : css.inlineResult}>
                                     <span className={css.arrow}>→</span>
-                                    <span className={resultText === 'No output'
+                                    <span className={resultText === t('layout.noOutput')
                                       ? `${css.inlineResultText} ${css.noOutputText}`
                                       : css.inlineResultText}
                                     >
@@ -2532,17 +2607,17 @@ export function TrajectoryTable({
         || (selected !== undefined && selectedState !== undefined)) && (
         <aside
           className={css.details}
-          aria-label="Event details"
+          aria-label={t('details.event')}
           style={detailsWidth === null ? undefined : { width: detailsWidth }}
         >
           <div
             className={css.detailsResizeHandle}
             role="separator"
-            aria-label="Resize event details"
+            aria-label={t('details.resize')}
             aria-controls="trajectory-detail-panel"
             aria-orientation="vertical"
             tabIndex={0}
-            title="Drag to resize. Double-click to reset."
+            title={t('details.resizeTitle')}
             onDoubleClick={() => {
               setDetailsWidth(null)
               setToolRequestOffset(null)
@@ -2618,19 +2693,23 @@ export function TrajectoryTable({
                   <>
                     <span className={css.requestDetailsDot} aria-hidden="true" />
                     <span className={css.requestDetailsName}>
-                      Request #{selectedRequestNumber ?? '—'}
+                      {t('request.heading', { number: selectedRequestNumber ?? '—' })}
                     </span>
                     <span className={css.detailsLocation}>
                       {selectedRequestInfo?.purpose === 'compaction'
-                        ? `Compaction · ${sectionLabel(selectedRequest.turn)}`
-                        : sectionLabel(selectedRequest.turn)}
+                        ? t('request.compactionHeading', {
+                          section: sectionLabel(selectedRequest.turn, t),
+                        })
+                        : sectionLabel(selectedRequest.turn, t)}
                     </span>
                   </>
                 )
                 : promptSelected
                   ? (
                     <>
-                      <span className={`${css.kindTag} ${css.systemNeutral}`}>SYSTEM</span>
+                      <span className={`${css.kindTag} ${css.systemNeutral}`}>
+                        {kindLabel('system', t).toLocaleUpperCase()}
+                      </span>
                       <span className={css.detailsLocation}>{selected?.cell.text}</span>
                     </>
                   )
@@ -2650,12 +2729,12 @@ export function TrajectoryTable({
                                   : css[selected.cell.kind]
                       }`}
                       >
-                        {KIND_LABEL[selected.cell.kind]}
+                        {kindLabel(selected.cell.kind, t).toLocaleUpperCase()}
                       </span>
                       <span className={css.detailsLocation}>
                         {selected.cell.kind === 'compacted'
-                          ? sectionLabel(selected.turn)
-                          : `${sectionLabel(selected.turn)} · ${selected.group}`}
+                          ? sectionLabel(selected.turn, t)
+                          : `${sectionLabel(selected.turn, t)} · ${selected.group}`}
                       </span>
                     </>
                   )}
@@ -2663,13 +2742,13 @@ export function TrajectoryTable({
             <button
               type="button"
               className={css.close}
-              aria-label="Close details"
+              aria-label={t('details.close')}
               onClick={clearInspectorSelection}
             >
               <span aria-hidden="true">×</span>
             </button>
           </div>
-          <div className={css.detailTabs} role="tablist" aria-label="Event details">
+          <div className={css.detailTabs} role="tablist" aria-label={t('details.event')}>
             {selectedTabs.map(tab => (
               <button
                 key={tab.id}
@@ -2702,21 +2781,21 @@ export function TrajectoryTable({
                   data-summary-scroll-region=""
                 >
                   <div>
-                    <dt>Status</dt>
+                    <dt>{t('overview.status')}</dt>
                     <dd className={selectedRequestState === 'error' ? css.error : undefined}>
-                      {statusLabel(selectedRequestState)}
+                      {statusLabel(selectedRequestState, t)}
                     </dd>
                   </div>
                   {selectedRequestInfo?.purpose === 'compaction' && (
                     <div>
-                      <dt>Purpose</dt>
-                      <dd>Compaction</dd>
+                      <dt>{t('overview.purpose')}</dt>
+                      <dd>{t('overview.compaction')}</dd>
                     </div>
                   )}
                   {(selectedRequestInfo?.provider
                     ?? selectedRequestInfo?.requestConfig?.provider) !== undefined && (
                     <div>
-                      <dt>Provider</dt>
+                      <dt>{t('overview.provider')}</dt>
                       <dd>
                         {selectedRequestInfo?.provider
                           ?? selectedRequestInfo?.requestConfig?.provider}
@@ -2726,7 +2805,7 @@ export function TrajectoryTable({
                   {(selectedRequestInfo?.model
                     ?? selectedRequestInfo?.requestConfig?.model) !== undefined && (
                     <div>
-                      <dt>Model</dt>
+                      <dt>{t('overview.model')}</dt>
                       <dd>
                         {selectedRequestInfo?.model
                           ?? selectedRequestInfo?.requestConfig?.model}
@@ -2734,41 +2813,48 @@ export function TrajectoryTable({
                     </div>
                   )}
                   <div>
-                    <dt>Tool calls</dt>
+                    <dt>{t('overview.toolCalls')}</dt>
                     <dd>{selectedRequestToolCalls}</dd>
                   </div>
                   {selectedRequestSubtoolCalls > 0 && (
                     <div>
-                      <dt>Subtool calls</dt>
+                      <dt>{t('overview.subtoolCalls')}</dt>
                       <dd>{selectedRequestSubtoolCalls}</dd>
                     </div>
                   )}
                   {selectedRequestInfo?.error !== undefined && (
                     <div>
-                      <dt>Error</dt>
-                      <dd className={css.error}>{selectedRequestInfo.error}</dd>
+                      <dt>{t('overview.error')}</dt>
+                      <dd className={css.error}>
+                        {selectedRequestInfo.error === COMPACTION_INTERRUPTED_ERROR
+                          ? t('error.compactionInterrupted')
+                          : selectedRequestInfo.error}
+                      </dd>
                     </div>
                   )}
                   {selectedRequestInfo?.retry !== undefined && (
                     <div>
-                      <dt>Retry</dt>
+                      <dt>{t('overview.retry')}</dt>
                       <dd>
-                        Scheduled {selectedRequestInfo.retry}
+                        {t('overview.scheduled')} {selectedRequestInfo.retry}
                         {selectedRequestInfo.maxRetries === undefined
                           ? ''
-                          : ` of ${selectedRequestInfo.maxRetries}`}
+                          : ` · ${t('overview.retryOf', {
+                            retry: selectedRequestInfo.retry,
+                            max: selectedRequestInfo.maxRetries,
+                          })}`}
                       </dd>
                     </div>
                   )}
                   {selectedRequestInfo?.retryDelayMs !== undefined && (
                     <div>
-                      <dt>Retry delay</dt>
+                      <dt>{t('overview.retryDelay')}</dt>
                       <dd>{formatDurationMs(selectedRequestInfo.retryDelayMs)}</dd>
                     </div>
                   )}
                   {selectedRequestResult !== undefined && (
                     <div>
-                      <dt>Result</dt>
+                      <dt>{t('overview.result')}</dt>
                       <dd className={css.overviewParentLinks}>
                         <button
                           type="button"
@@ -2779,8 +2865,8 @@ export function TrajectoryTable({
                         >
                           <span>
                             {selectedRequestInfo?.purpose === 'compaction'
-                              ? 'Compacted'
-                              : 'Assistant Message'}
+                              ? t('overview.compacted')
+                              : t('overview.assistantMessage')}
                           </span>
                           <IconChevronRightOutline14
                             className={css.overviewHierarchyJumpIconTight}
@@ -2793,30 +2879,32 @@ export function TrajectoryTable({
                 </dl>
                 <div className={css.overviewSections}>
                   {selectedRequestOptions !== undefined && (
-                    <OverviewSection label="Options" onOpen={() => { activateTab('options') }}>
-                      <RequestOptions options={selectedRequestOptions} preview />
+                    <OverviewSection label={t('detail.tab.options')} onOpen={() => { activateTab('options') }}>
+                      <RequestOptions options={selectedRequestOptions} preview t={t} />
                     </OverviewSection>
                   )}
-                  <OverviewSection label="Usage" onOpen={() => { activateTab('usage') }}>
-                    <UsageRows usage={selectedRequestUsage} />
+                  <OverviewSection label={t('detail.tab.usage')} onOpen={() => { activateTab('usage') }}>
+                    <UsageRows usage={selectedRequestUsage} t={t} />
                   </OverviewSection>
-                  <OverviewSection label="Timing" onOpen={() => { activateTab('timing') }}>
+                  <OverviewSection label={t('detail.tab.timing')} onOpen={() => { activateTab('timing') }}>
                     <RequestTiming
                       assistant={selectedRequestAssistant}
                       anchor={selectedRequestAnchor}
                       request={selectedRequestInfo}
+                      t={t}
                     />
                   </OverviewSection>
                 </div>
               </>
             )}
             {selectedRequest !== null && activeTab === 'options' && (
-              <RequestOptions options={selectedRequestOptions} />
+              <RequestOptions options={selectedRequestOptions} t={t} />
             )}
             {selectedRequest !== null && activeTab === 'usage' && (
               <RequestUsagePanel
                 usage={selectedRequestUsage}
                 cumulative={selectedRequestCumulativeUsage}
+                t={t}
               />
             )}
             {selectedRequest !== null && activeTab === 'timing' && (
@@ -2824,6 +2912,7 @@ export function TrajectoryTable({
                 assistant={selectedRequestAssistant}
                 anchor={selectedRequestAnchor}
                 request={selectedRequestInfo}
+                t={t}
               />
             )}
             {promptSelected
@@ -2832,11 +2921,12 @@ export function TrajectoryTable({
               <SystemPromptDiff
                 before={selectedPreviousPrompt}
                 after={selectedPrompt}
+                t={t}
               />
             )}
             {promptSelected && activeTab === 'system-prompt' && (
               selectedPrompt.system === ''
-                ? <p className={css.noPayload}>No system prompt in this request</p>
+                ? <p className={css.noPayload}>{t('overview.noSystemPrompt')}</p>
                 : (
                   <div className={`${css.markdownPayload} ${css.systemPrompt}`}>
                     <MarkdownText text={selectedPrompt.system} />
@@ -2844,7 +2934,7 @@ export function TrajectoryTable({
                 )
             )}
             {promptSelected && activeTab === 'tools' && (
-              <ToolCatalog tools={selectedPrompt.tools} />
+              <ToolCatalog tools={selectedPrompt.tools} t={t} />
             )}
             {!promptSelected
               && selected?.cell.kind === 'compacted'
@@ -2856,17 +2946,17 @@ export function TrajectoryTable({
                   data-summary-scroll-region=""
                 >
                   <div>
-                    <dt>Status</dt>
+                    <dt>{t('overview.status')}</dt>
                     <dd className={selectedState === 'error' ? css.error : undefined}>
-                      {statusLabel(selectedState)}
+                      {statusLabel(selectedState, t)}
                     </dd>
                   </div>
                   <div>
-                    <dt>Duration</dt>
+                    <dt>{t('timing.duration')}</dt>
                     <dd>{formatElapsedSeconds(selected.cell.timeSeconds)}</dd>
                   </div>
                   <div>
-                    <dt>Tokens</dt>
+                    <dt>{t('usage.tokens')}</dt>
                     <dd>—</dd>
                   </div>
                 </dl>
@@ -2881,6 +2971,7 @@ export function TrajectoryTable({
                       thinkingExpanded={thinkingExpanded}
                       onThinkingExpandedChange={setThinkingExpanded}
                       onOpenCall={openCallSummary}
+                      t={t}
                     />
                   </div>
                 )}
@@ -2898,14 +2989,14 @@ export function TrajectoryTable({
                 >
                   {selected.cell.messageSource !== undefined && (
                     <div>
-                      <dt>Source</dt>
+                      <dt>{t('overview.source')}</dt>
                       <dd className={css.overviewParentLinks}>
                         <button
                           type="button"
                           className={css.overviewHierarchyNavLink}
                           onClick={() => { activateTab('source') }}
                         >
-                          <span>{messageSourceLabel(selected.cell.messageSource)}</span>
+                          <span>{messageSourceLabel(selected.cell.messageSource, t)}</span>
                           <IconChevronRightOutline14
                             className={css.overviewHierarchyJumpIconTight}
                             size={11}
@@ -2918,8 +3009,8 @@ export function TrajectoryTable({
                     <div>
                       <dt>
                         {selectedAssistantRequestTarget !== undefined
-                          ? 'Source'
-                          : 'Hierarchy'}
+                          ? t('overview.source')
+                          : t('overview.hierarchy')}
                       </dt>
                       <dd className={css.overviewParentLinks}>
                         {selectedAssistantRequestTarget !== undefined && (
@@ -2930,7 +3021,7 @@ export function TrajectoryTable({
                               selectRequest(selectedAssistantRequestTarget)
                             }}
                           >
-                            <span>Request #{selectedAssistantRequest ?? '—'}</span>
+                            <span>{t('request.heading', { number: selectedAssistantRequest ?? '—' })}</span>
                             <IconChevronRightOutline14
                               className={css.overviewHierarchyJumpIconTight}
                               size={11}
@@ -2943,7 +3034,7 @@ export function TrajectoryTable({
                             className={css.overviewHierarchyNavLink}
                             onClick={() => { openRecordSummary(selectedParentMessage) }}
                           >
-                            <span>Assistant Message</span>
+                            <span>{t('overview.assistantMessage')}</span>
                             <IconChevronRightOutline14
                               className={css.overviewHierarchyJumpIconTight}
                               size={11}
@@ -2956,7 +3047,7 @@ export function TrajectoryTable({
                             className={css.overviewHierarchyNavLink}
                             onClick={() => { openRecordSummary(selectedParentTool) }}
                           >
-                            <span>Tool Call</span>
+                            <span>{t('overview.toolCall')}</span>
                             <IconChevronRightOutline14
                               className={css.overviewHierarchyJumpIconTight}
                               size={11}
@@ -2967,17 +3058,17 @@ export function TrajectoryTable({
                     </div>
                   )}
                   <div>
-                    <dt>Status</dt>
+                    <dt>{t('overview.status')}</dt>
                     <dd className={selectedState === 'error' ? css.error : undefined}>
-                      {statusLabel(selectedState)}
+                      {statusLabel(selectedState, t)}
                     </dd>
                   </div>
                   {selected.cell.kind === 'message' && (
-                    <TokenRows cell={selected.cell} />
+                    <TokenRows cell={selected.cell} t={t} />
                   )}
                   {(selected.cell.kind === 'user' || selected.cell.kind === 'context') && (
                     <div>
-                      <dt>Duration</dt>
+                      <dt>{t('timing.duration')}</dt>
                       <dd>{formatElapsedSeconds(selected.cell.timeSeconds)}</dd>
                     </div>
                   )}
@@ -2986,7 +3077,7 @@ export function TrajectoryTable({
                   {isMarkdownRecord(selected)
                     ? (
                       <>
-                        <OverviewSection label="Preview" onOpen={() => { activateTab('rendered') }}>
+                        <OverviewSection label={t('detail.tab.preview')} onOpen={() => { activateTab('rendered') }}>
                           <MarkdownRecordContent
                             record={selected}
                             rendered
@@ -2994,6 +3085,7 @@ export function TrajectoryTable({
                             thinkingExpanded={thinkingExpanded}
                             onThinkingExpandedChange={setThinkingExpanded}
                             onOpenCall={openCallSummary}
+                            t={t}
                           />
                         </OverviewSection>
                       </>
@@ -3001,33 +3093,33 @@ export function TrajectoryTable({
                     : (
                       <>
                         {selected.cell.inputDetail && (
-                          <OverviewSection label="Payload" onOpen={() => { activateTab('input') }}>
-                            <RecordPayload record={selected} direction="input" preview />
+                          <OverviewSection label={t('detail.tab.payload')} onOpen={() => { activateTab('input') }}>
+                            <RecordPayload record={selected} direction="input" preview t={t} />
                           </OverviewSection>
                         )}
                         {selected.cell.outputDetail && (
-                          <OverviewSection label="Result" onOpen={() => { activateTab('output') }}>
-                            <RecordPayload record={selected} direction="output" preview />
+                          <OverviewSection label={t('detail.tab.result')} onOpen={() => { activateTab('output') }}>
+                            <RecordPayload record={selected} direction="output" preview t={t} />
                           </OverviewSection>
                         )}
-                        <OverviewSection label="Schema" onOpen={() => { activateTab('schema') }}>
-                          <RecordSchema record={selected} preview />
+                        <OverviewSection label={t('detail.tab.schema')} onOpen={() => { activateTab('schema') }}>
+                          <RecordSchema record={selected} preview t={t} />
                         </OverviewSection>
                       </>
                     )}
                   {selectedAssistantRequestTarget !== undefined && (
                     <OverviewSection
-                      label="Request Timing"
+                      label={t('overview.requestTiming')}
                       onOpen={() => {
                         selectRequest(selectedAssistantRequestTarget, 'timing')
                       }}
                     >
-                      <RecordTiming record={selected} />
+                      <RecordTiming record={selected} t={t} />
                     </OverviewSection>
                   )}
                   {(selected.cell.kind === 'tool' || selected.cell.kind === 'subtool') && (
-                    <OverviewSection label="Timing" onOpen={() => { activateTab('timing') }}>
-                      <RecordTiming record={selected} />
+                    <OverviewSection label={t('detail.tab.timing')} onOpen={() => { activateTab('timing') }}>
+                      <RecordTiming record={selected} t={t} />
                     </OverviewSection>
                   )}
                 </div>
@@ -3040,6 +3132,7 @@ export function TrajectoryTable({
                 thinkingExpanded={thinkingExpanded}
                 onThinkingExpandedChange={setThinkingExpanded}
                 onOpenCall={openCallSummary}
+                t={t}
               />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'raw' && (
@@ -3049,22 +3142,23 @@ export function TrajectoryTable({
                 thinkingExpanded={thinkingExpanded}
                 onThinkingExpandedChange={setThinkingExpanded}
                 onOpenCall={openCallSummary}
+                t={t}
               />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'source' && (
-              <MessageSource record={selected} />
+              <MessageSource record={selected} t={t} />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'input' && (
-              <RecordPayload record={selected} direction="input" />
+              <RecordPayload record={selected} direction="input" t={t} />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'output' && (
-              <RecordPayload record={selected} direction="output" />
+              <RecordPayload record={selected} direction="output" t={t} />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'schema' && (
-              <RecordSchema record={selected} />
+              <RecordSchema record={selected} t={t} />
             )}
             {!promptSelected && selected !== undefined && activeTab === 'timing' && (
-              <RecordTiming record={selected} />
+              <RecordTiming record={selected} t={t} />
             )}
           </div>
         </aside>

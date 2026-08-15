@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-primitives
+# lasmex-client-ui-primitives
 
 English | [中文](README.zh.md)
 
@@ -50,5 +50,5 @@ None; this package neither assembles nor sends a provider request.
 - **Glyph-level icons are redrawn approximations** — the fish logo (and the sparkle held by ui-conversation) come from font glyphs whose vector geometry is not exportable from the local design data; hand-authored recreations stand in until an exact export path exists.
 - **Pill and Input have no design source** — both atoms are self-defined; the sidebar search field and view-tab strip that resemble them are consumer-owned compositions, not these atoms.
 - **No `Active` StateDot variant** — the supported states are done, warning, ongoing, and error.
-- **User-facing copy localizes through label props, defaulting to the original Chinese literals** — the atoms are zero-cordis and cannot reach `ctx.locale`, so `HoverCard` (`copyLabel`/`copiedLabel`), `TerminalBlock` (`labels`), `JsonTree` (`labels`), `CodeBlock` (`copyLabel`/`copiedLabel`), `MarkdownText` (`codeLabels`), `JsonBlock` (`truncatedLabel`), `ConnectionBanner` (`label`), and `Modal` (`closeLabel`) take their copy as optional props. Localized plugins pass dictionary-driven labels from their own `t` seat; a consumer that passes nothing gets those defaults. `WebBlock` does not yet follow this pattern: its source-list and fetch truncation notes and its empty-search note stay inline Chinese, pending the same label-prop treatment.
+- **User-facing copy localizes through label props, defaulting to the original literals** — the atoms are zero-cordis and cannot reach `ctx.locale`, so `HoverCard`, `TerminalBlock`, `JsonTree`, `CodeBlock`, `MarkdownText`, `JsonBlock`, `ConnectionBanner`, `Modal`, and the structured `DiffBlock`, `ReadBlock`, `SearchBlock`, and `WebBlock` cards take their copy as optional props. `MarkdownText` also accepts the accessible footnotes heading. Localized plugins pass dictionary-driven labels from their own `t` seat; a consumer that passes nothing gets the original defaults.
 - **`TerminalBlock` is not a terminal emulator** — it renders settled or still-running command output, not an interactive session: SGR color and attributes are honored, and so are the in-line cursor movements a progress line uses — carriage return, backspace, erase-in-line, tab stops and character width. Absolute cursor positioning, screen clearing, and alternate-screen sequences are stripped. Basic-16 magenta and cyan have no token equivalent and stay literal rgb.

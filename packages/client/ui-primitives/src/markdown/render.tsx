@@ -26,12 +26,14 @@ import { renderTexToReact } from './katex.tsx'
 import type { PositionedBlock } from './incremental.ts'
 import css from './MarkdownText.module.css'
 
-/** Copy-button labels forwarded to fence CodeBlocks (this package is cordis-free, so copy arrives via props). */
+/** Markdown labels supplied by the owning localized plugin. */
 export interface MarkdownCodeLabels {
   /** Copy-button idle label. */
   copyLabel?: string | undefined
   /** Copy-button label during the post-copy confirmation window. */
   copiedLabel?: string | undefined
+  /** Accessible heading for the generated footnotes section. */
+  footnotesLabel?: string | undefined
 }
 
 function sanitizeUrl(url: string): string {
@@ -576,7 +578,7 @@ export function renderFootnoteSection(context: MarkdownRenderContext): ReactNode
   if (items.length === 0) return null
   return (
     <section key="footnotes" data-footnotes className="footnotes">
-      <h2 id="footnote-label" className="sr-only">Footnotes</h2>
+      <h2 id="footnote-label" className="sr-only">{context.codeLabels?.footnotesLabel ?? 'Footnotes'}</h2>
       <ol>{items}</ol>
     </section>
   )

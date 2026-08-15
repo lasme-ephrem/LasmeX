@@ -17,6 +17,9 @@ export const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
  */
 export const ZH_BROWSER_LOCALE = 'zh-CN'
 
+/** Browser language used by product tests that pin the French-first surface. */
+export const FR_BROWSER_LOCALE = 'fr-FR'
+
 /**
  * Open the standard browser-test page advertising English before client boot.
  * This keeps role locators and goldens deterministic while leaving the Host
@@ -31,6 +34,16 @@ export async function newEnglishPage(browser: Browser, height = 1000): Promise<P
   return await browser.newPage({ viewport: { width: 1680, height }, locale: 'en-US' })
 }
 
+/**
+ * Open a browser-test page on the product's French-first surface.
+ * @param browser - Playwright browser owning the page.
+ * @param height - Viewport height; width is fixed to the lane baseline.
+ * @returns the initialized page.
+ */
+export async function newFrenchPage(browser: Browser, height = 1000): Promise<Page> {
+  return await browser.newPage({ viewport: { width: 1680, height }, locale: FR_BROWSER_LOCALE })
+}
+
 /** Fail loud on a stale checkout instead of testing yesterday's bundle. */
 export function requireDist(): void {
   if (!existsSync(DIST_INDEX)) {
@@ -38,7 +51,7 @@ export function requireDist(): void {
   }
 }
 
-/** OS-assigned free port, released before use (the spawned `dsh web` needs a concrete --port). */
+/** OS-assigned free port, released before use (the spawned `lasmex web` needs a concrete --port). */
 export function probeFreePort(): Promise<number> {
   return new Promise((resolvePort, reject) => {
     const probe = createServer()
@@ -88,9 +101,9 @@ export async function connectFreshWorkspace(page: Page, root: string, name = 'wo
 }
 
 /**
- * {@link connectFreshWorkspace} over the product default Chinese locale: the
+ * {@link connectFreshWorkspace} for an explicitly Chinese browser locale: the
  * English helper's anchors assume the locale every other scenario boots, so a
- * scenario that deliberately keeps zh needs the localized picker copy.
+ * scenario that deliberately selects zh needs the localized picker copy.
  * @param page - the browser page under test.
  * @param root - workspace parent directory.
  * @param name - directory created under `root` and connected.
@@ -124,7 +137,7 @@ export async function saveFailureShot(page: Page, name: string): Promise<void> {
  * The conversation engine's Context key format, restated here rather than
  * imported: these specs live in the Host compiler aggregate, which must not
  * reach the Client plane. The engine's own copy is
- * `conversationContextKey` in dsh-client-runtime; a drift between them makes
+ * `conversationContextKey` in lasmex-client-runtime; a drift between them makes
  * the key miss its rendered node, so the assertion fails loudly.
  * @param kind - Definition kind.
  * @param id - Definition-local business identity.

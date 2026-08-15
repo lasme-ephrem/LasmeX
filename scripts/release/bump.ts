@@ -3,7 +3,7 @@
  * readable from the repository rather than derived inside CI
  * ([rationale](../../.agents/notes/implemented/process/2026-08-10-npm-release-sequences.md)).
  *
- * The dsh family shares one version across its members and the workspace root:
+ * The LasmeX family shares one version across its members and the workspace root:
  * `major`, `minor`, `patch`, or an explicit `x.y.z` (including a prerelease such
  * as `0.0.1-rc.1`). The vendored family has one version line per package, but
  * every release advances and publishes the complete family so the next release
@@ -31,10 +31,10 @@ const ALWAYS_PUBLISHED = ['package.json', 'README*', 'LICENSE*', 'LICENCE*'] as 
  */
 const BUILD_INPUTS = ['src/**', 'tsconfig*.json', 'tsdown.config.*', 'build.config.*'] as const
 
-/** Release types the dsh family accepts besides an explicit version. */
+/** Release types the LasmeX family accepts besides an explicit version. */
 const RELEASE_TYPES = ['major', 'minor', 'patch'] as const
 
-/** The workspace root manifest, which carries the dsh family's version. */
+/** The workspace root manifest, which carries the LasmeX family's version. */
 const ROOT_MANIFEST = 'package.json'
 
 /** One manifest the bump rewrites, and the tag its new version will carry. */
@@ -124,7 +124,7 @@ export function compareVersions(left: string, right: string): number {
 }
 
 /**
- * The next dsh version.
+ * The next LasmeX version.
  * @param current - the family's current shared version.
  * @param request - `major`, `minor`, `patch`, or an explicit version.
  * @returns The target version.
@@ -132,7 +132,7 @@ export function compareVersions(left: string, right: string): number {
 function nextSharedVersion(current: string, request: string): string {
   if (!RELEASE_TYPES.includes(request as typeof RELEASE_TYPES[number])) {
     if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(request)) {
-      throw new Error(`usage: release:dsh <major|minor|patch|x.y.z>, got ${request}`)
+      throw new Error(`usage: release:lasmex <major|minor|patch|x.y.z>, got ${request}`)
     }
     return request
   }
@@ -236,8 +236,8 @@ function rootVersion(root: string): string {
 }
 
 /**
- * Plan the dsh family's rewrite: one version for every member and the root.
- * @param family - the dsh family.
+ * Plan the LasmeX family's rewrite: one version for every member and the root.
+ * @param family - the LasmeX family.
  * @param root - repository root.
  * @param members - the family's members.
  * @param request - `major`, `minor`, `patch`, or an explicit version.
@@ -311,7 +311,7 @@ function main(): void {
     },
     allowPositionals: true,
   })
-  if (values.family === undefined) throw new Error('usage: bump.ts --family <dsh|vendor> [version]')
+  if (values.family === undefined) throw new Error('usage: bump.ts --family <lasmex|vendor> [version]')
 
   const family = releaseFamily(values.family)
   const root = process.cwd()
@@ -320,11 +320,11 @@ function main(): void {
 
   let planned: PlannedVersion[]
   let sharedVersion: string | undefined
-  if (family.id === 'dsh') {
+  if (family.id === 'lasmex') {
     const request = positionals[0]
-    if (request === undefined) throw new Error('usage: release:dsh <major|minor|patch|x.y.z>')
+    if (request === undefined) throw new Error('usage: release:lasmex <major|minor|patch|x.y.z>')
     if (values.prerelease !== undefined) {
-      throw new Error('release:dsh takes the prerelease in its version argument, as in 0.0.1-rc.1')
+      throw new Error('release:lasmex takes the prerelease in its version argument, as in 0.0.1-rc.1')
     }
     const shared = planShared(family, root, members, request)
     planned = shared.planned

@@ -13,25 +13,25 @@
  * The General-settings row separately writes the default preset for sessions
  * created later through the host Settings API.
  */
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
+import type { ConnectionHandle } from 'lasmex-api-remotes/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from 'lasmex-client-locale/client'
 // Type-only: the settings slot types (this package registers a General row).
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from 'lasmex-client-ui-settings/client'
 // Type-only: pulls the ctx.remote merge and the forwarded-event key face
 // (the settings invalidation rides the allowlist) into this program.
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
-import type { ClientContext, SessionFace } from '@deepseek-ai/dsh-client-runtime/client'
-import type { CommandUiContract, SelectOption } from '@deepseek-ai/dsh-client-ui-commands/client'
-import type { ClientSessionContext } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
-import type { PermissionSelect } from '@deepseek-ai/dsh-permission-presets/client'
+import type {} from 'lasmex-api-remotes/client'
+import type { ClientContext, SessionFace } from 'lasmex-client-runtime/client'
+import type { CommandUiContract, SelectOption } from 'lasmex-client-ui-commands/client'
+import type { ClientSessionContext } from 'lasmex-client-ui-input-trigger/client'
+import type { PermissionSelect } from 'lasmex-permission-presets/client'
 import { PermissionRow } from './PermissionRow.tsx'
 import type { PermissionRowInjected } from './PermissionRow.tsx'
 import {
-  accessEn, accessZh, en, zh,
+  accessEn, accessFr, accessZh, en, fr, zh,
 } from './locales.ts'
 import {
-  displayPermissionPreset, FULL_ACCESS_PRESET,
+  FULL_ACCESS_PRESET, localizedPermissionDetail, localizedPermissionPreset,
 } from './presentation.ts'
 import {
   PERMISSION_SETTINGS_NS, PermissionPresetSettingsController, refreshPermissionIfLoaded,
@@ -56,23 +56,26 @@ function selectOf(session: SessionFace | undefined): PermissionSelect | undefine
 function optionsOf(value: PermissionSelect, t: (key: string) => string): SelectOption[] {
   return value.options
     .filter(option => option.value !== 'custom')
-    .map(option => ({
-      id: option.value,
-      label: displayPermissionPreset(option.value, option.name),
-      ...(option.description !== undefined ? { detail: option.description } : {}),
-      ...(option.value === value.currentValue ? { active: true } : {}),
-      ...(option.value === FULL_ACCESS_PRESET
-        ? {
-          confirmation: {
-            title: t('confirm.title'),
-            description: t('confirm.description'),
-            acknowledgeLabel: t('confirm.acknowledge'),
-            cancelLabel: t('confirm.cancel'),
-            confirmLabel: t('confirm.enable'),
-          },
-        }
-        : {}),
-    }))
+    .map((option) => {
+      const detail = localizedPermissionDetail(option.value, option.description, t)
+      return {
+        id: option.value,
+        label: localizedPermissionPreset(option.value, option.name, t),
+        ...(detail === undefined ? {} : { detail }),
+        ...(option.value === value.currentValue ? { active: true } : {}),
+        ...(option.value === FULL_ACCESS_PRESET
+          ? {
+            confirmation: {
+              title: t('confirm.title'),
+              description: t('confirm.description'),
+              acknowledgeLabel: t('confirm.acknowledge'),
+              cancelLabel: t('confirm.cancel'),
+              confirmLabel: t('confirm.enable'),
+            },
+          }
+          : {}),
+      }
+    })
 }
 
 /**
@@ -87,30 +90,26 @@ export function apply(ctx: ClientContext): void {
   // owns the same safety copy under its own locale namespace.
   /* jscpd:ignore-start */
   ctx.effect(() => {
-    const disposers = [
-      ctx.locale.register(ACCESS_NS, 'zh', {
-        'confirm.title': accessZh['confirm.title'],
-        'confirm.description': accessZh['confirm.description'],
-        'confirm.acknowledge': accessZh['confirm.acknowledge'],
-        'confirm.cancel': accessZh['confirm.cancel'],
-        'confirm.enable': accessZh['confirm.enable'],
-      }),
-      ctx.locale.register(ACCESS_NS, 'en', {
-        'confirm.title': accessEn['confirm.title'],
-        'confirm.description': accessEn['confirm.description'],
-        'confirm.acknowledge': accessEn['confirm.acknowledge'],
-        'confirm.cancel': accessEn['confirm.cancel'],
-        'confirm.enable': accessEn['confirm.enable'],
-      }),
+    const dictionaries: [locale: string, dict: Record<string, string>][] = [
+      ['fr', accessFr],
+      ['zh', accessZh],
+      ['en', accessEn],
     ]
+    const disposers: (() => void)[] = []
+    try {
+      for (const [locale, dict] of dictionaries) disposers.push(ctx.locale.register(ACCESS_NS, locale, dict))
+    } catch (error) {
+      for (const dispose of disposers.reverse()) dispose()
+      throw error
+    }
     return () => { for (const dispose of disposers) dispose() }
-  }, 'ui-permission: Full access confirmation dictionaries')
+  }, 'ui-permission: access dictionaries')
   /* jscpd:ignore-end */
   const t = ctx.locale.bind(ACCESS_NS)
   const sessionFor = (session: ClientSessionContext): SessionFace | undefined =>
     sessions.binding(session.sessionId)?.session
 
-  ctx.effect(() => ctx.locale.register('settings.permission', { zh, en }), 'ui-permission: settings row dictionaries')
+  ctx.effect(() => ctx.locale.register('settings.permission', { fr, en, zh }), 'ui-permission: settings row dictionaries')
 
   const connection = ctx.get('connection') as ConnectionHandle
   const controller = new PermissionPresetSettingsController(connection.api)
@@ -155,15 +154,17 @@ export function apply(ctx: ClientContext): void {
       kind: 'popupSelect',
       options: (session) => {
         const value = selectOf(sessionFor(session))
-        if (value === undefined) throw new Error('permission presets are not available on this host')
+        if (value === undefined) throw new Error(t('error.hostUnavailable'))
         return Promise.resolve(optionsOf(value, t))
       },
       onSelect: async (option, session) => {
         const live = sessionFor(session)
-        if (live === undefined) throw new Error('this session is not materialized yet')
+        if (live === undefined) throw new Error(t('error.sessionPending'))
         const result = await live.command(`/permission ${option.id}`)
-        if (!result.ok) throw new Error(`permission switch failed: ${result.error.code}: ${result.error.message}`)
-        if (!result.value.matched) throw new Error('the host offers no /permission command')
+        if (!result.ok) {
+          throw new Error(t('error.switchFailed', { code: result.error.code, message: result.error.message }))
+        }
+        if (!result.value.matched) throw new Error(t('error.commandUnavailable'))
       },
     },
   }), 'ui-permission: /permission decoration')

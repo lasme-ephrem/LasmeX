@@ -1,14 +1,9 @@
 {
-  "name": "@deepseek-ai/dsh-web-frontend",
-  "description": "Web application entry: vite build over the @deepseek-ai/dsh-client-web shell library; dist/ served by apps/cli's dsh web",
-  "version": "0.1.0-rc.5",
+  "name": "lasmex-web-frontend",
+  "description": "LasmeX Web application entry: Vite build over the inherited client shell; dist served by lasmex web",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
-    "directory": "apps/web"
   },
   "type": "module",
   "exports": {
@@ -26,18 +21,18 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-client-web": "workspace:^",
+    "lasmex-client-web": "workspace:^",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@deepseek-ai/cordis-plugin-group": "workspace:^",
-    "@deepseek-ai/dsh-client-modules": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-client-web-react": "workspace:^",
-    "@deepseek-ai/dsh-cmdline": "workspace:^",
-    "@deepseek-ai/dsh-pwsh-local": "workspace:^",
+    "lasmex-client-modules": "workspace:^",
+    "lasmex-client-ui-primitives": "workspace:^",
+    "lasmex-client-ui-slots": "workspace:^",
+    "lasmex-client-web-react": "workspace:^",
+    "lasmex-cmdline": "workspace:^",
+    "lasmex-pwsh-local": "workspace:^",
     "@types/node": "^22.0.0",
     "@types/react": "~18.3.1",
     "@types/react-dom": "~18.3.0",
@@ -47,5 +42,14 @@
     "vite": "^6.0.0",
     "vitest": "^4.1.8",
     "fflate": "^0.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lasme-ephrem/LasmeX.git",
+    "directory": "apps/web"
+  },
+  "homepage": "https://github.com/lasme-ephrem/LasmeX#readme",
+  "bugs": {
+    "url": "https://github.com/lasme-ephrem/LasmeX/issues"
   }
 }

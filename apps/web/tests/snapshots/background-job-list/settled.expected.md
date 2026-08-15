@@ -1,2 +1,2 @@
 - list "Background jobs":
-  - listitem: "bash sleep 45 signal: SIGTERM {{duration}}"
+  - listitem: {{shellTool}} {{command}} {{cancelled}} {{duration}}

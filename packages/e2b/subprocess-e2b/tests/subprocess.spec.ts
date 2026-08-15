@@ -7,14 +7,14 @@ import {
   type CommandHandle,
   type CommandResult,
   type Sandbox,
-} from '@deepseek-ai/dsh-e2b'
-import type E2BRuntime from '@deepseek-ai/dsh-e2b'
-import type { SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
-import E2BSubprocessRuntime from '@deepseek-ai/dsh-subprocess-e2b'
+} from 'lasmex-e2b'
+import type E2BRuntime from 'lasmex-e2b'
+import type { SubprocessSpawnSpec } from 'lasmex-subprocess'
+import E2BSubprocessRuntime from 'lasmex-subprocess-e2b'
 import * as E2BSubprocessInvariant from '../src/invariant.ts'
 import { E2BBase64Decoder, E2B_OUTPUT_COMPLETE_FRAME, E2BOutputReader } from '../src/output.ts'
 import { E2BSubprocessHandle } from '../src/process.ts'
-import InvariantRegistry from '@deepseek-ai/dsh-invariants'
+import InvariantRegistry from 'lasmex-invariants'
 import { describe, expect, it, vi } from 'vitest'
 
 function commandError(exitCode: number): CommandExitError {
@@ -110,7 +110,7 @@ class FakeSandbox {
   sdkKillStops = true
   alive = true
   zombieOnly = false
-  ambient = 'PATH=/ambient/bin\0KEEP=safe\0UNICODE=你好\0NPM_TOKEN=secret\0DSH_STALE=old\0BROKEN\0=bad\0'
+  ambient = 'PATH=/ambient/bin\0KEEP=safe\0UNICODE=你好\0NPM_TOKEN=secret\0LASMEX_STALE=old\0BROKEN\0=bad\0'
   environmentHome = '/home/user'
   environmentWire: string | undefined
   environmentRequest: ((signal: AbortSignal | undefined) => Promise<void>) | undefined
@@ -315,7 +315,7 @@ function spec(overrides: Partial<SubprocessSpawnSpec> = {}): SubprocessSpawnSpec
 function runtime(fake: FakeSandbox, getSandbox: () => Promise<Sandbox> = async () => fake.sandbox): E2BRuntime {
   return {
     cwd: '/workspace',
-    runtimeRoot: '/workspace/.dsh-e2b',
+    runtimeRoot: '/workspace/.lasmex-e2b',
     getSandbox,
   } as unknown as E2BRuntime
 }
@@ -397,11 +397,11 @@ describe('E2BSubprocessHandle', () => {
         'FOO-BAR': 'hyphen-value',
         '--split-string': 'literal-value',
         DEEPSEEK_API_KEY: 'explicit-secret',
-        DSH_MODE: 'test',
+        LASMEX_MODE: 'test',
         // The seam's tombstone: an explicit undefined removes the ambient entry.
         KEEP: undefined,
       },
-    }), '/workspace/.dsh-e2b/processes/one')
+    }), '/workspace/.lasmex-e2b/processes/one')
     expect(handle.pid).toBe(-1)
     handle.stdin!.write('hello')
     handle.stdin!.end()
@@ -411,17 +411,17 @@ describe('E2BSubprocessHandle', () => {
     expect(fake.handle.sent.map(value => String(value))).toEqual(['hello'])
     expect(fake.handle.closes).toBe(1)
     const controlEnvs = fake.startOptions?.envs
-    expect(controlEnvs?.HOME).toMatch(/^\/\.dsh-e2b-control-/)
+    expect(controlEnvs?.HOME).toMatch(/^\/\.lasmex-e2b-control-/)
     expect(controlEnvs).toEqual({
       TERM: 'dumb',
       NPM_TOKEN: '',
-      DSH_STALE: '',
+      LASMEX_STALE: '',
       HOME: controlEnvs?.HOME,
     })
     const command = fake.commandsSeen.find(value => value.includes('exec "$dsh_e2b_env_bin" -i'))!
     expect(command).toContain('"$dsh_e2b_setsid" --wait -- "$dsh_e2b_bash" -c')
     expect(command).not.toContain('DEEPSEEK_API_KEY')
-    expect(command).not.toContain('DSH_MODE')
+    expect(command).not.toContain('LASMEX_MODE')
     expect(command).not.toContain('FOO-BAR')
     expect(command).not.toContain('explicit-secret')
     expect(command).not.toContain('hyphen-value')
@@ -439,13 +439,13 @@ describe('E2BSubprocessHandle', () => {
     expect(command).not.toContain('2>/dev/null >&2')
     expect(command).toContain('base64')
     expect(fake.writtenFiles[0]).toEqual([
-      '/workspace/.dsh-e2b/processes/one/pid',
-      '/workspace/.dsh-e2b/processes/one/exit-code',
-      '/workspace/.dsh-e2b/processes/one/environment',
-      '/workspace/.dsh-e2b/processes/one/stderr.log',
+      '/workspace/.lasmex-e2b/processes/one/pid',
+      '/workspace/.lasmex-e2b/processes/one/exit-code',
+      '/workspace/.lasmex-e2b/processes/one/environment',
+      '/workspace/.lasmex-e2b/processes/one/stderr.log',
     ])
-    expect(fake.writtenFileData.get('/workspace/.dsh-e2b/processes/one/environment')).toBe(
-      'PATH=/bin\0UNICODE=你好\0HOME=/home/user\0FOO-BAR=hyphen-value\0--split-string=literal-value\0DEEPSEEK_API_KEY=explicit-secret\0DSH_MODE=test\0',
+    expect(fake.writtenFileData.get('/workspace/.lasmex-e2b/processes/one/environment')).toBe(
+      'PATH=/bin\0UNICODE=你好\0HOME=/home/user\0FOO-BAR=hyphen-value\0--split-string=literal-value\0DEEPSEEK_API_KEY=explicit-secret\0LASMEX_MODE=test\0',
     )
 
     let piped = ''
@@ -456,7 +456,7 @@ describe('E2BSubprocessHandle', () => {
     await expect(handle.done).resolves.toEqual({ exitCode: 0, signal: null })
     expect(piped).toBe('pipe-data')
     expect(handle.collected.stderr!.readFrom(0)).toMatchObject({ text: 'err', lossy: false })
-    expect(fake.removed).toContain('/workspace/.dsh-e2b/processes/one/stderr.log')
+    expect(fake.removed).toContain('/workspace/.lasmex-e2b/processes/one/stderr.log')
     await expect(handle.waitForExit()).resolves.toBe(true)
   })
 

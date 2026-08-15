@@ -9,11 +9,12 @@
 // section, its first line in the collapsed summary.
 
 import type { Context } from '@deepseek-ai/cordis'
-import { IconEditOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import { IconEditOutline16 } from 'lasmex-client-ui-primitives'
+import type { PropsLocale } from 'lasmex-client-ui-slots'
 import type { ToolCallViewProps } from '../../contract/slots.ts'
 import { diffCardModel } from '../models/diff-card-model.ts'
 import { toolRowModel } from '../models/tool-call-model.ts'
+import { toolRowTitle } from '../models/primitive-card-labels.ts'
 import { ToolRow } from '../components/ToolRow.tsx'
 import { CONVERSATION_NS as NS } from '../../locale.ts'
 
@@ -38,7 +39,7 @@ export function FileMutationRow({ toolName, block, cwd, openFile, inspect, t }: 
       variant={model.variant}
       toolName={toolName}
       icon={<IconEditOutline16 size={14} />}
-      title={model.title}
+      title={toolRowTitle(t, toolName, model.variant)}
       summary={model.summary}
       body={null}
       output={model.output}

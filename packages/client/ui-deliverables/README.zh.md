@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-deliverables
+# lasmex-client-ui-deliverables
 
 [English](README.md) | 中文
 

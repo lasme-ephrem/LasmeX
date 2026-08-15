@@ -23,5 +23,16 @@ export const en: Record<keyof typeof zh, string> = {
   'dialog.commandFailed': 'Could not start the Session export.',
 }
 
+/** Libellés français pour l’export de session. */
+export const fr: Record<keyof typeof zh, string> = {
+  'dialog.preparingTitle': 'Export de la session',
+  'dialog.preparingDescription': 'Préparation d’une archive ZIP contenant cette session, ses sous-sessions et ses pièces jointes.',
+  'dialog.successTitle': 'Téléchargement de la session démarré',
+  'dialog.successDescription': 'Le navigateur télécharge l’archive ZIP de la session.',
+  'dialog.errorTitle': 'Échec de l’export de la session',
+  'dialog.close': 'Fermer',
+  'dialog.commandFailed': 'Impossible de démarrer l’export de la session.',
+}
+
 /** Stable locale keys consumed by the shared modal. */
 export type SessionLogDownloadKey = keyof typeof zh

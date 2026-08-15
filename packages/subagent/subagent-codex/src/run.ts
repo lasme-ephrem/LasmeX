@@ -4,12 +4,12 @@
  * creation, flatten post-publication failures, and dispose to whole-tree
  * quiescence.
  *
- * @module @deepseek-ai/dsh-subagent-codex/run
+ * @module lasmex-subagent-codex/run
  */
 
 import { randomUUID } from 'node:crypto'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import type { ContentBlock } from 'lasmex-llm'
+import { SessionId } from 'lasmex-session'
 import {
   settleRunResult,
   subprocessRunHandle,
@@ -17,8 +17,8 @@ import {
   type SubagentRun,
   type SubagentStartRequest,
   type SubagentStopReason,
-} from '@deepseek-ai/dsh-subagent'
-import type { SubprocessHandle, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
+} from 'lasmex-subagent'
+import type { SubprocessHandle, SubprocessSpawnSpec } from 'lasmex-subprocess'
 import { CodexAppServerWire } from './wire.ts'
 
 /** Default POSIX grace between subprocess termination tiers. */

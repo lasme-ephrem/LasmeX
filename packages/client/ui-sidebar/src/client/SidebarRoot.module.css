@@ -7,19 +7,19 @@
    mid-slide. */
 
 .root {
-  --dsh-sidebar-inline-padding: 12px;
+  --lasmex-sidebar-inline-padding: 12px;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 6px var(--dsh-sidebar-inline-padding);
+  padding: 6px var(--lasmex-sidebar-inline-padding);
   box-sizing: border-box;
   background: var(--dsw-specific-sidebar-fill);
   color: var(--dsw-alias-label-primary);
   font-size: 14px;
   /* The sidebar is elevated above the conversation surface, so a revealed
      scrollbar uses the l2 pair. .quietBars hides it without changing layout. */
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+  --lasmex-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --lasmex-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
 /* Rail geometry (figma rail spec): 36x36 control boxes centered in the 56px
@@ -38,8 +38,8 @@
    revealing the thumb never reflows a row. Rebinding contract and the two
    rendering paths it reaches: ui-theme's README. */
 .root.quietBars {
-  --dsh-scrollbar-thumb: transparent;
-  --dsh-scrollbar-thumb-hover: transparent;
+  --lasmex-scrollbar-thumb: transparent;
+  --lasmex-scrollbar-thumb-hover: transparent;
 }
 
 /* Collapse phase 1: the whole frozen-width content fades out in place over
@@ -148,7 +148,7 @@
   height: 36px;
 }
 
-/* Rail logo swap: collapsed, the toggle rests as the whale mark (brand ink,
+/* Rail logo swap: collapsed, the toggle rests as the LasmeX mark (brand ink,
    no hover circle) and hovering reveals the panel icon — the expand
    affordance (figma sidebar-hover flow). Expanded it is a plain panel icon. */
 .collapsed .toggle .panelIcon {
@@ -230,7 +230,7 @@
   display: flex;
   flex-direction: column;
   margin-left: -4px;
-  margin-right: calc(-1 * var(--dsh-sidebar-inline-padding));
+  margin-right: calc(-1 * var(--lasmex-sidebar-inline-padding));
   padding-left: 4px;
   overflow: hidden;
 }

@@ -7,9 +7,9 @@
     patches:
       - insert:
           - id: lsp
-            name: '@deepseek-ai/dsh-lsp'
+            name: 'lasmex-lsp'
           - id: lsp-stdio
-            name: '@deepseek-ai/dsh-lsp-stdio'
+            name: 'lasmex-lsp-stdio'
             config:
               servers:
                 fixture:
@@ -18,8 +18,8 @@
                   extensionToLanguage:
                     '.ts': typescript
           - id: timeout-policy
-            name: '@deepseek-ai/dsh-tool-call-timeout-policy'
+            name: 'lasmex-tool-call-timeout-policy'
           - id: tool-lsp
-            name: '@deepseek-ai/dsh-tool-lsp'
+            name: 'lasmex-tool-lsp'
             config:
               maxLocations: 1

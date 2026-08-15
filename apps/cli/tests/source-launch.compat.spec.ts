@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
  * vector the root `dsh` script invokes directly) and assert the
  * required-config diagnostic. The Node compatibility matrix runs this
  * WHOLE file, so a Node release changing module hooks or TypeScript handling
- * breaks this gate instead of every developer's `pnpm dsh`; the built-bin
+ * breaks this gate instead of every developer's `pnpm lasmex`; the built-bin
  * suite covers the published `lib/` entry, not this source chain.
  */
 
@@ -21,7 +21,7 @@ describe('dsh SOURCE launcher (node --import tsx/esm)', () => {
     const rootPackage = JSON.parse(await readFile(new URL('../../../package.json', import.meta.url), 'utf8')) as {
       readonly scripts?: Record<string, string>
     }
-    expect(rootPackage.scripts?.dsh).toBe('node --import tsx/esm apps/cli/src/bin.ts')
+    expect(rootPackage.scripts?.lasmex).toBe('node --import tsx/esm apps/cli/src/bin.ts')
   })
 
   it('boots the source entry and requires a profile', async () => {
@@ -36,7 +36,7 @@ describe('dsh SOURCE launcher (node --import tsx/esm)', () => {
       throw new Error(`dsh source launch did not exit within 25s. stdout:\n${result.stdout}\nstderr:\n${result.stderr}`)
     }
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('--profile <name> is required')
+    expect(result.stderr).toContain('--profile <nom> est requis')
     expect(result.stdout).toBe('')
   }, 30_000)
 })

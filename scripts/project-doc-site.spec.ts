@@ -38,6 +38,8 @@ function fixture(): { root: string; pages: DocsPage[] } {
       { locale: 'root', contentLocale: 'en-US', source: 'docs/b.md', route: 'reference-root/b.md', label: 'B', sidebar: 'zh-reference', section: 'Test', order: 2 },
       { locale: 'en', contentLocale: 'en-US', source: 'docs/a.md', route: 'en/a.md', label: 'A', sidebar: 'en-reference', section: 'Test', order: 1 },
       { locale: 'en', contentLocale: 'en-US', source: 'docs/b.md', route: 'en/reference/b.md', label: 'B', sidebar: 'en-reference', section: 'Test', order: 2 },
+      { locale: 'zh', contentLocale: 'en-US', source: 'docs/a.md', route: 'zh/a.md', label: 'A', sidebar: 'zh-reference', section: 'Test', order: 1 },
+      { locale: 'zh', contentLocale: 'en-US', source: 'docs/b.md', route: 'zh/reference/b.md', label: 'B', sidebar: 'zh-reference', section: 'Test', order: 2 },
     ],
   }
 }
@@ -79,7 +81,17 @@ describe('publishableImage', () => {
     const outside = mkdtempSync(join(tmpdir(), 'dsh-doc-site-outside-'))
     roots.push(outside)
     writeFileSync(join(outside, 'secret.png'), 'not really a png\n')
-    symlinkSync(join(outside, 'secret.png'), join(root, 'packages/linked.png'))
+
+    try {
+      symlinkSync(join(outside, 'secret.png'), join(root, 'packages/linked.png'))
+    } catch (error) {
+      // Windows may reserve file symlinks for Developer Mode or elevated
+      // processes. The Linux CI lane retains the symlink-escape assertion.
+      if (process.platform !== 'win32'
+        || !(error instanceof Error && 'code' in error && error.code === 'EPERM')) throw error
+      expect(publishableImage(join(outside, 'secret.png'), realpathSync(root))).toBeUndefined()
+      return
+    }
 
     expect(publishableImage(join(root, 'packages/linked.png'), realpathSync(root))).toBeUndefined()
     expect(publishableImage(join(outside, 'secret.png'), realpathSync(root))).toBeUndefined()
@@ -104,18 +116,33 @@ describe('rewriteMarkdown', () => {
       repositoryRef: 'abc123',
     })).toBe(
       '[B](./reference/b.md#part) '
-      + '[source](https://github.com/deepseek-ai/deepseek-harness/blob/abc123/packages/tool.ts#L2) '
+      + '[source](https://github.com/lasme-ephrem/LasmeX/blob/abc123/packages/tool.ts#L2) '
       + '[web](https://example.com)\n',
     )
   })
 
-  it('selects the published target in the current site locale', () => {
+  it('keeps links from an English root fallback inside the English route tree', () => {
     const { root, pages } = fixture()
     expect(rewriteMarkdown('[B](b.md)\n', {
       locale: 'root',
       sourcePath: 'docs/a.md',
       route: 'a.md',
       pages,
+      repoRoot: root,
+      repositoryRef: 'abc123',
+    })).toBe('[B](./en/reference/b.md)\n')
+  })
+
+  it('selects the root target for reviewed French root content', () => {
+    const { root, pages } = fixture()
+    const frenchPages = pages.map(page => (
+      page.locale === 'root' && page.route === 'a.md' ? { ...page, contentLocale: 'fr-FR' as const } : page
+    ))
+    expect(rewriteMarkdown('[B](b.md)\n', {
+      locale: 'root',
+      sourcePath: 'docs/a.md',
+      route: 'a.md',
+      pages: frenchPages,
       repoRoot: root,
       repositoryRef: 'abc123',
     })).toBe('[B](./reference-root/b.md)\n')
@@ -130,7 +157,7 @@ describe('rewriteMarkdown', () => {
       pages,
       repoRoot: root,
       repositoryRef: 'abc123',
-    })).toBe('![logo](https://raw.githubusercontent.com/deepseek-ai/deepseek-harness/abc123/packages/logo.svg)\n')
+    })).toBe('![logo](https://raw.githubusercontent.com/lasme-ephrem/LasmeX/abc123/packages/logo.svg)\n')
   })
 
   it('hands an image to the placer and uses the URL it returns', () => {
@@ -209,32 +236,36 @@ describe('rewriteMarkdown', () => {
       repositoryRef: 'abc123',
     })).toBe(
       '[title](./reference/b.md "b.md") '
-      + '[escaped](https://github.com/deepseek-ai/deepseek-harness/blob/abc123/docs/x(y).md)\n',
+      + '[escaped](https://github.com/lasme-ephrem/LasmeX/blob/abc123/docs/x(y).md)\n',
     )
   })
 
-  it('routes a pair switcher across locales while ordinary links stay in locale', () => {
+  it('routes a pair switcher from Chinese to English while ordinary links stay in Chinese', () => {
     const { root, pages } = fixture()
     writeFileSync(join(root, 'docs/a.zh.md'), '# A\n')
     const paired = pages.filter(page => page.source !== 'docs/a.md')
     paired.push(
       {
-        locale: 'root', contentLocale: 'zh-CN', source: 'docs/a.zh.md', sourceAliases: ['docs/a.md'],
-        route: 'guide/a.md', label: 'A', sidebar: 'zh-guide', section: 'Test', order: 1,
+        locale: 'root', contentLocale: 'en-US', source: 'docs/a.md', sourceAliases: ['docs/a.zh.md'],
+        route: 'guide/a.md', label: 'A', sidebar: 'fr-guide', section: 'Test', order: 1,
       },
       {
         locale: 'en', contentLocale: 'en-US', source: 'docs/a.md', sourceAliases: ['docs/a.zh.md'],
         route: 'en/guide/a.md', label: 'A', sidebar: 'en-guide', section: 'Test', order: 1,
       },
+      {
+        locale: 'zh', contentLocale: 'zh-CN', source: 'docs/a.zh.md', sourceAliases: ['docs/a.md'],
+        route: 'zh/guide/a.md', label: 'A', sidebar: 'zh-guide', section: 'Test', order: 1,
+      },
     )
     expect(rewriteMarkdown('[English](a.md) [B](b.md)\n', {
-      locale: 'root',
+      locale: 'zh',
       sourcePath: 'docs/a.zh.md',
-      route: 'guide/a.md',
+      route: 'zh/guide/a.md',
       pages: paired,
       repoRoot: root,
       repositoryRef: 'abc123',
-    })).toBe('[English](../en/guide/a.md) [B](../reference-root/b.md)\n')
+    })).toBe('[English](../../en/guide/a.md) [B](../reference/b.md)\n')
   })
 
   it('fails loud when a relative target is missing', () => {
@@ -251,38 +282,62 @@ describe('rewriteMarkdown', () => {
 })
 
 describe('docsPages locale routes', () => {
-  it('redirects both locale roots to their locale-relative quick-start page', () => {
+  it('redirects every locale home to its locale-relative quick-start page', () => {
     const homes = docsPages.filter(page => page.sidebar === null)
-    expect(homes.map(page => page.route).sort()).toEqual(['en/index.md', 'index.md'])
+    expect(homes.map(page => page.route).sort()).toEqual(['en/index.md', 'index.md', 'zh/index.md'])
+
+    const french = homes.find(page => page.locale === 'root')
+    expect(french?.source).toBe('docs/user/index.fr.md')
+    expect(french?.contentLocale).toBe('fr-FR')
+    expect(readFileSync(resolve(repositoryRoot, french!.source), 'utf8')).toContain('# LasmeX')
+
     for (const page of homes) {
       const source = readFileSync(resolve(repositoryRoot, page.source), 'utf8')
       const projected = projectedPageContent(source, page)
       expect(projected).toContain('layout: false')
       expect(projected).toContain('http-equiv: refresh')
       expect(projected).toContain('content: 0; url=./guide/quickstart')
-      expect(projected).not.toContain('# DeepSeek Harness')
+      expect(projected).not.toContain('# LasmeX')
     }
   })
 
-  it('publishes every route in both locales and uses every available Chinese counterpart', () => {
+  it('publishes only editorially reviewed French sources at root routes', () => {
+    const rootPages = docsPages.filter(page => page.locale === 'root')
+    const french = rootPages.filter(page => page.contentLocale === 'fr-FR')
+    const fallbacks = rootPages.filter(page => page.contentLocale === 'en-US')
+    expect(rootPages).toHaveLength(83)
+    expect(french).toHaveLength(79)
+    expect(fallbacks).toHaveLength(4)
+    for (const page of french) {
+      expect(page.source).toMatch(/\.fr\.md$/)
+    }
+    for (const page of fallbacks) {
+      expect(page.source).not.toMatch(/\.fr\.md$/)
+    }
+  })
+
+  it('publishes every route in three locales and identifies French fallbacks', () => {
     const byRoute = new Map(docsPages.map(page => [page.route, page]))
-    for (const page of docsPages.filter(page => page.locale === 'root')) {
-      const counterpart = byRoute.get(`en/${page.route}`)
-      expect(counterpart, page.route).toBeDefined()
-      expect(counterpart?.locale).toBe('en')
-      if (page.contentLocale === 'zh-CN') {
-        expect(page.source).toMatch(/\.zh\.md$/)
-        expect(page.contentLocale).toBe('zh-CN')
-        expect(counterpart?.source).toBe(page.source.replace(/\.zh\.md$/, '.md'))
-        expect(counterpart?.contentLocale).toBe('en-US')
+    for (const page of docsPages.filter(page => page.locale === 'root' && page.sidebar !== null)) {
+      const english = byRoute.get(`en/${page.route}`)
+      const chinese = byRoute.get(`zh/${page.route}`)
+      expect(english, page.route).toBeDefined()
+      expect(chinese, page.route).toBeDefined()
+      expect(english?.contentLocale).toBe('en-US')
+      if (page.contentLocale === 'fr-FR') {
+        expect(page.source).toMatch(/\.fr\.md$/)
+        expect(english?.source).toBe(page.source.replace(/\.fr\.md$/, '.md'))
       } else {
-        expect(counterpart?.source).toBe(page.source)
-        expect(counterpart?.contentLocale).toBe(page.contentLocale)
-        const chineseSource = page.source.replace(/\.md$/, '.zh.md')
-        expect(
-          existsSync(resolve(repositoryRoot, chineseSource)),
-          `${page.route} has a Chinese counterpart but projects English`,
-        ).toBe(false)
+        expect(page.contentLocale).toBe('en-US')
+        expect(page.source).toBe(english?.source)
+      }
+      const chineseSource = english!.source.replace(/\.md$/, '.zh.md')
+      if (existsSync(resolve(repositoryRoot, chineseSource))) {
+        expect(chinese?.source).toBe(chineseSource)
+        expect(chinese?.contentLocale).toBe('zh-CN')
+      } else {
+        expect(chinese?.source).toBe(english?.source)
+        expect(chinese?.contentLocale).toBe('en-US')
       }
     }
   })
@@ -290,7 +345,7 @@ describe('docsPages locale routes', () => {
   it('indexes every subsystem page in both sides of the folder README', () => {
     const pages = globSync(join(repositoryRoot, 'docs/subsystems/*.md'))
       .map(page => basename(page))
-      .filter(page => !page.endsWith('.zh.md') && page !== 'README.md')
+      .filter(page => !page.endsWith('.fr.md') && !page.endsWith('.zh.md') && page !== 'README.md')
       .sort()
     expect(pages.length).toBeGreaterThan(0)
     for (const readme of ['README.md', 'README.zh.md']) {
@@ -302,7 +357,7 @@ describe('docsPages locale routes', () => {
 
   it('projects every published subsystem page in Chinese', () => {
     const rootPages = docsPages.filter(page => (
-      page.locale === 'root' && page.route.startsWith('reference/subsystems/')
+      page.locale === 'zh' && page.route.startsWith('zh/reference/subsystems/')
     ))
     const translated = rootPages.filter(page => page.contentLocale === 'zh-CN')
     const fallbacks = rootPages.filter(page => page.contentLocale === 'en-US')
@@ -317,33 +372,42 @@ describe('docsPages locale routes', () => {
     for (const file of files) {
       const root = docsPages.find(page => page.route === `reference/cordis-api/${file}`)
       const english = docsPages.find(page => page.route === `en/reference/cordis-api/${file}`)
-      expect(root?.source).toBe(`docs/cordis-api/${file.replace(/\.md$/, '.zh.md')}`)
-      expect(root?.contentLocale).toBe('zh-CN')
-      expect(root?.section).toBe('Cordis API')
+      const chinese = docsPages.find(page => page.route === `zh/reference/cordis-api/${file}`)
+      expect(root?.source).toBe(`docs/cordis-api/${file.replace(/\.md$/, '.fr.md')}`)
+      expect(root?.contentLocale).toBe('fr-FR')
+      expect(root?.section).toBe('API principale de Cordis')
       expect(english?.source).toBe(`docs/cordis-api/${file}`)
       expect(english?.contentLocale).toBe('en-US')
       expect(english?.section).toBe('Cordis Core API')
+      expect(chinese?.source).toBe(`docs/cordis-api/${file.replace(/\.md$/, '.zh.md')}`)
+      expect(chinese?.contentLocale).toBe('zh-CN')
+      expect(chinese?.section).toBe('Cordis API')
     }
   })
 
-  it('keeps Cordis inherited on the English fallback in both locales', () => {
+  it('uses reviewed French for Cordis inherited and keeps the Chinese English fallback', () => {
     const pages = docsPages.filter(page => page.route.endsWith('reference/cordis-api/inherited.md'))
-    expect(pages).toHaveLength(2)
-    expect(pages.every(page => page.source === 'docs/cordis-api/inherited.md')).toBe(true)
-    expect(pages.every(page => page.contentLocale === 'en-US')).toBe(true)
+    expect(pages).toHaveLength(3)
+    expect(pages.map(page => page.source).sort()).toEqual([
+      'docs/cordis-api/inherited.fr.md',
+      'docs/cordis-api/inherited.md',
+      'docs/cordis-api/inherited.md',
+    ])
+    expect(pages.map(page => page.contentLocale).sort()).toEqual(['en-US', 'en-US', 'fr-FR'])
   })
 
-  it('includes persistence event headings in both locale outlines', () => {
+  it('includes persistence event headings in all locale outlines', () => {
     const pages = docsPages.filter(page => page.route.endsWith('reference/persistence-catalog.md'))
-    expect(pages).toHaveLength(2)
+    expect(pages).toHaveLength(3)
     expect(pages.map(page => page.source).sort()).toEqual([
+      'docs/persistence-catalog.fr.md',
       'docs/persistence-catalog.md',
       'docs/persistence-catalog.zh.md',
     ])
-    expect(pages.map(page => page.outline)).toEqual(['deep', 'deep'])
+    expect(pages.map(page => page.outline)).toEqual(['deep', 'deep', 'deep'])
   })
 
-  it('projects reviewed generated counterparts into root locale routes', () => {
+  it('projects reviewed generated counterparts into Chinese locale routes', () => {
     // module-graph, event-producer-consumer, and graph-atlas are paired but intentionally unpublished.
     const routes = [
       'reference/capability-seams.md',
@@ -358,7 +422,7 @@ describe('docsPages locale routes', () => {
       'reference/cordis-api/registry.md',
       'reference/cordis-api/service.md',
     ]
-    const pages = routes.map(route => docsPages.find(page => page.route === route))
+    const pages = routes.map(route => docsPages.find(page => page.route === `zh/${route}`))
     expect(pages.every(page => page?.contentLocale === 'zh-CN')).toBe(true)
     expect(pages.every(page => page?.source.endsWith('.zh.md'))).toBe(true)
   })
@@ -373,25 +437,28 @@ describe('sidebar ordering', () => {
   })
 
   it('refuses a section with no declared placement', () => {
-    expect(() => sectionSpec('root', '数据结构'))
-      .toThrow('Sidebar section "数据结构" has no placement in the root locale.')
+    expect(() => sectionSpec('root', 'Structures de données'))
+      .toThrow('Sidebar section "Structures de données" has no placement in the root locale.')
   })
 
   it('declares placements per locale rather than in one shared list', () => {
-    // `SDK` labels a group in both locales, so one shared list would have to
-    // rank it against `入门` and against `Guide` at the same position.
-    expect(sectionSpec('root', 'SDK').index).toBeGreaterThan(sectionSpec('root', '入门').index)
+    // `SDK` labels a group in every locale, so one shared list would have to
+    // rank it against both `入门` and `Guide` at the same position.
+    expect(sectionSpec('root', 'SDK').index).toBeGreaterThan(sectionSpec('root', 'Guide').index)
     expect(sectionSpec('en', 'SDK').index).toBeGreaterThan(sectionSpec('en', 'Guide').index)
+    expect(sectionSpec('zh', 'SDK').index).toBeGreaterThan(sectionSpec('zh', '入门').index)
     expect(() => sectionSpec('en', '入门')).toThrow()
-    expect(() => sectionSpec('root', 'Guide')).toThrow()
+    expect(() => sectionSpec('root', '入门')).toThrow()
+    expect(() => sectionSpec('zh', 'Guide')).toThrow()
   })
 
   it('lands every navigation item on a page the manifest publishes', () => {
     // The navigation bar named `/guide/` while the manifest published the guide's
     // first page at `guide/quickstart.md`, so the item served a 404.
     const collections = [
-      ['root', 'zh-guide'], ['root', 'zh-develop'], ['root', 'zh-reference'],
+      ['root', 'fr-guide'], ['root', 'fr-develop'], ['root', 'fr-reference'],
       ['en', 'en-guide'], ['en', 'en-develop'], ['en', 'en-reference'],
+      ['zh', 'zh-guide'], ['zh', 'zh-develop'], ['zh', 'zh-reference'],
     ] as const
     const published = new Set(docsPages.map(page => routeLink(page.route)))
     for (const [locale, collection] of collections) {
@@ -400,9 +467,10 @@ describe('sidebar ordering', () => {
   })
 
   it('collapses the subsystem groups and leaves the smaller ones open', () => {
-    expect(sectionSpec('root', '执行与工具').collapsed).toBe(true)
+    expect(sectionSpec('root', 'Exécution et outils').collapsed).toBe(true)
     expect(sectionSpec('en', 'Execution and tools').collapsed).toBe(true)
-    expect(sectionSpec('root', '概念').collapsed).toBeUndefined()
+    expect(sectionSpec('zh', '执行与工具').collapsed).toBe(true)
+    expect(sectionSpec('root', 'Concepts').collapsed).toBeUndefined()
   })
 
   it('gives each page its own position within a section', () => {
@@ -468,6 +536,23 @@ describe('projectedPageContent', () => {
     expect(projectedPageContent(markdown, page('zh-guide'))).toBe(markdown)
   })
 
+  it('labels English technical content published in the French locale', () => {
+    const fallback = { ...page('zh-guide'), contentLocale: 'en-US' as const }
+    const notice = '> [!NOTE]\n> Cette page technique est proposée en anglais. L’interface et les guides utilisateur de LasmeX sont disponibles en français.\n'
+
+    expect(projectedPageContent('# Reference\n', fallback)).toBe(`${notice}\n# Reference\n`)
+    expect(projectedPageContent('---\ntitle: Reference\n---\n\n# Reference\n', fallback)).toBe(
+      `---\ntitle: Reference\n---\n\n${notice}\n# Reference\n`,
+    )
+  })
+
+  it('does not label reviewed French, English, or Chinese locale content', () => {
+    const markdown = '# Guide\n'
+    expect(projectedPageContent(markdown, { ...page('zh-guide'), contentLocale: 'fr-FR' })).toBe(markdown)
+    expect(projectedPageContent(markdown, { ...page('zh-guide'), locale: 'en', contentLocale: 'en-US' })).toBe(markdown)
+    expect(projectedPageContent(markdown, { ...page('zh-guide'), locale: 'zh', contentLocale: 'zh-CN' })).toBe(markdown)
+  })
+
   it('drops the language switcher the navigation bar already offers', () => {
     expect(projectedPageContent('# Guide\n\nEnglish | [中文](./en/guide)\n\nBody.\n', page('zh-guide')))
       .toBe('# Guide\n\nBody.\n')
@@ -476,7 +561,7 @@ describe('projectedPageContent', () => {
   })
 
   it('drops the repository badge every page links from its footer', () => {
-    const badge = '[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square)](https://github.com/deepseek-ai/deepseek-harness)'
+    const badge = '[![](https://img.shields.io/badge/powered_by-LasmeX-4D6BFE?style=flat-square)](https://github.com/lasme-ephrem/LasmeX)'
     expect(projectedPageContent(`# Guide\n\nBody.\n\n${badge}\n`, page('zh-guide')))
       .toBe('# Guide\n\nBody.\n')
   })
@@ -487,8 +572,8 @@ describe('projectedPageContent', () => {
     expect(projectedPageContent(sample, page('zh-guide'))).toBe(sample)
   })
 
-  it('rejects a locale home source without frontmatter', () => {
-    expect(() => projectedPageContent('# Harness\n', page(null)))
-      .toThrow('locale home source "docs/index.zh.md" must start with YAML frontmatter')
+  it('renders a document-style locale home without frontmatter', () => {
+    expect(projectedPageContent('# LasmeX\n\nBienvenue.\n', page(null)))
+      .toBe('# LasmeX\n\nBienvenue.\n')
   })
 })

@@ -5,14 +5,14 @@ import { chmodSync, existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import type { SubprocessOutcome } from '@deepseek-ai/dsh-subprocess'
+import SubagentRuntime from 'lasmex-subagent'
+import type { Agent } from 'lasmex-agent'
+import { MAX_TIMER_DELAY_MS } from 'lasmex-timeout'
+import type { SubprocessOutcome } from 'lasmex-subprocess'
 import * as acp from '../src/index.ts'
 import { acpStopReason, acpContentText, DEFAULT_DISPOSE_EOF_GRACE_MS, DEFAULT_DISPOSE_GRACE_MS, disposeAcpChild, startAcpRun, toAcpPrompt, type AcpRunSpec } from '../src/run.ts'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { spawnSubprocess } from '@deepseek-ai/dsh-subprocess-local/src/spawn.ts'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import { spawnSubprocess } from 'lasmex-subprocess-local/src/spawn.ts'
 
 /**
  * Keyless integration tests for the ACP subagent backend. Each spawns a REAL
@@ -127,8 +127,8 @@ describe('child env layering (through the subprocess seam)', () => {
     }
   })
 
-  it('forwards explicit DSH_* config entries to the child', async () => {
-    // A deployment sets child-harness facts like DSH_PERMISSION_MODE in
+  it('forwards explicit LASMEX_* config entries to the child', async () => {
+    // A deployment sets child-harness facts like LASMEX_PERMISSION_MODE in
     // config.env; the seam's scrub drops only the AMBIENT namesakes, so the
     // explicit entry merges after it and the child must see the value.
     const ctx = await setup({ MOCK_ECHO_ENV: 'DSH_ACP_TEST_FACT', DSH_ACP_TEST_FACT: 'managed' })
@@ -189,7 +189,7 @@ describe('disposeAcpChild (the backend-owned teardown ladder over seam verbs)', 
   it('observes a spawn-level rejection and returns without a process to reap', async () => {
     const child = spawnSubprocess({
       argv: [process.execPath, '--input-type=module', '--eval', ''],
-      cwd: '/nonexistent-dir-dsh-acp-ladder-test',
+      cwd: '/nonexistent-dir-lasmex-acp-ladder-test',
       stdio: { stdin: 'ignore', stdout: { maxBytes: 1000 }, stderr: { maxBytes: 1000 } },
       graceMs: 200,
     })
@@ -264,7 +264,7 @@ describe('cwd resolution', () => {
 
   it('resolves a relative config cwd against the launch directory at load', async () => {
     // The child process AND its announced ACP session cwd must both get the
-    // ABSOLUTE form — DSH's own ACP server rejects a relative session cwd, and
+    // ABSOLUTE form — LasmeX's own ACP server rejects a relative session cwd, and
     // deferring resolution to spawn would hide the launch-dir dependency.
     const relative = 'packages/subagent/subagent-acp'
     const absolute = resolve(relative)
@@ -384,7 +384,7 @@ describe('cwd resolution', () => {
   })
 })
 
-describe('dsh-subagent-acp', () => {
+describe('lasmex-subagent-acp', () => {
   it('drives child processes with parent-unique run ids and returns streamed output', async () => {
     const ctx = await setup({ MOCK_TEXT: 'hello from acp child', MOCK_STOP: 'end_turn', MOCK_SESSION_ID: 'acp-child-session' })
     const run = await ctx.subagents.start('acp', request('do X'))

@@ -4,7 +4,7 @@ import { join, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
+import SystemPrompt, { renderPrompt } from 'lasmex-system-prompt'
 import {
   addHarnessSourceSection, assertEntriesActivated, assertEntriesLoaded, boot,
   FAIL_LOUD_RELEASE_TIMEOUT_MS, HARNESS_SOURCE_SECTION,
@@ -13,7 +13,7 @@ import {
 
 const NAME = 'dsh-test-bin'
 
-const tmp = (): string => mkdtempSync(join(tmpdir(), 'dsh-app-boot-'))
+const tmp = (): string => mkdtempSync(join(tmpdir(), 'lasmex-app-boot-'))
 
 describe('resolveConfigPath', () => {
   it('resolves relative to the given cwd outside replay mode', () => {
@@ -55,7 +55,7 @@ describe('loadEnv', () => {
     const warn = vi.fn()
     loadEnv(NAME, dir, warn)
     expect(warn).toHaveBeenCalledTimes(1)
-    expect(warn.mock.calls[0]?.[0]).toMatch(new RegExp(`^${NAME}: failed to load \\.env: `))
+    expect(warn.mock.calls[0]?.[0]).toMatch(new RegExp(`^${NAME} : chargement impossible du fichier \\.env : `))
   })
 
   it('defaults dir to the process cwd and warn to a stderr write', () => {
@@ -83,7 +83,7 @@ describe('loadEnv', () => {
       write.mockRestore()
     }
     expect(written).toHaveLength(1)
-    expect(written[0]).toContain(`${NAME}: failed to load .env: `)
+    expect(written[0]).toContain(`${NAME} : chargement impossible du fichier .env : `)
   })
 })
 
@@ -110,7 +110,7 @@ describe('loadLayeredEnv', () => {
       '',
     ].join('\n'))
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     vi.stubEnv('APP_BOOT_LAYERED_INHERITED', 'inherited')
     const warn = vi.fn()
     try {
@@ -127,10 +127,10 @@ describe('loadLayeredEnv', () => {
   })
 
   it.each([
-    ['a harness switch', 'DSH_PERMISSION_MODE=danger-full-access\n'],
+    ['a harness switch', 'LASMEX_PERMISSION_MODE=danger-full-access\n'],
     ['the executable search path', 'PATH=/tmp/evil\n'],
     ['a module preload', 'NODE_OPTIONS=--require /tmp/evil.js\n'],
-    ['a skill root', 'DSH_AGENTS_HOME=/tmp/injected\n'],
+    ['a skill root', 'LASMEX_AGENTS_HOME=/tmp/injected\n'],
     ['a network proxy', 'HTTPS_PROXY=http://attacker.example\n'],
     ['a lowercase network proxy', 'https_proxy=http://attacker.example\n'],
   ])('refuses to launch when a .env sets %s, before applying anything', (_case, content) => {
@@ -138,9 +138,9 @@ describe('loadLayeredEnv', () => {
     const project = tmp()
     writeFileSync(join(project, '.env'), `${NAMES[1]}=applied-anyway\n${content}`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     try {
-      expect(() => loadLayeredEnv(NAME, project, vi.fn())).toThrow(/only the launching environment may set/)
+      expect(() => loadLayeredEnv(NAME, project, vi.fn())).toThrow(/seul l'environnement de lancement peut le faire/)
       expect(process.env[NAMES[1]]).toBeUndefined()
     } finally {
       clear()
@@ -154,7 +154,7 @@ describe('loadLayeredEnv', () => {
     writeFileSync(join(home, '.env'), `${NAMES[1]}=u\n`)
     writeFileSync(join(project, '.env'), `${NAMES[2]}=p\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     try {
       const snapshot = loadLayeredEnv(NAME, project, vi.fn())
       expect(snapshot.get(NAMES[1])).toEqual({ value: 'u', source: 'user-env', path: join(home, '.env') })
@@ -172,7 +172,7 @@ describe('loadLayeredEnv', () => {
     writeFileSync(join(home, '.env'), `${NAMES[1]}=real-home\n`)
     writeFileSync(join(project, '.env'), `${NAMES[2]}=set-by-project\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     try {
       loadLayeredEnv(NAME, project, vi.fn())
       expect(process.env[NAMES[1]]).toBe('real-home')
@@ -190,11 +190,11 @@ describe('loadLayeredEnv', () => {
     mkdirSync(join(home, '.env'))
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     const warn = vi.fn()
     try {
       const snapshot = loadLayeredEnv(NAME, project, warn)
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${NAME}: failed to load .env`))
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining(`${NAME} : chargement impossible du fichier .env`))
       expect(snapshot.get(NAMES[1])).toBeUndefined()
       expect(snapshot.get(NAMES[2])).toEqual({ value: 'project-only', source: 'project-env', path: join(project, '.env') })
       expect(process.env[NAMES[2]]).toBe('project-only')
@@ -210,11 +210,11 @@ describe('loadLayeredEnv', () => {
     mkdirSync(join(home, '.env'))
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     const write = vi.spyOn(process.stderr, 'write').mockReturnValue(true)
     try {
       const snapshot = loadLayeredEnv(NAME, project)
-      expect(write).toHaveBeenCalledWith(expect.stringContaining(`${NAME}: failed to load .env`))
+      expect(write).toHaveBeenCalledWith(expect.stringContaining(`${NAME} : chargement impossible du fichier .env`))
       expect(snapshot.get(NAMES[2])).toEqual({ value: 'project-only', source: 'project-env', path: join(project, '.env') })
       expect(process.env[NAMES[2]]).toBe('project-only')
     } finally {
@@ -229,7 +229,7 @@ describe('loadLayeredEnv', () => {
     const project = tmp()
     writeFileSync(join(project, '.env'), `${NAMES[2]}=project-only\n`)
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     const warn = vi.fn()
     try {
       const snapshot = loadLayeredEnv(NAME, project, warn)
@@ -245,7 +245,7 @@ describe('loadLayeredEnv', () => {
     const home = tmp()
     const project = tmp()
     clear()
-    vi.stubEnv('DSH_HOME', home)
+    vi.stubEnv('LASMEX_HOME', home)
     vi.stubEnv('APP_BOOT_LAYERED_INHERITED', 'inherited')
     try {
       const snapshot = loadLayeredEnv(NAME, project, vi.fn())
@@ -260,7 +260,7 @@ describe('loadLayeredEnv', () => {
     const both = tmp()
     writeFileSync(join(both, '.env'), `${NAMES[2]}=one-file\n`)
     clear()
-    vi.stubEnv('DSH_HOME', both)
+    vi.stubEnv('LASMEX_HOME', both)
     try {
       const snapshot = loadLayeredEnv(NAME, both, vi.fn())
       expect(snapshot.get(NAMES[2])).toEqual({ value: 'one-file', source: 'project-env', path: join(both, '.env') })
@@ -430,7 +430,7 @@ describe('assertEntriesLoaded', () => {
       { fiber: {}, options: { name: 'ok' } },
       { options: { name: 'broken-a' } },
       { options: { name: 'broken-b' } },
-    ]), NAME) }).toThrow(`${NAME}: plugin(s) failed to load: broken-a, broken-b`)
+    ]), NAME) }).toThrow(`${NAME} : échec du chargement des plugins : broken-a, broken-b`)
   })
 })
 
@@ -481,7 +481,7 @@ describe('assertEntriesActivated', () => {
     const original = new Error('actual plugin failure')
     await expect(assertEntriesActivated(ctxWith([
       { fiber: fiber(3, original), options: { name: 'broken-plugin' } },
-    ]), NAME)).rejects.toThrow(`${NAME}: 1 entry did not activate\nbroken-plugin: ${original.stack!}`)
+    ]), NAME)).rejects.toThrow(`${NAME} : 1 entrée ne s'est pas activée\nbroken-plugin: ${original.stack!}`)
   })
 
   it('formats stackless and non-Error activation failures', async () => {
@@ -490,16 +490,16 @@ describe('assertEntriesActivated', () => {
     await expect(assertEntriesActivated(ctxWith([
       { fiber: fiber(3, stackless), options: { name: 'stackless' } },
       { fiber: fiber(3, 'plain failure'), options: { name: 'plain' } },
-    ]), NAME)).rejects.toThrow(`${NAME}: 2 entries did not activate\nstackless: stackless failure\nplain: plain failure`)
+    ]), NAME)).rejects.toThrow(`${NAME} : 2 entrées ne se sont pas activées\nstackless: stackless failure\nplain: plain failure`)
   })
 
   it('reports unresolved services for pending entries', async () => {
     let awaitCalls = 0
     const expected = [
-      `${NAME}: 3 entries did not activate`,
-      'waiting: pending (waiting for services: missingA, missingB)',
-      'single-wait: pending (waiting for service: missing)',
-      'unknown-wait: pending (waiting for services: unknown)',
+      `${NAME} : 3 entrées ne se sont pas activées`,
+      'waiting : en attente (services requis : missingA, missingB)',
+      'single-wait : en attente (service requis : missing)',
+      'unknown-wait : en attente (services requis : inconnu)',
     ].join('\n')
     const waiting = fiber(0, undefined, { ready: {}, missingA: {}, missingB: {} }, ['ready'])
     const singleWait = fiber(0, undefined, { missing: {} })
@@ -521,7 +521,7 @@ describe('assertEntriesActivated', () => {
   it('retains the numeric diagnostic for a settled unexpected state', async () => {
     await expect(assertEntriesActivated(ctxWith([
       { fiber: fiber(4), options: { name: 'disposed' } },
-    ]), NAME)).rejects.toThrow('disposed: fiber state 4')
+    ]), NAME)).rejects.toThrow('disposed : état de fibre 4')
   })
 })
 
@@ -531,16 +531,16 @@ describe('loadOverlayPatches', () => {
     const valid = join(dir, 'valid.yml')
     writeFileSync(valid, '- id: target\n  config:\n    value: !!js process.env.VALUE\n')
     expect(loadOverlayPatches(NAME, valid)).toEqual([{ id: 'target', config: { value: { __jsExpr: 'process.env.VALUE' } } }])
-    expect(() => loadOverlayPatches(NAME, join(dir, 'missing.yml'))).toThrow(`${NAME}: failed to read overlay`)
+    expect(() => loadOverlayPatches(NAME, join(dir, 'missing.yml'))).toThrow(`${NAME} : lecture impossible de la surcouche`)
     const malformed = join(dir, 'malformed.yml')
     writeFileSync(malformed, ': bad')
-    expect(() => loadOverlayPatches(NAME, malformed)).toThrow(`${NAME}: failed to parse overlay`)
+    expect(() => loadOverlayPatches(NAME, malformed)).toThrow(`${NAME} : analyse impossible de surcouche`)
     const mapping = join(dir, 'mapping.yml')
     writeFileSync(mapping, 'id: target\n')
-    expect(() => loadOverlayPatches(NAME, mapping)).toThrow('must be a top-level YAML array')
+    expect(() => loadOverlayPatches(NAME, mapping)).toThrow('doit être un tableau YAML racine')
     const scalar = join(dir, 'scalar.yml')
     writeFileSync(scalar, '- scalar\n')
-    expect(() => loadOverlayPatches(NAME, scalar)).toThrow('entry 1')
+    expect(() => loadOverlayPatches(NAME, scalar)).toThrow("l'entrée 1")
   })
 })
 
@@ -562,12 +562,12 @@ describe('boot', () => {
     const dir = tmp()
     const harness = tmp()
     const absolutePlugin = join(dir, 'absolute.mjs')
-    const shadow = join(dir, 'node_modules', '@deepseek-ai', 'dsh-system-prompt')
-    const harnessPlugin = join(harness, 'node_modules', '@deepseek-ai', 'dsh-system-prompt')
+    const shadow = join(dir, 'node_modules', 'lasmex-system-prompt')
+    const harnessPlugin = join(harness, 'node_modules', 'lasmex-system-prompt')
     mkdirSync(shadow, { recursive: true })
     mkdirSync(harnessPlugin, { recursive: true })
     writeFileSync(join(shadow, 'package.json'), JSON.stringify({
-      name: '@deepseek-ai/dsh-system-prompt',
+      name: 'lasmex-system-prompt',
       type: 'module',
       exports: './index.mjs',
     }))
@@ -578,7 +578,7 @@ describe('boot', () => {
       '',
     ].join('\n'))
     writeFileSync(join(harnessPlugin, 'package.json'), JSON.stringify({
-      name: '@deepseek-ai/dsh-system-prompt',
+      name: 'lasmex-system-prompt',
       type: 'module',
       exports: './index.mjs',
     }))
@@ -592,7 +592,7 @@ describe('boot', () => {
     writeFileSync(absolutePlugin, 'export function apply(ctx) { ctx.provide("absolutePluginLoaded", true) }\n')
     const entries = [
       '- id: prompt',
-      "  name: '@deepseek-ai/dsh-system-prompt'",
+      "  name: 'lasmex-system-prompt'",
       '- id: relative',
       "  name: './relative.mjs'",
     ]
@@ -652,16 +652,16 @@ describe('boot', () => {
     })
 
     await expect(task).rejects.toMatchObject({
-      message: `${NAME}: host preparation failed: ${failure}`,
+      message: `${NAME} : échec de la préparation de l'hôte : ${failure}`,
       cause: failure,
     })
     expect(disposed).toBe(true)
   })
 
-  it('exposes dshHomePath to Loader config expressions', async () => {
+  it('exposes lasmexHomePath to Loader config expressions', async () => {
     const dir = tmp()
-    const dshHome = join(dir, 'home')
-    vi.stubEnv('DSH_HOME', dshHome)
+    const lasmexHome = join(dir, 'home')
+    vi.stubEnv('LASMEX_HOME', lasmexHome)
     writeFileSync(join(dir, 'capture.mjs'), [
       'export const name = "capture"',
       'export function apply(ctx, config) {',
@@ -673,13 +673,13 @@ describe('boot', () => {
       '- id: capture',
       '  name: ./capture.mjs',
       '  config:',
-      "    path: !!js dshHomePath('sessions')",
+      "    path: !!js lasmexHomePath('sessions')",
       '',
     ].join('\n'))
     let ctx: Context | undefined
     try {
       ctx = await boot(NAME, join(dir, 'cordis.yml'))
-      expect(ctx.get('capturedPath')).toBe(join(dshHome, 'sessions'))
+      expect(ctx.get('capturedPath')).toBe(join(lasmexHome, 'sessions'))
     } finally {
       await ctx?.fiber.dispose()
       vi.unstubAllEnvs()
@@ -719,7 +719,7 @@ describe('boot', () => {
     const dir = tmp()
     writeFileSync(join(dir, 'cordis.yml'), '- id: ghost\n  name: ./missing.mjs\n')
     await expect(boot(NAME, join(dir, 'cordis.yml'))).rejects.toThrow(
-      `${NAME}: plugin tree failed to load: failed to apply loader entry`,
+      `${NAME} : échec du chargement de l'arbre de plugins : failed to apply loader entry`,
     )
   })
 
@@ -766,7 +766,7 @@ describe('boot', () => {
     await expect(boot(NAME, join(dir, 'cordis.yml'), undefined, () => {
       throw new Error('wrapped setup failure', { cause: deepest })
     })).rejects.toThrow(
-      `${NAME}: host preparation failed: wrapped setup failure\nstackless deep failure`,
+      `${NAME} : échec de la préparation de l'hôte : wrapped setup failure\nstackless deep failure`,
     )
   })
 
@@ -775,15 +775,15 @@ describe('boot', () => {
     writeFileSync(join(dir, 'waiting.mjs'), 'export const inject = ["neverProvided"]\nexport function apply() {}\n')
     writeFileSync(join(dir, 'cordis.yml'), '- id: waiting\n  name: ./waiting.mjs\n')
     await expect(boot(NAME, join(dir, 'cordis.yml'))).rejects.toThrow([
-      `${NAME}: 1 entry did not activate`,
-      './waiting.mjs: pending (waiting for service: neverProvided)',
+      `${NAME} : 1 entrée ne s'est pas activée`,
+      './waiting.mjs : en attente (service requis : neverProvided)',
     ].join('\n'))
   })
 })
 
 describe('addHarnessSourceSection', () => {
   const SOURCE_ROOT = `${sep}opt${sep}harness-src`
-  const EXPECTED = `The DeepSeek Harness implementation checkout is at ${SOURCE_ROOT}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.`
+  const EXPECTED = `The LasmeX implementation checkout is at ${SOURCE_ROOT}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend LasmeX itself.`
 
   it('distinguishes the source path from the current workdir between identity and persona', async () => {
     const ctx = new Context()
@@ -796,7 +796,7 @@ describe('addHarnessSourceSection', () => {
       expect(rendered).toContain(EXPECTED)
       // Harness-owned opener (-100) → source (-99) → persona (0). The >= 0 guards
       // keep a drifted opener/persona string from a false pass through `-1 < n`.
-      const identityAt = rendered.indexOf('You are an AI agent powered by DeepSeek Harness.')
+      const identityAt = rendered.indexOf('You are an AI agent powered by LasmeX.')
       const sourceAt = rendered.indexOf(EXPECTED)
       const personaAt = rendered.indexOf('You are a coding agent.')
       expect(identityAt).toBeGreaterThanOrEqual(0)

@@ -15,11 +15,11 @@
  */
 import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import { InputTriggerService } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
-import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import type { ClientSessionContext, InputTriggerSource } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+import type { SessionId } from 'lasmex-client-runtime/client'
+import { SlotRegistry } from 'lasmex-client-runtime/client'
+import { InputTriggerService } from 'lasmex-client-ui-input-trigger/client'
+import { TestRemote } from 'lasmex-client-test-runtime'
+import type { ClientSessionContext, InputTriggerSource } from 'lasmex-client-ui-input-trigger/client'
 import { apply, inject } from '../src/client/index.ts'
 import { SkillRow as SkillToolRow } from '../src/client/SkillRow.tsx'
 
@@ -124,11 +124,22 @@ describe('apply', () => {
     expect(entry?.component).toBe(SkillToolRow)
     expect(presentation.dictionaries).toEqual([{
       namespace: 'skill', dictionaries: {
+        fr: {
+          'row.running': 'Chargement de la compétence',
+          'row.failed': 'Échec du chargement de la compétence',
+          'row.stopped': 'Chargement de la compétence interrompu',
+          'row.instructions': 'Instructions',
+          'row.title': 'Compétence',
+          'row.inspect': 'Inspecter',
+          'menu.userOnly': 'utilisateur uniquement',
+        },
         zh: {
           'row.running': '正在加载 skill',
           'row.failed': 'skill 加载失败',
           'row.stopped': 'skill 加载已中止',
           'row.instructions': '说明',
+          'row.title': '技能',
+          'row.inspect': '检查',
           'menu.userOnly': '仅用户',
         },
         en: {
@@ -136,6 +147,8 @@ describe('apply', () => {
           'row.failed': 'Skill load failed',
           'row.stopped': 'Skill load stopped',
           'row.instructions': 'Instructions',
+          'row.title': 'Skill',
+          'row.inspect': 'Inspect',
           'menu.userOnly': 'user-only',
         },
       },

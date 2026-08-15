@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tmux-context
+# lasmex-tmux-context
 
 [English](README.md) | 中文
 
@@ -8,7 +8,7 @@
 
 ```yaml
 - id: tmux-context
-  name: '@deepseek-ai/dsh-tmux-context'
+  name: 'lasmex-tmux-context'
   config:
     refreshIntervalMs: 60000 # optional; omit or set to 0 to inject on every changed turn
 ```

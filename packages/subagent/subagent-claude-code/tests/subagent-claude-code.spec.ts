@@ -17,17 +17,17 @@ import {
   type Mock,
   vi,
 } from 'vitest'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
+import type { Agent } from 'lasmex-agent'
+import type { InvariantInstaller } from 'lasmex-invariants'
+import type { ContentBlock } from 'lasmex-llm'
+import SubagentRuntime from 'lasmex-subagent'
 import type {
   SubprocessHandle,
   SubprocessOutcome,
   SubprocessSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+} from 'lasmex-subprocess'
+import LocalSubprocessRuntime from 'lasmex-subprocess-local'
+import { MAX_TIMER_DELAY_MS } from 'lasmex-timeout'
 import * as claudeCode from '../src/index.ts'
 import * as invariant from '../src/invariant.ts'
 import {
@@ -403,7 +403,7 @@ describe('task admission and package contracts', () => {
     const ctx = { invariants: { register } } as unknown as Context
     await expect(invariant.apply(ctx)).resolves.toBe(dispose)
     expect(register).toHaveBeenCalledWith(
-      '@deepseek-ai/dsh-subagent-claude-code',
+      'lasmex-subagent-claude-code',
       expect.any(Function),
     )
     const install = register.mock.calls[0]![1]
@@ -464,11 +464,11 @@ describe('official spawn projection', () => {
     }), 7, 'win32')
 
     expect(spec.argv).toEqual([
-      'cmd.exe', '/d', '/v:off', '/s', '/c', '%DSH_CLAUDE_CODE_EXECUTABLE%',
+      'cmd.exe', '/d', '/v:off', '/s', '/c', '%LASMEX_CLAUDE_CODE_EXECUTABLE%',
       '--output-format', 'stream-json',
     ])
     expect(spec.env).toEqual(expect.objectContaining({
-      DSH_CLAUDE_CODE_EXECUTABLE: `"${command}"`,
+      LASMEX_CLAUDE_CODE_EXECUTABLE: `"${command}"`,
     }))
   })
 
@@ -533,7 +533,7 @@ describe('query options and result mapping', () => {
   it('builds the fixed unattended options over the scrubbed environment', () => {
     vi.stubEnv('HOST_VISIBLE', 'visible')
     vi.stubEnv('HOST_SECRET_TOKEN', 'must-not-leak')
-    vi.stubEnv('DSH_INTERNAL', 'must-not-leak')
+    vi.stubEnv('LASMEX_INTERNAL', 'must-not-leak')
     const child = fakeChild()
     const spawn = vi.fn(() => child.handle)
     const captured: SubprocessHandle[] = []
@@ -564,7 +564,7 @@ describe('query options and result mapping', () => {
       ANTHROPIC_API_KEY: 'explicit-fake-key',
     })
     expect(options.env).not.toHaveProperty('HOST_SECRET_TOKEN')
-    expect(options.env).not.toHaveProperty('DSH_INTERNAL')
+    expect(options.env).not.toHaveProperty('LASMEX_INTERNAL')
     for (const omitted of [
       'settingSources',
       'canUseTool',

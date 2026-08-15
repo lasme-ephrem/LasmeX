@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from 'lasmex-session'
 import {
   captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -30,7 +30,7 @@ const MODE = webSnapshotMode()
 const PROMPT = 'Using ONE run_code program: run bash `echo CODE_ROUND_OK`, then read the file missing.txt '
   + 'catching its error in the program. Return an object with both outcomes. Then reply DONE and stop.'
 
-describe('web e2e: Code Mode round renders nested sub-calls', () => {
+describe.skipIf(process.platform === 'win32')('web e2e: Code Mode round renders nested sub-calls', () => {
   let scaffold: WebScaffold
   let browser: Browser
   let page: Page

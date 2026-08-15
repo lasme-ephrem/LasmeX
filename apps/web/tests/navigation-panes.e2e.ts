@@ -13,8 +13,8 @@ import type { Browser, Page, Response } from 'playwright'
 import { chromium } from 'playwright'
 import { strFromU8, unzipSync } from 'fflate'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, onTestFailed } from 'vitest'
-import { parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { parseSessionLog } from 'lasmex-llm-replay'
+import type { SessionEvent } from 'lasmex-session'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, seedSession, watchConsole, webSnapshotMode, type WebScaffold,
@@ -28,6 +28,18 @@ const SEARCH_EXPECTED = join(SNAPSHOT_DIR, 'search-results.expected.md')
 const TERMINAL_EXPECTED = join(SNAPSHOT_DIR, 'terminal-card.expected.md')
 const MODE = webSnapshotMode()
 const SEED_ID = 'navigation-panes-web-e2e'
+
+function platformSeed(raw: string): string {
+  return process.platform === 'win32'
+    ? raw.replaceAll('"name":"bash"', '"name":"pwsh"')
+    : raw
+}
+
+function normalizeShellSnapshot(snapshot: string): string {
+  return process.platform === 'win32'
+    ? snapshot.split('Pwsh').join('Bash').replace(/\bpwsh\b/g, 'bash')
+    : snapshot
+}
 
 // Turn 1 leads with a distinctive word: the session-title fallback takes the
 // first words of the first message, so the sidebar-search scenario has a
@@ -97,7 +109,7 @@ describe('web e2e: navigation & panes over a rich seeded session', () => {
       const raw = await readFile(SEED, 'utf8')
       expect(fixtureUserPrompts(raw), 'seed fixture must carry exactly the two drive prompts')
         .toEqual([PROMPT_TURN1, PROMPT_TURN2])
-      await seedSession(scaffold, raw, SEED_ID)
+      await seedSession(scaffold, platformSeed(raw), SEED_ID)
     }
     browser = await chromium.launch()
   }, 120_000)
@@ -282,8 +294,10 @@ describe('web e2e: navigation & panes over a rich seeded session', () => {
     }))
     expect(assistantTimingStyle.background).toContain('linear-gradient')
     expect(assistantTimingStyle.ttft).toMatch(/%$/)
-    const snapshot = (await captureStableAria(page, '[class*="viewArea"]', scaffold.workspaceCwd))
-      .split(SEED_ID).join('{{seededId}}')
+    const snapshot = normalizeShellSnapshot(
+      (await captureStableAria(page, '[class*="viewArea"]', join(scaffold.workspaceCwd, 'workspace')))
+        .split(SEED_ID).join('{{seededId}}'),
+    )
     await compareOrRefreshGolden(TRAJECTORY_EXPECTED, snapshot, MODE)
     await details.getByRole('button', { name: 'Close details' }).click()
   }, 60_000)
@@ -309,7 +323,7 @@ describe('web e2e: navigation & panes over a rich seeded session', () => {
     const response = await responsePromise
     expect(response.status()).toBe(200)
     const download = await downloadPromise
-    expect(download.suggestedFilename()).toMatch(/^dsh-session-.+\.zip$/)
+    expect(download.suggestedFilename()).toMatch(/^lasmex-session-.+\.zip$/)
     const dialog = page.getByRole('dialog', { name: 'Session download started' })
     await dialog.waitFor({ timeout: 30_000 })
     // The real host streamed the ZIP; its root entry is the persisted log
@@ -492,8 +506,10 @@ describe('web e2e: navigation & panes over a rich seeded session', () => {
     expect(dot.color).toBe(dot.success)
     // Golden of the card at rest — captured before the copy click, whose
     // confirmation label self-reverts on a timer and would not hold still.
-    const snapshot = (await captureStableAria(page, '[data-terminal]', scaffold.workspaceCwd))
-      .split(SEED_ID).join('{{seededId}}')
+    const snapshot = normalizeShellSnapshot(
+      (await captureStableAria(page, '[data-terminal]', scaffold.workspaceCwd))
+        .split(SEED_ID).join('{{seededId}}'),
+    )
     await compareOrRefreshGolden(TERMINAL_EXPECTED, snapshot, MODE)
     // Copy writes the raw output through the browser's own clipboard, which in
     // a real page is the async Clipboard API rather than the jsdom fallback.

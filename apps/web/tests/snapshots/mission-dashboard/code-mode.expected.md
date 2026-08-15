@@ -1,0 +1,100 @@
+- region "Tableau de mission":
+  - heading "Tableau de mission" [level=1]
+  - paragraph: Vue opérationnelle de la session complète
+  - status:
+    - text: État de la mission
+    - strong: Prête
+  - region "Objectif":
+    - heading "Objectif" [level=2]
+    - paragraph: Aucun objectif défini.
+  - region "Plan":
+    - heading "Plan" [level=2]
+    - paragraph: Mode plan inactif
+  - region "Autorisations":
+    - heading "Autorisations" [level=2]
+    - term: Niveau actuel
+    - definition: Écriture dans l’espace de travail
+  - region "Liste de travail":
+    - heading "Liste de travail" [level=2]
+    - paragraph: Aucune liste de travail enregistrée.
+  - region "Capacités utilisées":
+    - heading "Capacités utilisées" [level=2]
+    - list:
+      - listitem:
+        - code: bash
+        - term: Démarrés
+        - definition: "1"
+        - term: Terminés
+        - definition: "1"
+        - term: Échecs
+        - definition: "0"
+        - term: En cours
+        - definition: "0"
+      - listitem:
+        - code: read
+        - term: Démarrés
+        - definition: "1"
+        - term: Terminés
+        - definition: "1"
+        - term: Échecs
+        - definition: "1"
+        - term: En cours
+        - definition: "0"
+  - region "Validations récentes":
+    - heading "Validations récentes" [level=2]
+    - list:
+      - listitem:
+        - code: pnpm test
+        - text: Réussie bash · Durée 1 ms
+  - region "Décisions humaines":
+    - heading "Décisions humaines" [level=2]
+    - term: Demandées
+    - definition: "0"
+    - term: Autorisées
+    - definition: "0"
+    - term: Refusées
+    - definition: "0"
+    - term: Annulées
+    - definition: "0"
+    - term: Sans réponse
+    - definition: "0"
+  - region "Dernière issue":
+    - heading "Dernière issue" [level=2]
+    - paragraph: Aucune issue nécessitant une attention.
+  - region "Activité en direct":
+    - heading "Activité en direct" [level=2]
+    - term: Agent
+    - definition: Au repos
+    - term: Interactions en attente
+    - definition: "0"
+    - term: Instructions en file
+    - definition: "0"
+    - term: Historique
+    - definition: Charger l’historique antérieur
+    - button "Charger l’historique antérieur"
+  - region "Enfants et orchestration":
+    - heading "Enfants et orchestration" [level=2]
+    - heading "Agents enfants" [level=3]
+    - paragraph: Aucun agent enfant signalé.
+    - heading "Tâches d’arrière-plan" [level=3]
+    - paragraph: Aucune tâche d’arrière-plan signalée.
+  - region "Mesures de session":
+    - heading "Mesures de session" [level=2]
+    - term: Tours
+    - definition: "28"
+    - term: Étapes
+    - definition: "28"
+    - term: Temps modèle
+    - definition: 32 ms
+    - term: Temps outils
+    - definition: 0 ms
+    - term: Premier token moyen
+    - definition: Non enregistré
+    - term: Débit
+    - definition: Non enregistré
+    - term: Tokens d’entrée facturés
+    - definition: "0"
+    - term: Tokens de sortie
+    - definition: "0"
+    - term: Tokens lus en cache
+    - definition: "0"

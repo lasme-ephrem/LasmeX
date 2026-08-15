@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-user-approval
+# lasmex-user-approval
 
 [English](README.md) | 中文
 

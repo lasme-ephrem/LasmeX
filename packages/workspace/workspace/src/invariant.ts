@@ -1,14 +1,14 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-workspace`.
- * @module @deepseek-ai/dsh-workspace/invariant
+ * Package-owned invariant companion for `lasmex-workspace`.
+ * @module lasmex-workspace/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
-import type { DomainChanged } from '@deepseek-ai/dsh-storage-domain'
-import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
+import type { InvariantInstaller } from 'lasmex-invariants'
+import type { DomainChanged } from 'lasmex-storage-domain'
+import { WorkspaceId } from 'lasmex-workspace'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-workspace'
+const PACKAGE_NAME = 'lasmex-workspace'
 
 /** Cordis companion plugin name. */
 export const name = 'workspace-invariant'

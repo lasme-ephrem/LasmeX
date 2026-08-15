@@ -10,19 +10,19 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import { z } from 'zod'
-import SessionStore from '@deepseek-ai/dsh-session'
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
+import SessionStore from 'lasmex-session'
+import type { Session, SessionEvent } from 'lasmex-session'
+import SessionProjectionRegistry from 'lasmex-session-projection'
+import type { ProjectionDefinition } from 'lasmex-session-projection'
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
+declare module 'lasmex-session-projection/types' {
   interface SessionProjectionMap {
     'test/marks': { marks: string[] }
     'test/count': number
   }
 }
 
-declare module '@deepseek-ai/dsh-session/types' {
+declare module 'lasmex-session/types' {
   interface SessionEventMap {
     'test/mark': { marks: string[] }
   }

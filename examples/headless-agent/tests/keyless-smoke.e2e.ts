@@ -4,8 +4,8 @@ import { promisify } from 'node:util'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@deepseek-ai/dsh-loader-smoke'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from 'lasmex-loader-smoke'
+import type { SessionEvent } from 'lasmex-session'
 
 const binScript = fileURLToPath(new URL('./fixtures/headless-driver.ts', import.meta.url))
 const configPath = fileURLToPath(new URL('./fixtures/cli.cordis.yml', import.meta.url))
@@ -23,6 +23,7 @@ describe('headless-agent keyless smoke', () => {
       configPath,
       binArgs: [configPath, 'prove the tool path'],
       tsconfigPath,
+      env: { CLI_MOCK_TOOL: 'bash' },
       inspect: async (cwd) => {
         const files = await readdir(cwd, { recursive: true })
         const relativePath = files.find(file => file.endsWith('.jsonl.zstd'))

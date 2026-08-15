@@ -8,18 +8,18 @@
     patches:
       - insert:
           - id: subagent-codex
-            name: '@deepseek-ai/dsh-subagent-codex'
+            name: 'lasmex-subagent-codex'
           - id: subagent-claude-code
-            name: '@deepseek-ai/dsh-subagent-claude-code'
+            name: 'lasmex-subagent-claude-code'
           - id: tool-subagent-codex
-            name: '@deepseek-ai/dsh-tool-subagent'
+            name: 'lasmex-tool-subagent'
             config:
               provider: codex
               toolName: subagent_codex
               enableRunInBackground: false
               maxDepth: provider-managed
           - id: tool-subagent-claude-code
-            name: '@deepseek-ai/dsh-tool-subagent'
+            name: 'lasmex-tool-subagent'
             config:
               provider: claude-code
               toolName: subagent_claude_code

@@ -4,15 +4,15 @@ import {
 import {
   indexSubagentDescendants, type SessionId, type SessionListState, type SessionProjectionMap,
   type SessionSummary, type SubagentAddress, type SubagentCatalogSnapshot,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from 'lasmex-client-runtime/client'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconRefreshOutline14, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
+} from 'lasmex-client-ui-primitives'
+import type { PropsLocale, PropsRuntime, TranslateNS } from 'lasmex-client-ui-slots'
 import { NS } from './locales.ts'
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-subagent/client'
-import type {} from '@deepseek-ai/dsh-token-meter/client'
+import type {} from 'lasmex-client-ui-conversation/client'
+import type {} from 'lasmex-subagent/client'
+import type {} from 'lasmex-token-meter/client'
 import css from './SubagentCatalogAction.module.css'
 
 type CatalogEntry = SubagentCatalogSnapshot['entries'][number]

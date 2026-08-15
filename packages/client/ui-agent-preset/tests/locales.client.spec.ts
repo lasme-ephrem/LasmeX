@@ -1,19 +1,21 @@
 /** Web-localized copy for the four shipped presets and file copy for every other row. */
 
 import { describe, expect, it } from 'vitest'
-import { en, presetDisplayText, zh } from '../src/client/locales.ts'
+import { en, fr, presetDisplayText, zh } from '../src/client/locales.ts'
 
 const translate = (bundle: typeof en) => (key: keyof typeof en): string => bundle[key]
 
 describe('preset display copy', () => {
   it.each([
     ['standard', 'presetStandardName', 'presetStandardDescription'],
-    ['code', 'presetCodeName', 'presetCodeDescription'],
+    ['lasmex-code', 'presetCodeName', 'presetCodeDescription'],
     ['minimal', 'presetMinimalName', 'presetMinimalDescription'],
     ['cordis', 'presetCordisName', 'presetCordisDescription'],
-  ] as const)('localizes the shipped %s preset in English and Chinese', (id, nameKey, descriptionKey) => {
+  ] as const)('localizes the shipped %s preset in French, English, and Chinese', (id, nameKey, descriptionKey) => {
     const preset = { id, trust: 'system' as const, name: 'file name', description: 'file description' }
 
+    expect(presetDisplayText(preset, translate(fr)))
+      .toEqual({ name: fr[nameKey], description: fr[descriptionKey] })
     expect(presetDisplayText(preset, translate(en)))
       .toEqual({ name: en[nameKey], description: en[descriptionKey] })
     expect(presetDisplayText(preset, translate(zh)))

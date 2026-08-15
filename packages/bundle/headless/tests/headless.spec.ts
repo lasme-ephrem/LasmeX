@@ -2,12 +2,12 @@
 
 import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry, { Inbox } from '@deepseek-ai/dsh-agent'
-import type { Agent, AgentHandle, CreateAgentOptions } from '@deepseek-ai/dsh-agent'
-import AgentDefaultModelConfig from '@deepseek-ai/dsh-agent-default-model'
-import { createAssistantMessage } from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import type { Session, UserMessage } from '@deepseek-ai/dsh-session'
+import AgentRegistry, { Inbox } from 'lasmex-agent'
+import type { Agent, AgentHandle, CreateAgentOptions } from 'lasmex-agent'
+import AgentDefaultModelConfig from 'lasmex-agent-default-model'
+import { createAssistantMessage } from 'lasmex-llm'
+import SessionStore from 'lasmex-session'
+import type { Session, UserMessage } from 'lasmex-session'
 import { apply, Config, internals } from '../src/index.ts'
 
 const originalInternals = { ...internals }
@@ -167,7 +167,7 @@ describe('headless runner', () => {
     expect(await test.run()).toMatchObject({
       code: 1,
       out: '\n',
-      err: 'dsh: SERVER: provider unavailable\n',
+      err: 'LasmeX : SERVER : provider unavailable\n',
     })
     await test.ctx.fiber.dispose()
   })
@@ -191,7 +191,7 @@ describe('headless runner', () => {
     ctx.provide('agents', { create: () => Promise.reject(new Error('factory exploded')) } as never)
     apply(ctx, { task: 't' })
     expect(await exited).toBe(1)
-    expect(err).toBe('dsh: factory exploded\n')
+    expect(err).toBe('LasmeX : factory exploded\n')
     await ctx.fiber.dispose()
   })
 
@@ -213,7 +213,7 @@ describe('headless runner', () => {
     ctx.provide('agents', { create: () => rejected } as never)
     apply(ctx, { task: 't' })
     expect(await exited).toBe(1)
-    expect(err).toBe('dsh: factory exploded\n')
+    expect(err).toBe('LasmeX : factory exploded\n')
     await ctx.fiber.dispose()
   })
 
@@ -242,7 +242,7 @@ describe('headless runner', () => {
 
   it('fails loud without the launcher-provided exit request', () => {
     const ctx = new Context()
-    expect(() => { apply(ctx, { task: 't' }) }).toThrow('must provide ctx.appExit')
+    expect(() => { apply(ctx, { task: 't' }) }).toThrow('doit fournir ctx.appExit')
   })
 
   it('validates config: the task is required', () => {

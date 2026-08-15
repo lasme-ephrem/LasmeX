@@ -12,12 +12,12 @@ import {
   tokenizeSessionFixtureCwd,
   type HarvestedLog,
   type NormalizeContext,
-} from '@deepseek-ai/dsh-acp-snapshot'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@deepseek-ai/dsh-loader-smoke'
+} from 'lasmex-acp-snapshot'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from 'lasmex-loader-smoke'
 import {
   decompressZstdFrame,
   scanZstdFrames,
-} from '@deepseek-ai/dsh-session-persistence-jsonl/src/zstd.ts'
+} from 'lasmex-session-persistence-jsonl/src/zstd.ts'
 import { describe, expect, it } from 'vitest'
 
 const snapshotsDir = join(dirname(fileURLToPath(import.meta.url)), 'snapshots')
@@ -210,7 +210,7 @@ async function persistedLogs(cwd: string, root: string = join(cwd, '.sessions'))
 
 /** Install the keyless product-CLI adapter into the temporary headless profile. */
 async function prepareCliMockFixture(cwd: string): Promise<void> {
-  const fixtureDir = join(cwd, '.dsh', 'profiles', 'headless', 'snapshot-fixtures')
+  const fixtureDir = join(cwd, '.lasmex', 'profiles', 'headless', 'snapshot-fixtures')
   await mkdir(fixtureDir, { recursive: true })
   await Promise.all([
     copyFile(cliMockLlmPluginPath, join(fixtureDir, 'cli-mock-llm.ts')),
@@ -220,7 +220,7 @@ async function prepareCliMockFixture(cwd: string): Promise<void> {
 
 describe('headless stream-json snapshots', () => {
   it('runs one task through the product headless profile command', async () => {
-    const task = 'Prove the product headless profile path with one real tool round trip.'
+    const task = 'Prove the product headless profile path with one real memory round trip.'
     const result = await runLoaderSmoke({
       label: 'product headless profile snapshot',
       tempDirPrefix: 'headless-snapshot-profile-',
@@ -229,13 +229,13 @@ describe('headless stream-json snapshots', () => {
       binArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, task],
       tsconfigPath,
       env: {
-        DSH_PERMISSION_MODE: 'danger-full-access',
-        DSH_TELEMETRY_DISABLED: '1',
+        LASMEX_PERMISSION_MODE: 'danger-full-access',
+        LASMEX_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       prepare: prepareCliMockFixture,
       inspect: async (cwd) => {
-        const logs = await persistedLogs(cwd, join(cwd, '.dsh', 'sessions'))
+        const logs = await persistedLogs(cwd, join(cwd, '.lasmex', 'sessions'))
         expect(logs).toHaveLength(1)
         const actual = logs[0]
         if (actual === undefined) throw new Error('the headless profile did not persist its session')
@@ -244,11 +244,15 @@ describe('headless stream-json snapshots', () => {
         if (refreshing) await writeFile(headlessSessionExpected, session)
         expect(session).toBe(await readFile(headlessSessionExpected, 'utf8'))
         expect(session).toContain(task)
-        expect(session).toContain('CLI tool round trip complete: CLI_TOOL_ROUND_TRIP')
+        const calls = parseJsonl(actual.content)
+          .filter(record => record.type === 'tool/call')
+          .map(record => (record.data as JsonObject | undefined)?.name)
+        expect(calls).toEqual(['memory_list'])
+        expect(session).toContain('CLI memory round trip complete')
       },
     })
 
-    expect(result.stdout).toBe('CLI tool round trip complete: CLI_TOOL_ROUND_TRIP\n')
+    expect(result.stdout).toBe('CLI memory round trip complete: {"memories":[]}\n')
     expect(result.stderr).toBe('')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
@@ -263,7 +267,7 @@ describe('headless stream-json snapshots', () => {
       expectedExitCode: 1,
       env: {
         DSH_CLI_MOCK_FAILURE: '1',
-        DSH_TELEMETRY_DISABLED: '1',
+        LASMEX_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
       prepare: prepareCliMockFixture,
@@ -329,7 +333,9 @@ describe('headless stream-json snapshots', () => {
     expect(normalized).toBe(await readFile(streamExpected, 'utf8'))
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
-  it('recovers from context overflow through an assembled compaction', async () => {
+  // This composition deliberately exercises the POSIX bash provider between
+  // overflow and recovery; the product profiles select PowerShell on Windows.
+  it.skipIf(process.platform === 'win32')('recovers from context overflow through an assembled compaction', async () => {
     const prompt = await scenarioPrompt(compactionScenarioDir, 'compaction-recovery')
     let expectedSession = await readFile(compactionSessionFixture, 'utf8')
     let runCwd = ''
@@ -411,7 +417,7 @@ describe('headless stream-json snapshots', () => {
       binArgs: [credentialsConfigPath, 'say pong'],
       tsconfigPath,
       env: {
-        // First-run posture: no key in the environment, none under ./.dsh.
+        // First-run posture: no key in the environment, none under ./.lasmex.
         DEEPSEEK_API_KEY: '',
         DEEPSEEK_BASE_URL: '',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
@@ -753,8 +759,14 @@ describe('headless stream-json snapshots', () => {
 
         const childRecords = children.map(child => parseJsonl(child.content))
         const childPrompts = childRecords.map((records) => {
-          const message = records.find(record => record.type === 'user/message')
-          return JSON.stringify((message?.data as JsonObject | undefined)?.content)
+          // Stable entered-message order places injected context before the
+          // direct prompt, so the Ralph prompt is not the first user message.
+          const contents = records
+            .filter(record => record.type === 'user/message')
+            .map(record => JSON.stringify((record.data as JsonObject | undefined)?.content))
+          const prompt = contents.find(content => content.includes('Ralph round:'))
+          if (prompt === undefined) throw new Error('child has no Ralph round prompt')
+          return prompt
         })
         expect(childPrompts[0]).toContain('Ralph round: 1 of 2.')
         expect(childPrompts[0]).toContain('(none — this is the first round)')

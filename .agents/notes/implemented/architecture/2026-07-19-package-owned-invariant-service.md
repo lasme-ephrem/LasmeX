@@ -16,7 +16,7 @@ Package ownership must also be exhaustive. Without a mechanical repository rule,
 
 ### One registry service, package-owned contributions
 
-`@deepseek-ai/dsh-invariants` is a product-independent Cordis service plugin that registers `ctx.invariants`. It owns configuration, registration uniqueness, child-fiber lifecycle, and package-attributed failures. It imports no session, agent, scope, or agent-loop package and contains none of their checks.
+`lasmex-invariants` is a product-independent Cordis service plugin that registers `ctx.invariants`. It owns configuration, registration uniqueness, child-fiber lifecycle, and package-attributed failures. It imports no session, agent, scope, or agent-loop package and contains none of their checks.
 
 Every workspace package publishes a `./invariant` companion plugin that registers its exact full npm name. A companion checks a meaningful event or mutable-data relationship when its owner has one; otherwise it carries an owner-specific explanation for its empty installer. Generated ownership placeholders and synthetic API-shape assertions are forbidden by the follow-up [runtime-contract Agent Note](2026-07-19-package-invariant-runtime-contracts.md). Package root entrypoints do not import or register diagnostics implicitly, so loading a root package does not change runtime checking or require the invariant service.
 
@@ -59,10 +59,10 @@ The former functional-plugin entry point and one-argument `InvariantError` const
 
 | Companion entry | Registration name | Owned checks |
 |---|---|---|
-| `@deepseek-ai/dsh-session/invariant` | `@deepseek-ai/dsh-session` | session sequence, turn/step enclosure, and same-step call/result trace |
-| `@deepseek-ai/dsh-agent/invariant` | `@deepseek-ai/dsh-agent` | agent-status transitions |
-| `@deepseek-ai/dsh-scope/invariant` | `@deepseek-ai/dsh-scope` | scoped-event carrier presence and subject consistency |
-| `@deepseek-ai/dsh-agent-loop/invariant` | `@deepseek-ai/dsh-agent-loop` | model-request reconstruction |
+| `lasmex-session/invariant` | `lasmex-session` | session sequence, turn/step enclosure, and same-step call/result trace |
+| `lasmex-agent/invariant` | `lasmex-agent` | agent-status transitions |
+| `lasmex-scope/invariant` | `lasmex-scope` | scoped-event carrier presence and subject consistency |
+| `lasmex-agent-loop/invariant` | `lasmex-agent-loop` | model-request reconstruction |
 
 These four owners supplied the initial stateful checks. The follow-up runtime-contract decision adds checks for seventeen more owners with real event or mutable-data relationships and records justified empty companions for the rest. Every companion is a separately bundled `./invariant` export with its own declarations and Loader-safe namespace plugin shape; the service package's own companion imports its local service type to avoid a self-dependency.
 
@@ -70,7 +70,7 @@ These four owners supplied the initial stateful checks. The follow-up runtime-co
 
 ### Scoped-event semantic map
 
-The generated scoped-event subject resolver lives in `dsh-scope`, beside the contract and invariant that consume it. `gen-scoped-events` uses the root TypeScript Program to enumerate `this: Scoped<Base>` declarations, infer routing-key types from real `scopeTarget(base, key)` calls, and require one unambiguous payload subject or an explicit unsupported marker. The committed runtime map imports no event-owner package, so semantic completeness does not expand either the service or scope package's runtime closure.
+The generated scoped-event subject resolver lives in `lasmex-scope`, beside the contract and invariant that consume it. `gen-scoped-events` uses the root TypeScript Program to enumerate `this: Scoped<Base>` declarations, infer routing-key types from real `scopeTarget(base, key)` calls, and require one unambiguous payload subject or an explicit unsupported marker. The committed runtime map imports no event-owner package, so semantic completeness does not expand either the service or scope package's runtime closure.
 
 ### Example composition and SDK output
 
@@ -88,7 +88,7 @@ Every Vitest configuration loads a test host that mounts an explicitly enabled s
 
 ## Alternatives considered
 
-- **Keep all checks in `dsh-invariants`.** Rejected because the registry would continue importing every checked product domain, owner changes would require central edits, and package tests would remain detached from the contracts they protect.
+- **Keep all checks in `lasmex-invariants`.** Rejected because the registry would continue importing every checked product domain, owner changes would require central edits, and package tests would remain detached from the contracts they protect.
 - **Let root package entrypoints register checks implicitly when `ctx.invariants` happens to exist.** Rejected because root behavior would depend on composition order and optional service presence, diagnostics could not be selected independently, and package loading would hide a registration effect outside an explicit companion.
 - **Discover every `invariant.ts` file automatically at runtime.** Rejected because filesystem/package discovery is not a runtime ownership contract, makes bundled publication ambiguous, and cannot express explicit Cordis load order or dependency installation. Build-time generation, verification, and the test host may enumerate the source tree because they validate repository completeness rather than composing a shipped deployment.
 - **Validate allow/block entries against the currently loaded package set.** Rejected because a zero-match pattern can intentionally target a later or HMR-loaded contribution; current load order must not determine config validity.

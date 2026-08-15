@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-test-runtime`.
- * @module @deepseek-ai/dsh-client-test-runtime/invariant
+ * Package-owned invariant companion for `lasmex-client-test-runtime`.
+ * @module lasmex-client-test-runtime/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { InvariantInstaller } from 'lasmex-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-test-runtime'
+const PACKAGE_NAME = 'lasmex-client-test-runtime'
 
 /** Cordis companion plugin name. */
 export const name = 'client-test-runtime-invariant'

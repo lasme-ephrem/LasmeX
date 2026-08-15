@@ -1,4 +1,4 @@
-# DeepSeek Harness 架构
+# LasmeX 架构
 
 [English](architecture.md) | 中文
 
@@ -8,28 +8,28 @@
 
 ## Cordis
 
-[Cordis](cordis-primer.md) 是 dsh 底层的框架：插件向共享上下文贡献服务、类型化事件和可逆的副作用。产品的每一部分都是插件，包括模型适配器、工具注册表、会话日志，以及 agent loop（智能体循环）本身，因此每一部分都可以从配置替换。
+[Cordis](cordis-primer.md) 是 LasmeX 底层的框架：插件向共享上下文贡献服务、类型化事件和可逆的副作用。产品的每一部分都是插件，包括模型适配器、工具注册表、会话日志，以及 agent loop（智能体循环）本身，因此每一部分都可以从配置替换。
 
-不存在需要打补丁的特权内核：扩展 dsh 的方式是把插件挂载到其他插件旁边，而各项注册都是副作用，会在其插件卸载时撤销。
+不存在需要打补丁的特权内核：扩展 LasmeX 的方式是把插件挂载到其他插件旁边，而各项注册都是副作用，会在其插件卸载时撤销。
 
 ## Profile 与组合包
 
-运行中的 `dsh` 是一棵插件树，由启动时按序叠加的各层组合而成。
+运行中的 `lasmex` 进程是一棵插件树，由启动时按序叠加的各层组合而成。
 
 **profile** 是存放在 Harness home 中的具名组装。它列出自己叠放的组合包，存放自己安装的树外插件，并保存用户自己的 `cordis.patch.yml`。`web` 和 `headless` 作为模板随发行版交付。
 
 **组合包**是 Cordis 配置项及其挂载代码的分发格式，因此它插入的内容始终可被其上各层 patch。
 
-两者都在各自的 `package.json` 中通过 `dsh` 字段声明自己：`dsh.profile` 列出一个 profile 的组合包，`dsh.bundle` 指向一个组合包的 patch 文件。
+两者都在各自的 `package.json` 中通过 `lasmex` 字段声明自己：`lasmex.profile` 列出一个 profile 的组合包，`lasmex.bundle` 指向一个组合包的 patch 文件。
 
-[`dsh-base`](../packages/bundle/base/README.md) 是每个 profile 的第一层：模型适配器、工具、持久化、沙箱与审批策略、设置、凭据、遥测。[`dsh-web-app`](../packages/bundle/web-app/README.md) 增加浏览器应用；[`dsh-headless`](../packages/bundle/headless/README.md) 增加一次性运行器，且完全不带服务器。
+[`lasmex-base`](../packages/bundle/base/README.md) 是每个 profile 的第一层：模型适配器、工具、持久化、沙箱与审批策略、设置、凭据、遥测。[`lasmex-web-app`](../packages/bundle/web-app/README.md) 增加浏览器应用；[`lasmex-headless`](../packages/bundle/headless/README.md) 增加一次性运行器，且完全不带服务器。
 
 各层按此顺序应用在空条目列表之上：先按 profile 列出的顺序应用每个组合包，然后是 profile 的 `cordis.patch.yml`，然后是 home 级的那份，最后是任意 `--patch` overlay。一条 patch 按 id 定位某个条目并替换其整个 config，或插入新条目。
 
 要查看你的机器实际启动的配置树：
 
 ```sh
-dsh --profile web --dump-config
+lasmex --profile web --dump-config
 ```
 
 它打印出的任何条目，都可以由你自己的 patch 替换。
@@ -74,6 +74,8 @@ turn/start
   assemble prompt sections + tool schemas
   -> agent/pre-step                   reject | enter(messages)
      reject, or a first enter rewritten empty -> close the turn with no step
+     stable-partition entered messages: context first, direct user input last
+     enforce maxStepsPerTurn before admitting another request
      step/start
      append entered messages as user/message
      derive model history from the log
@@ -81,6 +83,7 @@ turn/start
      tool/call* -> tools/pre-execute -> tools/execute -> tools/post-execute -> tool/result*
      step/end
      tools owe another request, or next-step input arrived -> claim -> next step
+       result-only continuation -> append completed-tools notice + quoted direct request
   -> agent/turn-stopping
 turn/end
 ```
@@ -89,7 +92,7 @@ turn/end
 
 输入通过同一个 inbox 到达驱动器。有些消息会立即唤醒它；注入的上下文会留在 inbox 中，直到另一条消息将其唤醒。
 
-`agent/pre-step` 决定模型看到什么。监听器可以改写已领取的消息，也可以直接拒绝它们；首次领取被拒绝或被改写为空时，仍会关闭一个不含步骤的持久轮次，因此日志会记录这次尝试。每个步骤读取插件注册的提示词片段和工具 schema。
+`agent/pre-step` 决定模型看到什么。监听器可以改写已领取的消息，也可以直接拒绝它们；作出 enter 决策后，循环会以稳定分组把所有非 user source 消息放在所有 `source.kind === 'user'` 消息之前。两个分组都保留生产方顺序和消息标识，因此 instructions、runtime context 与 catalog 在持久日志和模型请求中都先于直接提示词。当工具结果需要另一次请求且没有新的直接输入时，循环会在结果之后记录一条插件 notice。它列出本轮已经调用的所有工具，禁止仅为满足被引用请求而重复调用，并引用最近直接请求的文本，使其尚未完成的响应指令保持在尾部。原始消息和工具历史保持不变。首次领取被拒绝或被改写为空时，仍会关闭一个不含步骤的持久轮次，因此日志会记录这次尝试。`maxStepsPerTurn` 会以 `MAX_STEPS` 拒绝超过所配置正数上限的第一个模型步骤；每个已获准步骤都会读取插件注册的提示词片段和工具 schema。
 
 详情见[时序图](agent-lifecycle.md)、[工具流水线](tool-execution-pipeline.md)和[取消与错误恢复](subsystems/core.md#the-agent-handle)。
 
@@ -115,7 +118,7 @@ seam 正是替换一个提供方就能改变整个产品的原因。文件系统
 | 添加面向模型的能力 | 在 `ctx.tools` 上注册；其 schema 加入提示词组装 |
 | 让某个会话拥有不同的能力集合 | 组装一个 agent preset；其中的服务行需要 `isolate` realm |
 | 添加 shell 执行 | 注册 `ctx.shell` 后端；本地后端通过 `ctx.subprocess` spawn 进程 |
-| 添加持久化终端执行 | 注册 `ctx.terminals` 后端和 `dsh-tool-terminal` |
+| 添加持久化终端执行 | 注册 `ctx.terminals` 后端和 `lasmex-tool-terminal` |
 | 添加用户命令 | 在 `ctx.commands` 上注册；它无需模型轮次即可分派 |
 | 添加后台工作 | 在 `ctx.jobs` 上注册；`job_*` 工具负责收集或停止 |
 | 添加文件系统访问或策略 | 注册 `ctx.fs` 提供方，或监听 `fs/*` 事件 |

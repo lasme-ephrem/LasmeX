@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-token-meter
+# lasmex-token-meter
 
 English | [中文](README.zh.md)
 
@@ -46,15 +46,15 @@ The [Agent Note](../../../.agents/notes/implemented/architecture/2026-07-29-proj
 ## Composition
 
 ```yaml
-- name: '@deepseek-ai/dsh-token-meter'
-- name: '@deepseek-ai/dsh-compaction-basic'
+- name: 'lasmex-token-meter'
+- name: 'lasmex-compaction-basic'
 ```
 
-Both plugins have usable defaults. The meter remains independent of model routing and optional compaction. A deployment configures capacity on its LLM adapter and compaction policy on `dsh-compaction-basic`.
+Both plugins have usable defaults. The meter remains independent of model routing and optional compaction. A deployment configures capacity on its LLM adapter and compaction policy on `lasmex-compaction-basic`.
 
 ## Model Experience
 
-Indirectly, through consumers such as `dsh-compaction-basic`; the service itself adds no prompt, message, schema, tool, or model call.
+Indirectly, through consumers such as `lasmex-compaction-basic`; the service itself adds no prompt, message, schema, tool, or model call.
 
 #### KV Cache effect
 

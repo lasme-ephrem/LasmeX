@@ -36,7 +36,11 @@ The loop appends injected `user/message` events only from entered batches inside
 
 ## Extension and caller semantics
 
-The enter branch's `PreStepDecision.messages` is the complete batch for the proposed step. A waterfall listener that delegates with `next()` preserves downstream messages unless it intentionally replaces them; additions follow natural waterfall return order. Tool-result `additionalContexts` retain FIFO order and each message's source.
+The enter branch's `PreStepDecision.messages` is the complete batch for the proposed step. A waterfall listener that delegates with `next()` preserves downstream messages unless it intentionally replaces them. After the waterfall, the loop stably partitions the accepted batch: messages whose source is not `user` enter first, followed by `source.kind === 'user'` messages. Both groups preserve producer order and message identity. Tool-result `additionalContexts` retain FIFO order and each message's source.
+
+A continuation created only because a tool returned has no newly claimed direct message to restore that tail position. The loop therefore appends a durable plugin notice after the tool history. The notice lists every tool already called in the turn, tells the model not to repeat those calls merely to satisfy the quoted instruction, quotes the latest direct request's text blocks, and preserves exact-response punctuation. This explicit duplication keeps weak models attached to the unfinished response instruction while making the completed action equally explicit; the original identified message remains unchanged earlier in history. A newly accepted direct message supersedes the automatic notice.
+
+Every turn also has a configurable positive `maxStepsPerTurn` limit. The loop checks it before admitting a model request and records `MAX_STEPS` if another step would exceed the cap, so a model or plugin cannot continue one turn indefinitely even when other loop-hygiene policies fail to stop repeated calls.
 
 Caller-driven injection and current-step context deliberately use different timing. `inject()` joins the next pre-step available and cannot promise that a request already being finalized will consume it. A listener that must affect that exact request returns the context in `PreStepDecision.messages`; downstream rejection or failure then prevents it from materializing.
 
@@ -64,11 +68,15 @@ This decision preserves the caller-owned framing decision from [unwrapped inject
 - Idle `inject()` immediately appends one durable inbox insertion but no model-visible `user/message`; a later waking delivery may start pre-step processing.
 - Active-turn injection is claimed at the nearest later pre-step boundary, after complete tool-result batches and before the request that consumes it.
 - Rejected or failed pre-step drops its claimed batch; input inserted after the claim remains pending.
+- Every accepted batch records and sends non-user-source context before FIFO direct-user messages, with the direct prompt at the batch tail.
+- A result-only continuation records completed tool names and a quoted copy of the latest direct text after the tool history; a new direct message suppresses that notice.
+- `maxStepsPerTurn` closes a runaway turn before the first request beyond its configured limit.
 - Unit, persistence/resume, invariant, and TUI coverage pin event order, claim ownership, and durable replay.
 
 ## Consequences
 
 - Idle injection is not model-visible until a later pre-step enters it and may be discarded by cancellation or disposal, while its durable inbox lifecycle remains recorded.
-- Consecutive user-role messages replace one baked prompt message; provider adapters preserve that ordering.
+- Consecutive user-role messages replace one baked prompt message; provider adapters receive the loop's stable context-first, direct-user-last order.
+- Result-only tool steps pay for one bounded plugin notice plus the repeated direct text, while preserving the existing request prefix and complete tool history.
 - Exact-current-request context must be returned from `agent/pre-step`; ordinary injection provides only nearest-later-boundary delivery.
 - The public delivery contract and inbox records remain small: no context attachment, context-placement metadata, prompt envelope, or duplicate durable event type.

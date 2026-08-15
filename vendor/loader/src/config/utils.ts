@@ -1,12 +1,24 @@
 import { valueMap } from '@deepseek-ai/cosmokit'
 
-// eslint-disable-next-line no-new-func
-/** Evaluate a JavaScript expression against a loader context scope. */
-export const evaluate = new Function('ctx', 'expr', `
-  with (ctx) {
-    return eval(expr)
-  }
-`) as ((ctx: object, expr: string) => any)
+let expressionEvaluator: ((ctx: object, expr: string) => any) | undefined
+
+/**
+ * Evaluate a JavaScript expression against a loader context scope.
+ * The dynamic compiler is created only when a serialized expression is used,
+ * so browser Loader consumers without expressions can retain a strict CSP.
+ * @param ctx - Loader context exposed as the expression scope.
+ * @param expr - JavaScript expression source.
+ * @returns the expression result.
+ */
+export function evaluate(ctx: object, expr: string): any {
+  // eslint-disable-next-line no-new-func
+  expressionEvaluator ??= new Function('ctx', 'expr', `
+    with (ctx) {
+      return eval(expr)
+    }
+  `) as ((ctx: object, expr: string) => any)
+  return expressionEvaluator(ctx, expr)
+}
 
 /** Recursively replace YAML `!js` expression nodes with evaluated values. */
 export function interpolate(ctx: object, value: any) {

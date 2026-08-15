@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { TrajectoryTable } from '../src/client/TrajectoryTable.tsx'
 import type { TrajectoryTurnModel } from '../src/client/layout.ts'
+import { tEn, tFr } from './locale.client.ts'
 
 afterEach(() => {
   cleanup()
@@ -16,6 +17,7 @@ const TURNS: readonly TrajectoryTurnModel[] = [{
   turn: 1,
   groups: [{
     title: 'Step 1',
+    step: 1,
     description: '1.5s bash×2',
     cells: [
       {
@@ -58,6 +60,7 @@ const TURNS: readonly TrajectoryTurnModel[] = [{
 }]
 
 const FOLD_PROPS = {
+  t: tEn,
   collapsedTurns: new Set<number>(),
   onToggleTurn: () => {},
   collapsedAssistants: new Set<string>(),
@@ -65,11 +68,57 @@ const FOLD_PROPS = {
 }
 
 describe('TrajectoryTable', () => {
+  it('renders record ARIA and inspector copy from the French dictionary', () => {
+    const turns: readonly TrajectoryTurnModel[] = [{
+      turn: 1,
+      groups: [{
+        title: 'Message',
+        cells: [{
+          index: 1,
+          kind: 'user',
+          text: 'Bonjour',
+          timeSeconds: 0,
+        }],
+      }],
+    }]
+
+    render(<TrajectoryTable turns={turns} {...FOLD_PROPS} t={tFr} />)
+    fireEvent.click(screen.getByRole('row', { name: 'Utilisateur, Bonjour' }))
+
+    expect(screen.getByRole('complementary', { name: 'Détails de l’événement' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Aperçu' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Fermer les détails' })).toBeTruthy()
+  })
+
+  it('localizes JSON inspector actions in French', () => {
+    const turns: readonly TrajectoryTurnModel[] = [{
+      turn: 1,
+      groups: [{
+        title: 'Étape 1',
+        cells: [{
+          index: 1,
+          kind: 'tool',
+          text: 'bash · pwd',
+          inputDetail: '{"command":"pwd"}',
+          timeSeconds: 0,
+        }],
+      }],
+    }]
+
+    render(<TrajectoryTable turns={turns} {...FOLD_PROPS} t={tFr} />)
+    fireEvent.click(screen.getByRole('row', { name: /Outil/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Charge utile' }))
+    fireEvent.mouseOver(screen.getByRole('treeitem'))
+
+    expect(screen.getByRole('button', { name: 'Copier la valeur' })).toBeTruthy()
+  })
+
   it('shows a muted placeholder for an assistant response containing only tool calls', () => {
     const turns: readonly TrajectoryTurnModel[] = [{
       turn: 1,
       groups: [{
         title: 'Step 1',
+        step: 1,
         cells: [{
           index: 1,
           kind: 'message',
@@ -89,7 +138,7 @@ describe('TrajectoryTable', () => {
 
   it('shows assistant timing facts after keyboard selection', () => {
     render(<TrajectoryTable turns={TURNS} {...FOLD_PROPS} />)
-    fireEvent.keyDown(screen.getByRole('row', { name: /ASSISTANT/ }), { key: 'Enter' })
+    fireEvent.keyDown(screen.getByRole('row', { name: /Assistant/ }), { key: 'Enter' })
     fireEvent.click(screen.getByRole('button', { name: 'Request Timing' }))
 
     expect(screen.getByText('500 ms')).toBeTruthy()
@@ -113,14 +162,14 @@ describe('TrajectoryTable', () => {
     }]
 
     render(<TrajectoryTable turns={turns} {...FOLD_PROPS} />)
-    fireEvent.click(screen.getByRole('row', { name: /TOOL/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Tool/ }))
 
     expect(screen.getByText('1,500 ms', { selector: 'dd' })).toBeTruthy()
   })
 
   it('breaks output tokens into labeled reasoning and content rows', () => {
     render(<TrajectoryTable turns={TURNS} {...FOLD_PROPS} />)
-    fireEvent.click(screen.getByRole('row', { name: /ASSISTANT/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Assistant/ }))
 
     expect(screen.getByText('Tokens')).toBeTruthy()
     expect(screen.getByText('20 tok')).toBeTruthy()
@@ -132,7 +181,7 @@ describe('TrajectoryTable', () => {
 
   it('marks Summary scroll regions for interaction-only scrollbar thumbs', () => {
     render(<TrajectoryTable turns={TURNS} {...FOLD_PROPS} />)
-    fireEvent.click(screen.getByRole('row', { name: /ASSISTANT/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Assistant/ }))
 
     const panel = screen.getByRole('tabpanel')
     expect(panel.querySelectorAll('[data-summary-scroll-region]').length).toBeGreaterThan(1)
@@ -158,7 +207,7 @@ describe('TrajectoryTable', () => {
     }]
     render(<TrajectoryTable turns={turns} {...FOLD_PROPS} />)
 
-    fireEvent.click(screen.getByRole('row', { name: /ASSISTANT/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Assistant/ }))
     const toggle = screen.getByRole('button', { name: 'Thinking' })
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     expect(screen.queryByText(thinking)).toBeNull()
@@ -206,7 +255,7 @@ describe('TrajectoryTable', () => {
         onClearSelection={onClearSelection}
       />,
     )
-    const row = screen.getByRole('row', { name: /ASSISTANT/ })
+    const row = screen.getByRole('row', { name: /Assistant/ })
     fireEvent.click(row)
 
     expect(row.getAttribute('aria-selected')).toBe('true')
@@ -270,6 +319,7 @@ describe('TrajectoryTable', () => {
       turn: 2,
       groups: [{
         title: 'Step 1',
+        step: 1,
         cells: [{
           index,
           kind: 'message',
@@ -290,6 +340,7 @@ describe('TrajectoryTable', () => {
           turn: 1,
           groups: [{
             title: 'Step 1',
+            step: 1,
             cells: [{
               index: 1,
               kind: 'message',
@@ -313,6 +364,7 @@ describe('TrajectoryTable', () => {
       turn: 1,
       groups: [{
         title: 'Step 2',
+        step: 2,
         cells: [{
           index: 1,
           kind: 'user',
@@ -342,7 +394,7 @@ describe('TrajectoryTable', () => {
     />)
 
     const request = screen.getByRole('button', { name: 'Request #1' })
-    expect(request.closest('tr')?.getAttribute('aria-label')).toContain('ASSISTANT')
+    expect(request.closest('tr')?.getAttribute('aria-label')).toContain('Assistant')
   })
 
   it('follows appended records only while the ledger is already at the bottom', () => {
@@ -465,7 +517,7 @@ describe('TrajectoryTable', () => {
     expect(loadRow?.getAttribute('aria-rowindex')).toBe('1')
     expect(screen.getByRole('status').textContent).toBe('')
     expect(table.getAttribute('aria-rowcount')).toBe('4')
-    expect((await screen.findByRole('row', { name: /ASSISTANT/ })).getAttribute('aria-rowindex'))
+    expect((await screen.findByRole('row', { name: /Assistant/ })).getAttribute('aria-rowindex'))
       .toBe('2')
 
     fireEvent.click(loadButton)
@@ -629,6 +681,7 @@ describe('TrajectoryTable', () => {
         turn: index + 1,
         groups: [{
           title: 'Step 1',
+          step: 1,
           cells: [
             {
               index: index * 2 + 1,
@@ -671,9 +724,9 @@ describe('TrajectoryTable', () => {
     expect(view.container.querySelector('tr[data-kind="tool"][data-running="true"]')).toBeTruthy()
     expect(view.container.querySelector('tr[data-kind="tool"][data-error="true"]')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('row', { name: /TOOL, bash \{"command":"pwd"\}/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Tool, bash \{"command":"pwd"\}/ }))
     expect(screen.getByText('Pending')).toBeTruthy()
-    fireEvent.click(screen.getByRole('row', { name: /TOOL, bash \{"command":"false"\}/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Tool, bash \{"command":"false"\}/ }))
     expect(screen.getByText('Failed')).toBeTruthy()
     expect(screen.getByText('Failed').className).toContain('error')
     fireEvent.click(screen.getByRole('tab', { name: 'Result' }))
@@ -687,6 +740,7 @@ describe('TrajectoryTable', () => {
         turn: 1,
         groups: [{
           title: 'Step 1',
+          step: 1,
           cells: [{
             index: 1,
             kind: 'message',
@@ -701,6 +755,7 @@ describe('TrajectoryTable', () => {
         turn: 2,
         groups: [{
           title: 'Step 1',
+          step: 1,
           cells: [{
             index: 2,
             kind: 'message',
@@ -715,6 +770,7 @@ describe('TrajectoryTable', () => {
         turn: 3,
         groups: [{
           title: 'Step 1',
+          step: 1,
           cells: [{
             index: 3,
             kind: 'message',
@@ -751,7 +807,7 @@ describe('TrajectoryTable', () => {
     expect(screen.queryByRole('tooltip')).toBeNull()
     fireEvent.mouseEnter(toolIcon as HTMLElement)
     const tooltip = screen.getByRole('tooltip')
-    expect(tooltip.textContent).toBe('TOOL')
+    expect(tooltip.textContent).toBe('Tool')
     expect(tooltip.getAttribute('data-side')).toBe('right')
     fireEvent.mouseLeave(toolIcon as HTMLElement)
     expect(screen.queryByRole('tooltip')).toBeNull()
@@ -806,7 +862,7 @@ describe('TrajectoryTable', () => {
     }]
 
     render(<TrajectoryTable turns={turns} {...FOLD_PROPS} />)
-    fireEvent.click(screen.getByRole('row', { name: /TOOL/ }))
+    fireEvent.click(screen.getByRole('row', { name: /Tool/ }))
     fireEvent.click(screen.getByRole('tab', { name: 'Result' }))
 
     expect(screen.getByRole('tree', { name: 'Result JSON' })).toBeTruthy()
@@ -822,7 +878,7 @@ describe('TrajectoryTable', () => {
       />,
     )
     expect(screen.queryByRole('columnheader')).toBeNull()
-    expect(screen.getByRole('row', { name: /ASSISTANT/ })).toBeTruthy()
+    expect(screen.getByRole('row', { name: /Assistant/ })).toBeTruthy()
     expect(screen.getByRole('row', { name: /Collapsed turn summary/ })).toBeTruthy()
   })
 
@@ -830,6 +886,7 @@ describe('TrajectoryTable', () => {
     turn: 1,
     groups: [{
       title: 'Step 1',
+      step: 1,
       cells: [{
         index: 1,
         kind: 'tool',
@@ -852,7 +909,7 @@ describe('TrajectoryTable', () => {
       />,
     )
 
-    expect(screen.getByRole('row', { name: /TOOL/ }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('row', { name: /Tool/ }).getAttribute('aria-selected')).toBe('true')
     expect(screen.getByRole('complementary', { name: 'Event details' })).toBeTruthy()
     expect(onInspectApplied).toHaveBeenCalledOnce()
   })
@@ -868,7 +925,7 @@ describe('TrajectoryTable', () => {
       />,
     )
 
-    expect(screen.getByRole('row', { name: /TOOL/ }).getAttribute('aria-selected')).toBe('false')
+    expect(screen.getByRole('row', { name: /Tool/ }).getAttribute('aria-selected')).toBe('false')
     expect(onInspectApplied).not.toHaveBeenCalled()
   })
 })

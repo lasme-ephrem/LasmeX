@@ -53,6 +53,47 @@ export const en: Record<PluginsSettingsLocaleKey, string> = {
   webSearchMaxUsesHint: 'How many times one request may search before it must answer.',
 }
 
+/** Dictionnaire français. */
+export const fr: Record<PluginsSettingsLocaleKey, string> = {
+  nav: 'Plugins',
+  title: 'Plugins',
+  intro: 'Configurez et inspectez les plugins installés dans ce déploiement.',
+  tabs: 'Vues des plugins',
+  configurableTab: 'Configuration des plugins',
+  empty: 'Ce déploiement n’expose aucun paramètre de plugin.',
+  overridden: 'Personnalisé',
+  reset: 'Rétablir la valeur par défaut',
+  readOnly: 'Ce déploiement conserve les paramètres en lecture seule.',
+  expand: 'Afficher les paramètres',
+  collapse: 'Masquer les paramètres',
+  save: 'Enregistrer',
+  saving: 'Enregistrement…',
+  discard: 'Annuler les modifications',
+  unsaved: 'Non enregistré',
+  saveFailed: 'Le déploiement a refusé ces valeurs ; elles restent affichées pour être corrigées.',
+  invalidNumber: 'Saisissez un nombre ou laissez vide pour utiliser la valeur par défaut.',
+  bashTitle: 'Terminal',
+  bashDescription: 'Limites appliquées à chaque commande exécutée par l’agent.',
+  bashTimeoutMs: 'Délai maximal d’une commande (ms)',
+  bashTimeoutMsHint: 'Durée maximale d’exécution d’une commande avant son arrêt.',
+  bashMaxOutputBytes: 'Limite de sortie par flux (octets)',
+  bashMaxOutputBytesHint: 'La sortie excédentaire est enregistrée dans un fichier temporaire au lieu d’être perdue.',
+  agentLoopTitle: 'Boucle de l’agent',
+  agentLoopDescription: 'Mode de distribution des appels d’outils par l’agent.',
+  agentLoopMaxParallel: 'Appels d’outils parallèles',
+  agentLoopMaxParallelHint: 'Nombre maximal d’appels compatibles exécutés en parallèle dans une même étape.',
+  webSearchTitle: 'Recherche web',
+  webSearchDescription: 'Fournisseur de recherche DeepSeek.',
+  webSearchApiKey: 'Clé API',
+  webSearchApiKeyHint: 'Conservée hors du fichier de paramètres. Laissez vide pour garder la clé actuelle.',
+  webSearchApiKeySet: 'Une clé est configurée.',
+  webSearchApiKeyUnset: 'Aucune clé n’est configurée ; la recherche reste indisponible.',
+  webSearchBaseUrl: 'Point d’accès',
+  webSearchBaseUrlHint: 'Laissez vide pour utiliser la valeur par défaut du fournisseur.',
+  webSearchMaxUses: 'Nombre maximal de recherches par requête',
+  webSearchMaxUsesHint: 'Nombre de recherches autorisées avant que l’agent doive répondre.',
+}
+
 /** Simplified Chinese copy. */
 export const zh: Record<PluginsSettingsLocaleKey, string> = {
   nav: '插件',

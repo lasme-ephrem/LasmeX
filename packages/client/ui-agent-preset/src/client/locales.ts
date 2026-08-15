@@ -37,9 +37,9 @@ export const en: Record<AgentPresetSettingsKey, string> = {
   presetStandardName: 'Standard mode',
   presetStandardDescription:
     'Full coding agent with file editing, shell, file and web search, skills, planning, goals, subagents, and workflows.',
-  presetCodeName: 'Code mode',
+  presetCodeName: 'LasmeX Code',
   presetCodeDescription:
-    'All Standard mode capabilities, with tools exposed through the Code Mode SDK so the model can combine multi-step operations in one TypeScript program.',
+    'LasmeX’s complete coding agent, using the Code Mode SDK to combine operations, verify changes, and report an explicit result.',
   presetMinimalName: 'Minimal mode',
   presetMinimalDescription:
     'Two-tool coding agent with persistent bash and str_replace_editor.',
@@ -100,8 +100,8 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   view: '查看',
   presetStandardName: '标准模式',
   presetStandardDescription: '功能完整的编码 Agent，支持文件编辑、Shell、文件与网页检索、Skills、计划、目标、子代理和工作流。',
-  presetCodeName: 'PTC 模式',
-  presetCodeDescription: '具备标准模式的全部能力，并通过 Code Mode SDK 呈现工具，让模型用一个 TypeScript 程序组合多步操作。',
+  presetCodeName: 'LasmeX Code',
+  presetCodeDescription: 'LasmeX 的完整编码 Agent，通过 Code Mode SDK 组合多步操作、验证变更并明确报告结果。',
   presetMinimalName: '极简模式',
   presetMinimalDescription: '仅提供持久 bash 与 str_replace_editor 的双工具编码 Agent。',
   presetCordisName: '创造模式',
@@ -141,6 +141,72 @@ export const zh: Record<AgentPresetSettingsKey, string> = {
   deleting: '正在删除…',
 }
 
+/** Dictionnaire français. */
+export const fr: Record<AgentPresetSettingsKey, string> = {
+  title: 'Préréglage de l’agent',
+  description: 'S’applique aux nouvelles sessions. Les sessions actives conservent leur préréglage initial.',
+  loading: 'Chargement des préréglages…',
+  error: 'Impossible de charger les préréglages de l’agent.',
+  userTrust: 'Personnalisé',
+  seatHint: 'Préréglage de l’agent pour la session que vous allez démarrer',
+  headerHint: 'Préréglage utilisé par cette session, fixé lors de son démarrage',
+  nav: 'Préréglages de l’agent',
+  sectionIntro:
+    'Un préréglage définit la composition de plugins utilisée par l’agent d’une session : outils, instructions et capacités. '
+    + 'Dupliquez un préréglage existant pour le personnaliser, ou laissez l’agent en créer un en mode Créateur.',
+  builtIn: 'Intégré',
+  setDefault: 'Définir par défaut',
+  view: 'Afficher',
+  presetStandardName: 'Mode standard',
+  presetStandardDescription:
+    'Agent de développement complet avec édition de fichiers, terminal, recherche locale et web, compétences, plans, objectifs, sous-agents et workflows.',
+  presetCodeName: 'LasmeX Code',
+  presetCodeDescription:
+    'Agent de développement LasmeX complet, utilisant le SDK Code Mode pour combiner les opérations, vérifier les changements et livrer un résultat explicite.',
+  presetMinimalName: 'Mode minimal',
+  presetMinimalDescription:
+    'Agent de développement à deux outils : bash persistant et str_replace_editor.',
+  presetCordisName: 'Mode Créateur',
+  presetCordisDescription:
+    'Conçu pour créer des préréglages personnalisés, avec toutes les capacités du mode standard, l’inspection de l’exécution, l’expérimentation de plugins et un guide de création.',
+  duplicate: 'Dupliquer',
+  duplicateUnavailable: 'Ce déploiement ne possède aucun dossier de préréglages accessible en écriture',
+  delete: 'Supprimer',
+  presetId: 'Identifiant',
+  presetIdPlaceholder: 'mon-agent',
+  displayName: 'Nom',
+  displayNamePlaceholder: 'Affiché dans le sélecteur ; utilise l’identifiant par défaut',
+  inUse: 'Utilisé',
+  builtInGroup: 'Intégrés',
+  customGroup: 'Personnalisés',
+  noDescription: 'Aucune description.',
+  brokenBadge: 'Échec du chargement',
+  brokenNoCopy: 'Un préréglage qui n’a pas pu être chargé ne peut pas être dupliqué',
+  copyOf: 'Copié depuis',
+  composition: 'Composition (agent.cordis.yml)',
+  cancel: 'Annuler',
+  close: 'Fermer',
+  retry: 'Réessayer',
+  copyTitle: 'Dupliquer le préréglage',
+  copyIntro:
+    'Le préréglage complet est copié sur cette machine. Son identifiant devient le nom du dossier et ne pourra plus être modifié ; '
+    + 'les autres éléments se modifient directement dans les fichiers du préréglage.',
+  create: 'Créer',
+  creating: 'Création…',
+  creatorDraft: 'Créer un préréglage personnalisé avec le mode Créateur',
+  openLocation: 'Ouvrir le dossier',
+  showLocation: 'Afficher l’emplacement',
+  revealedPathLabel: 'Fichiers du préréglage :',
+  idRequired: 'Saisissez un identifiant.',
+  idInvalid: 'Utilisez des lettres minuscules, des chiffres et des tirets, en commençant par une lettre ou un chiffre.',
+  idTaken: 'Un préréglage avec cet identifiant existe déjà.',
+  deleteTitle: 'Supprimer ce préréglage ?',
+  deleteDescription:
+    'Le dossier du préréglage sera supprimé. Les sessions qui l’utilisent continuent de fonctionner ; les nouvelles sessions ne pourront plus le sélectionner.',
+  deleteConfirm: 'Supprimer',
+  deleting: 'Suppression…',
+}
+
 /** Preset roster fields needed to resolve Web display copy. */
 export interface PresetDisplaySource {
   /** Stable preset id. */
@@ -168,7 +234,7 @@ interface PresetLocaleKeys {
 
 const BUILT_IN_PRESET_KEYS: Readonly<Partial<Record<string, PresetLocaleKeys>>> = {
   standard: { name: 'presetStandardName', description: 'presetStandardDescription' },
-  code: { name: 'presetCodeName', description: 'presetCodeDescription' },
+  'lasmex-code': { name: 'presetCodeName', description: 'presetCodeDescription' },
   minimal: { name: 'presetMinimalName', description: 'presetMinimalDescription' },
   cordis: { name: 'presetCordisName', description: 'presetCordisDescription' },
 }

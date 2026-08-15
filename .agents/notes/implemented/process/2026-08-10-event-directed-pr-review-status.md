@@ -4,6 +4,8 @@ Status: implemented
 
 English | [中文](2026-08-10-event-directed-pr-review-status.zh.md)
 
+> **Superseded in part.** [Repository-label Issue lifecycle](2026-08-14-personal-repository-issue-label-lifecycle.md) replaces ProjectV2 storage, the status-actor guard, and the write-capable pull-request workflow trigger for LasmeX's personal repository. The event-to-command mapping and transition intent below remain current.
+
 ## Problem
 
 The Issue Project status records who owns the next step of resolving work. Aggregate pull-request review state answers whether GitHub considers the pull request mergeable, but it cannot represent that handoff: an earlier `CHANGES_REQUESTED` review can remain effective after the author fixes the code and requests review again.

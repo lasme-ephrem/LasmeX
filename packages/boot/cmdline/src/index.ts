@@ -1,5 +1,5 @@
 /**
- * @deepseek-ai/dsh-cmdline — the command line a dsh launcher hands to the app
+ * lasmex-cmdline — the command line a LasmeX launcher hands to the app
  * it boots.
  *
  * The launcher parses only its own flags (`--profile`, `--patch`, the config
@@ -13,15 +13,40 @@
  * can inject that service and read it from lazily resolved config —
  * `port: !!js ctx.webStartup.port ?? 3080` — so a flag beats the value written
  * beside it. No row has launcher-level command-line status.
- * @module @deepseek-ai/dsh-cmdline
+ * @module lasmex-cmdline
  */
 
 import type { Command } from 'commander'
 import type { Context } from '@deepseek-ai/cordis'
 
+const FRENCH_HELP_TITLES: Readonly<Record<string, string>> = Object.freeze({
+  'Usage:': 'Utilisation :',
+  'Arguments:': 'Arguments :',
+  'Options:': 'Options :',
+  'Global Options:': 'Options globales :',
+  'Commands:': 'Commandes :',
+})
+
+/**
+ * Apply LasmeX's French command-line presentation to a Commander program.
+ * App-owned descriptions and validation messages remain the program's
+ * responsibility; this helper owns Commander's shared headings and error
+ * prefix.
+ * @param program - command whose built-in presentation is localized.
+ * @returns the same command for fluent construction.
+ */
+export function configureFrenchCommand(program: Command): Command {
+  program
+    .configureHelp({ styleTitle: title => FRENCH_HELP_TITLES[title] ?? title })
+    .configureOutput({
+      outputError: (text, write) => { write(text.replace(/^error:/u, 'erreur :')) },
+    })
+  return program
+}
+
 /**
  * The invocation's inner arguments: everything after the launcher's own flags,
- * verbatim and in argv order. `dsh --profile tui --resume abc` yields
+ * verbatim and in argv order. `lasmex --profile tui --resume abc` yields
  * `['--resume', 'abc']`.
  */
 export interface CmdlineArgs {
@@ -101,10 +126,10 @@ export function parseCmdline(ctx: Context, program: Command): void {
   const args = ctx.get('cmdlineArgs')
   const exit = ctx.get('appExit')
   if (args === undefined || exit === undefined) {
-    throw new Error(`${program.name()}: the launcher must provide ctx.cmdlineArgs and ctx.appExit before the tree mounts`)
+    throw new Error(`${program.name()} : le lanceur doit fournir ctx.cmdlineArgs et ctx.appExit avant le montage de l’arbre`)
   }
   if (!hasAction(program)) {
-    throw new Error(`${program.name()}: no command in the program declares an action; parseCmdline runs the invoked command's action on a successful parse, and app code there publishes its service`)
+    throw new Error(`${program.name()} : aucune commande du programme ne déclare d’action ; après une analyse réussie, parseCmdline exécute l’action de la commande appelée, qui publie ensuite son service`)
   }
   configureExitAndOutput(program)
   try {

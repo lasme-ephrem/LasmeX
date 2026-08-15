@@ -24,3 +24,14 @@ export const en = {
   'overlay.aria': '/{command} options',
   'listbox.aria': '/{command} matches',
 } satisfies Record<CommandKey, string>
+
+/** Dictionnaire français. */
+export const fr = {
+  'search.placeholder': 'Rechercher…',
+  'search.aria': 'Filtrer les options',
+  'status.loading': 'Chargement des options…',
+  'status.applying': 'Application…',
+  'status.empty': 'Aucune option',
+  'overlay.aria': 'Options de /{command}',
+  'listbox.aria': 'Résultats pour /{command}',
+} satisfies Record<CommandKey, string>

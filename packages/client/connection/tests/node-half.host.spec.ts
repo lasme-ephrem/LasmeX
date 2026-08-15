@@ -6,10 +6,10 @@ import { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
 import type { AddressInfo } from 'node:net'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { ApiProxy } from '@deepseek-ai/dsh-host-apiproxy/api'
-import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import { RpcId, type ClientRequest } from '@deepseek-ai/dsh-host-apiproxy/api'
-import type { WebServer, WebRoute, WebUpgradeRoute } from '@deepseek-ai/dsh-host-webserver'
+import type { ApiProxy } from 'lasmex-host-apiproxy/api'
+import type { AttachmentStore } from 'lasmex-attachment'
+import { RpcId, type ClientRequest } from 'lasmex-host-apiproxy/api'
+import type { WebServer, WebRoute, WebUpgradeRoute } from 'lasmex-host-webserver'
 import { API_PATH, apply, HOST_EVENTS_PATH, inject, MUX_EVENTS_PATH, type HostConnectionHandle } from '../src/index.ts'
 
 /** Structural webServer fake recording both route registries. */
@@ -90,6 +90,23 @@ async function mounted(config?: { trustedHosts?: string[] }): Promise<{
 }
 
 describe('connection node half', () => {
+  it('attaches after the HTTP and API services arrive later', async () => {
+    const ctx = new Context()
+    const routes: WebRoute[] = []
+    const upgrades: WebUpgradeRoute[] = []
+    const fiber = ctx.plugin({ inject: [...inject], apply })
+
+    ctx.provide('webServer', fakeHttpServer(routes, upgrades) as WebServer)
+    ctx.provide('apiProxy', {} as unknown as ApiProxy)
+    await fiber.await()
+
+    expect(routes.map(route => route.path)).toEqual([API_PATH])
+    expect(upgrades.map(route => route.path)).toEqual([MUX_EVENTS_PATH, HOST_EVENTS_PATH])
+    await fiber.dispose()
+    expect(routes).toHaveLength(0)
+    expect(upgrades).toHaveLength(0)
+  })
+
   it('fails loud when the carrier cap cannot hold the configured image batch', () => {
     const ctx = new Context()
     const routes: WebRoute[] = []

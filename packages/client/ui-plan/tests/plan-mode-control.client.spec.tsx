@@ -7,12 +7,12 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
-import type { PlanProjection } from '@deepseek-ai/dsh-plan-mode/client'
+import { createSnapshotStore } from 'lasmex-client-runtime/client'
+import { bindSnapshotSelector } from 'lasmex-client-web-react'
+import type { PlanProjection } from 'lasmex-plan-mode/client'
 import { PlanChip, type PlanChipProps } from '../src/client/PlanModeControl.tsx'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { makeTranslate } from 'lasmex-client-test-runtime'
+import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import { zh } from '../src/client/locales.ts'
 
 afterEach(cleanup)
@@ -49,10 +49,10 @@ describe('PlanChip', () => {
 
   it('renders the Plan status for active and pending-entry targets', () => {
     setup({ active: true, pending: false })
-    expect(chip().textContent).toBe('Plan')
+    expect(chip().textContent).toBe('计划')
     cleanup()
     setup({ active: false, pending: true })
-    expect(chip().textContent).toBe('Plan')
+    expect(chip().textContent).toBe('计划')
   })
 
   it('executes /plan off once and follows the projection down', async () => {
@@ -82,7 +82,7 @@ describe('PlanChip', () => {
       .mockRejectedValueOnce('socket closed')
     setup({ active: true, pending: false }, exitPlanMode)
     fireEvent.click(chip())
-    expect((await screen.findByText('failed to exit plan mode')).getAttribute('title')).toBe('host said no')
+    expect((await screen.findByText('退出 plan mode 失败')).getAttribute('title')).toBe('host said no')
     expect(chip()).toBeTruthy()
 
     fireEvent.click(chip())

@@ -1,11 +1,8 @@
-# Pack and publish the dsh release sequence: every package under packages/ plus
-# the apps/ entries, all on one version. The vendored framework and the native
-# packages are separate sequences with their own workflows and version lines.
-#
-# Pack runs without credentials on every pull request and master push, so a
-# pull request proves the whole publish set still packs. Publication is a
-# manual dispatch from a dsh-v* tag and consumes exactly the packed bytes.
-name: Release (dsh)
+# Assemble one LasmeX release from immutable npm, Python, and desktop artifacts.
+# Publication is a manual action from the matching lasmex-v* tag. A draft GitHub
+# release receives every verified artifact before any registry write; it becomes
+# visible only after npm and both PyPI projects accept the same version.
+name: Release (LasmeX)
 
 on:
   pull_request:
@@ -14,136 +11,534 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Publish the packed tarballs to npm. Must run from a dsh-v* tag.
+        description: Publish versioned artifacts. Must run from the matching lasmex-v* tag.
         required: true
         type: boolean
         default: false
+      npm_authentication:
+        description: Use bootstrap only once, before npm trusted publishers can exist.
+        required: true
+        type: choice
+        options:
+          - oidc
+          - bootstrap
+        default: oidc
 
 permissions:
   contents: read
 
 concurrency:
-  # Pack runs per ref so concurrent pull requests never displace each
-  # other; the publish job below serializes the shared dist-tag state.
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && 'lasmex-publication' || format('{0}-{1}', github.workflow, github.ref) }}
   cancel-in-progress: false
 
 env:
   PRIMARY_NODE_VERSION: '24'
-  DSH_TELEMETRY_DISABLED: '1'
+  LASMEX_TELEMETRY_DISABLED: '1'
 
 jobs:
-  pack:
+  npm-pack:
     name: Pack npm tarballs
     runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      # Complete history: the release scripts read tags.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           dest: ${{ runner.temp }}/setup-pnpm
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
-
-      - name: Configure pnpm store path
-        id: pnpm-store
-        run: |
-          store_root="$HOME/.local/share/pnpm/store"
-          echo "PNPM_CONFIG_STORE_DIR=$store_root" >> "$GITHUB_ENV"
-          store_path=$(PNPM_CONFIG_STORE_DIR="$store_root" pnpm store path --silent)
-          echo "path=$store_path" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/cache/restore@v4
-        with:
-          path: ${{ steps.pnpm-store.outputs.path }}
-          key: ${{ runner.os }}-node-${{ env.PRIMARY_NODE_VERSION }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ env.PRIMARY_NODE_VERSION }}-pnpm-
 
       - name: Install (immutable)
         run: pnpm install --frozen-lockfile
 
-      - name: Verify release version
+      - name: Verify stable distribution metadata
         env:
           RELEASE_PUBLISH: ${{ inputs.publish }}
-        run: pnpm run release:verify --family dsh
+        run: |
+          pnpm run release:verify-distribution
+          pnpm run release:verify --family lasmex
+
+      - name: Refuse known high-severity production dependencies
+        run: pnpm run audit:production
+
+      - name: Resolve release version
+        id: version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Build
         run: pnpm run build
 
-      - name: Pack release tarballs
-        run: pnpm run release:pack --family dsh --out dist/npm
+      - name: Pack LasmeX tarballs
+        run: pnpm run release:pack --family lasmex --out dist/npm
 
-      # The harness packages declare the vendored framework as a peer, and this
-      # verification must not depend on the registry already carrying matching
-      # versions — one pull request may bump both families before either
-      # publishes — so it installs that family's pack output too. Only dist/npm
-      # is published.
-      - name: Pack the vendored framework for verification
-        run: pnpm run release:pack --family vendor --out dist/npm-vendor
-
-      # dsh-sandbox-local declares the Landlock entry as a runtime dependency, so
-      # the verification needs its tarball. Its platform packages stay out: they
-      # are optional, and building them needs a musl toolchain per architecture.
-      - name: Pack the Landlock entry for verification
+      - name: Pack verification dependencies
         run: |
+          pnpm run release:pack --family vendor --out dist/npm-vendor
           pnpm --dir native/landlock-run run build:ts
           pnpm --dir native/landlock-run/packages/entry pack --pack-destination "$PWD/dist/npm-landlock"
 
       - name: Verify packed install
-        run: pnpm run release:verify-packed-install --family dsh --from dist/npm --from dist/npm-vendor --from dist/npm-landlock
+        run: pnpm run release:verify-packed-install --family lasmex --from dist/npm --from dist/npm-vendor --from dist/npm-landlock
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: dsh-npm-tarballs
+          name: lasmex-npm-tarballs
           path: dist/npm/*
           if-no-files-found: error
           retention-days: 7
 
-  publish:
-    name: Publish to npm
-    if: inputs.publish
-    needs: pack
+  python-wheels:
+    name: Build Python wheels
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/build-exe-for-python-sdk.yml
+    with:
+      targets: node24-linux-x64,node24-linux-arm64,node24-macos-arm64
+      release: true
+
+  python-validate:
+    name: Validate Python wheels
+    if: github.event_name == 'workflow_dispatch'
+    needs: [npm-pack, python-wheels]
     runs-on: ubuntu-24.04
-    # Required reviewers and the allowed tags live on the environment; this is
-    # the only step in the sequence that can write to the registry.
-    environment: npm-publish
-    concurrency:
-      group: Release-publish
-      cancel-in-progress: false
-    permissions:
-      contents: read
     steps:
-      # Checkout and install carry the release scripts only. There is no build
-      # step: publication uploads the bytes the pack job produced.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.10'
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: lasmex_*
+          path: dist
+          merge-multiple: true
+
+      - name: Check wheel set and metadata
+        env:
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: |
+          set -euo pipefail
+          expected="$(mktemp)"
+          actual="$(mktemp)"
+          printf '%s\n' \
+            "lasmex_runtime_bin-$VERSION-py3-none-macosx_14_0_arm64.whl" \
+            "lasmex_runtime_bin-$VERSION-py3-none-manylinux_2_28_aarch64.whl" \
+            "lasmex_runtime_bin-$VERSION-py3-none-manylinux_2_28_x86_64.whl" \
+            "lasmex_sdk-$VERSION-py3-none-any.whl" > "$expected"
+          find dist -maxdepth 1 -type f -name '*.whl' -exec basename {} \; | sort > "$actual"
+          diff -u "$expected" "$actual"
+          python -m pip install twine==6.2.0
+          python -m twine check dist/*.whl
+          while IFS= read -r wheel; do
+            [ "$(stat -c '%s' "dist/$wheel")" -lt 100000000 ] || {
+              echo "::error::$wheel exceeds PyPI's default 100 MB limit"
+              exit 1
+            }
+          done < "$actual"
+
+      - name: Smoke installed SDK
+        env:
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: |
+          python -m pip install --find-links dist "lasmex-sdk==$VERSION"
+          python scripts/smoke-python-runtime.py --scenario sdk-default
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lasmex-python-wheels
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 7
+
+  desktop:
+    name: Build desktop distributions
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/build-desktop.yml
+    with:
+      release: ${{ inputs.publish }}
+    secrets:
+      LASMEX_WINDOWS_CERTIFICATE_PFX_BASE64: ${{ inputs.publish && secrets.LASMEX_WINDOWS_CERTIFICATE_PFX_BASE64 || '' }}
+      LASMEX_WINDOWS_CERTIFICATE_PASSWORD: ${{ inputs.publish && secrets.LASMEX_WINDOWS_CERTIFICATE_PASSWORD || '' }}
+      LASMEX_MACOS_CERTIFICATE_P12_BASE64: ${{ inputs.publish && secrets.LASMEX_MACOS_CERTIFICATE_P12_BASE64 || '' }}
+      LASMEX_MACOS_CERTIFICATE_PASSWORD: ${{ inputs.publish && secrets.LASMEX_MACOS_CERTIFICATE_PASSWORD || '' }}
+      LASMEX_APPLE_API_KEY_P8_BASE64: ${{ inputs.publish && secrets.LASMEX_APPLE_API_KEY_P8_BASE64 || '' }}
+      LASMEX_APPLE_API_KEY_ID: ${{ inputs.publish && secrets.LASMEX_APPLE_API_KEY_ID || '' }}
+      LASMEX_APPLE_API_ISSUER_ID: ${{ inputs.publish && secrets.LASMEX_APPLE_API_ISSUER_ID || '' }}
+
+  assemble:
+    name: Assemble release assets and SBOM
+    if: github.event_name == 'workflow_dispatch'
+    needs: [npm-pack, python-validate, desktop]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           dest: ${{ runner.temp }}/setup-pnpm
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      - name: Install release verifier (immutable, no package scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          pattern: lasmex-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Check registry name availability and source metadata
+        if: inputs.publish
+        run: pnpm run release:verify-registry
+
+      - name: Extract package and Electron inventories for Syft
+        run: |
+          set -euo pipefail
+          mkdir sbom-inputs
+          index=0
+          while IFS= read -r -d '' artifact; do
+            index=$((index + 1))
+            destination="sbom-inputs/$(printf '%04d' "$index")"
+            mkdir "$destination"
+            case "$artifact" in
+              *.tar.gz) tar -xzf "$artifact" -C "$destination" ;;
+              *.tgz) tar -xzf "$artifact" -C "$destination" ;;
+              *.whl|*.nupkg|*.zip) unzip -q "$artifact" -d "$destination" ;;
+              *.exe) cp "$artifact" "$destination/" ;;
+              *) rmdir "$destination" ;;
+            esac
+          done < <(find release-assets -maxdepth 1 -type f -print0 | sort -z)
+          mapfile -d '' asars < <(find sbom-inputs -type f -name app.asar -print0)
+          [ "${#asars[@]}" -gt 0 ] || {
+            echo '::error::No packaged Electron app.asar was found in the desktop artifacts'
+            exit 1
+          }
+          for asar in "${asars[@]}"; do
+            destination="${asar%.asar}-expanded"
+            pnpm --filter lasmex-desktop exec asar extract "$asar" "$destination"
+          done
+          mkdir sbom-inputs/electron-runtime
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs'
+          const desktop = JSON.parse(readFileSync('apps/desktop/package.json', 'utf8'))
+          const version = desktop.devDependencies?.electron
+          if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) {
+            throw new Error('apps/desktop/package.json must pin an exact Electron version')
+          }
+          writeFileSync(
+            'sbom-inputs/electron-runtime/package.json',
+            `${JSON.stringify({ name: 'electron', version }, undefined, 2)}\n`,
+          )
+          NODE
+
+      - name: Generate software bill of materials
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: sbom-inputs
+          format: spdx-json
+          output-file: release-assets/SBOM.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+          syft-version: v1.50.0
+
+      - name: Verify npm, Python, desktop, and Electron SBOM inventory
+        env:
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: pnpm exec tsx scripts/release/verify-sbom.ts --file release-assets/SBOM.spdx.json --version "$VERSION"
+
+      - name: Record artifact hashes
+        run: |
+          cd release-assets
+          find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          sha256sum -c SHA256SUMS
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 14
+
+  attest-and-draft:
+    name: Attest artifacts and create draft release
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: [npm-pack, assemble]
+    runs-on: ubuntu-24.04
+    environment: github-release
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: release-assets
+
+      - name: Verify artifact hashes
+        run: cd release-assets && sha256sum -c SHA256SUMS
+
+      - name: Attest release subjects and SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            release-assets/**/*.tgz
+            release-assets/**/*.whl
+            release-assets/**/*.exe
+            release-assets/**/*.nupkg
+            release-assets/**/*.zip
+            release-assets/**/*.tar.gz
+            release-assets/**/RELEASES
+            release-assets/**/manifest-*.json
+            release-assets/**/SHA256SUMS
+          sbom-path: release-assets/SBOM.spdx.json
+
+      - name: Create or refresh draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --json isDraft --jq .isDraft > draft-state 2>/dev/null; then
+            [ "$(cat draft-state)" = true ] || {
+              echo "::error::Release $TAG is already public; refusing to replace its assets"
+              exit 1
+            }
+          else
+            gh release create "$TAG" --verify-tag --draft --title "LasmeX $VERSION" --generate-notes
+          fi
+          gh release upload "$TAG" release-assets/* --clobber
+
+  publish-npm:
+    name: Publish npm packages
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.npm_authentication == 'oidc'
+    needs: [npm-pack, attest-and-draft]
+    runs-on: ubuntu-24.04
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ env.PRIMARY_NODE_VERSION }}
           registry-url: https://registry.npmjs.org
 
-      - name: Install (immutable, no package scripts)
+      - name: Install release publisher (immutable, no package scripts)
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          name: dsh-npm-tarballs
-          path: dist/npm
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: dist
 
-      - name: Publish tarballs
+      - name: Verify release artifact hashes
+        run: cd dist && sha256sum -c SHA256SUMS
+
+      - name: Publish exact packed tarballs through npm trusted publishing
+        run: pnpm run release:publish --family lasmex --from dist --provenance
+
+  bootstrap-npm:
+    name: Bootstrap new npm packages
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.npm_authentication == 'bootstrap'
+    needs: [npm-pack, attest-and-draft]
+    runs-on: ubuntu-24.04
+    environment: npm-bootstrap
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
+
+      - name: Install release publisher (immutable, no package scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: dist
+
+      - name: Verify release artifact hashes
+        run: cd dist && sha256sum -c SHA256SUMS
+
+      - name: Create packages with the one-time granular token
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm run release:publish --family dsh --from dist/npm
+          NODE_AUTH_TOKEN: ${{ secrets.LASMEX_NPM_BOOTSTRAP_TOKEN }}
+        run: |
+          [ -n "$NODE_AUTH_TOKEN" ] || {
+            echo '::error::LASMEX_NPM_BOOTSTRAP_TOKEN is required only for the initial npm bootstrap'
+            exit 1
+          }
+          pnpm run release:publish --family lasmex --from dist --provenance
+
+      - name: Record the mandatory trust handoff
+        run: |
+          {
+            echo '## npm bootstrap completed'
+            echo
+            echo 'The GitHub release remains a draft and PyPI was not published.'
+            echo 'Authenticate locally with npm CLI >=11.15.0 and account-level 2FA, then run:'
+            echo
+            echo '`pnpm run release:configure-npm-trust -- --apply`'
+            echo
+            echo 'After all relationships exist, rerun this workflow with `npm_authentication=oidc`.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish-python-runtime:
+    name: Publish Python runtime wheels
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.npm_authentication == 'oidc'
+    needs: [npm-pack, attest-and-draft]
+    runs-on: ubuntu-24.04
+    environment: pypi-runtime
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      - name: Install release verifier (immutable, no package scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: dist
+
+      - name: Verify release artifact hashes
+        run: cd dist && sha256sum -c SHA256SUMS
+
+      - name: Verify existing PyPI hashes and select absent runtime wheels
+        id: publish-plan
+        env:
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: |
+          set -euo pipefail
+          pnpm exec tsx scripts/release/prepare-pypi-publish.ts \
+            --project lasmex-runtime-bin --version "$VERSION" --from dist --out dist/runtime
+          if find dist/runtime -maxdepth 1 -type f -name '*.whl' -print -quit | grep -q .; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish through PyPI trusted publishing
+        if: steps.publish-plan.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598 # v1.13.0
+        with:
+          packages-dir: dist/runtime/
+
+  publish-python-sdk:
+    name: Publish Python SDK wheel
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.npm_authentication == 'oidc'
+    needs: [npm-pack, attest-and-draft, publish-python-runtime]
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      - name: Install release verifier (immutable, no package scripts)
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: lasmex-release-${{ needs.npm-pack.outputs.version }}
+          path: dist
+
+      - name: Verify release artifact hashes
+        run: cd dist && sha256sum -c SHA256SUMS
+
+      - name: Verify existing PyPI hashes and select an absent SDK wheel
+        id: publish-plan
+        env:
+          VERSION: ${{ needs.npm-pack.outputs.version }}
+        run: |
+          set -euo pipefail
+          pnpm exec tsx scripts/release/prepare-pypi-publish.ts \
+            --project lasmex-sdk --version "$VERSION" --from dist --out dist/sdk
+          if find dist/sdk -maxdepth 1 -type f -name '*.whl' -print -quit | grep -q .; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish through PyPI trusted publishing
+        if: steps.publish-plan.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@106e0b0b7c337fa67ed433972f777c6357f78598 # v1.13.0
+        with:
+          packages-dir: dist/sdk/
+
+  finalize:
+    name: Publish GitHub release
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && inputs.npm_authentication == 'oidc'
+    needs: [attest-and-draft, publish-npm, publish-python-runtime, publish-python-sdk]
+    runs-on: ubuntu-24.04
+    environment: github-release
+    permissions:
+      contents: write
+    steps:
+      - name: Make the completed release public
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --draft=false --latest

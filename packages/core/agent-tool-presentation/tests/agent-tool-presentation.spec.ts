@@ -8,14 +8,14 @@
 
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
-import { createScope } from '@deepseek-ai/dsh-scope'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import { CodeRuntime } from '@deepseek-ai/dsh-code-runtime'
-import type { CodeRunRequest, CodeRunResult } from '@deepseek-ai/dsh-code-runtime'
-import ToolRuntime, { RUN_CODE_NAME, defineTool } from '@deepseek-ai/dsh-tools'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import { apply, Config, inject, name } from '@deepseek-ai/dsh-agent-tool-presentation'
+import { createScope } from 'lasmex-scope'
+import SystemPrompt from 'lasmex-system-prompt'
+import { CodeRuntime } from 'lasmex-code-runtime'
+import type { CodeRunRequest, CodeRunResult } from 'lasmex-code-runtime'
+import ToolRuntime, { RUN_CODE_NAME, defineTool } from 'lasmex-tools'
+import type { Agent } from 'lasmex-agent'
+import { SessionId } from 'lasmex-session'
+import { apply, Config, inject, name } from 'lasmex-agent-tool-presentation'
 
 /** A runtime that never runs anything: presentation never dispatches. */
 class StubRuntime extends CodeRuntime {
@@ -103,7 +103,7 @@ describe('the tool-presentation row', () => {
 
     const { agent, row } = await mount(ctx, { mode: 'code' })
 
-    // Pending, not applied: `dsh-agent-presets` rejects a mount holding a row
+    // Pending, not applied: `lasmex-agent-presets` rejects a mount holding a row
     // that never reached a usable state, naming this id — so the preset fails
     // where the operator can act, instead of at the first request.
     expect(row.ctx.get('codeRuntime')).toBeUndefined()

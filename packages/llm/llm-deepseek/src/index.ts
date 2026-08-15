@@ -8,18 +8,18 @@
  * anything, while an in-flight stream keeps the facts it started with. The
  * one registration-captured fact — the retry policy — re-registers the route
  * in place when it changes.
- * @module @deepseek-ai/dsh-llm-deepseek
+ * @module lasmex-llm-deepseek
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
-import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import type { RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { launchEnvironmentOf, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import { deepEqualJson, installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { getOrCreateAnonymousUserId, type AnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
+import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from 'lasmex-llm'
+import type { RetryPolicyConfig } from 'lasmex-llm'
+import { credentialRef } from 'lasmex-credentials'
+import { launchEnvironmentOf, type LaunchEnvironmentSnapshot } from 'lasmex-launch-environment'
+import { deepEqualJson, installSettingsSection, settingsNamespace } from 'lasmex-settings'
+import { MAX_TIMER_DELAY_MS } from 'lasmex-timeout'
+import { getOrCreateAnonymousUserId, type AnonymousUserId } from 'lasmex-anonymous-user-id'
 import {
   DEFAULT_CONTEXT_WINDOW,
   DEFAULT_MAX_TOKENS,
