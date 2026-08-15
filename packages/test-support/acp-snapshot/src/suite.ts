@@ -761,7 +761,7 @@ export function refreshFixtureReplacements(
         from,
         from.replaceAll('\\', '/'),
         escaped,
-        escaped.replaceAll('\\', '\\\\'),
+        from.replaceAll('\\', '\\\\'.repeat(2)),
       ])]
       for (const form of forms) {
         if (form === to) continue
