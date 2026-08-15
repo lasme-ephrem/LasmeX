@@ -43,7 +43,7 @@ describe('stable distribution versions', () => {
 
   it('rejects awkward or retired product names in public descriptions', () => {
     expect(packageDescriptionIssues('lasmex-session', 'Session store for LasmeX')).toEqual([])
-    expect(packageDescriptionIssues('lasmex-session', 'Session store for the LasmeX and lasmex-session')).toEqual([
+    expect(packageDescriptionIssues('lasmex-session', 'Session store for the LasmeX and dsh-session')).toEqual([
       'lasmex-session description must use LasmeX as a proper name',
       'lasmex-session description exposes a retired dsh package name',
     ])
