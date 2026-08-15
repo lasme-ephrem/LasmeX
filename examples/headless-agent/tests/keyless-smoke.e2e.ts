@@ -23,6 +23,7 @@ describe('headless-agent keyless smoke', () => {
       configPath,
       binArgs: [configPath, 'prove the tool path'],
       tsconfigPath,
+      env: { CLI_MOCK_TOOL: 'bash' },
       inspect: async (cwd) => {
         const files = await readdir(cwd, { recursive: true })
         const relativePath = files.find(file => file.endsWith('.jsonl.zstd'))

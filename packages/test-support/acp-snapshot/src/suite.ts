@@ -738,6 +738,8 @@ export function unknownToolCallIds(rawLog: string): string[] {
  *
  * @param logs The freshly harvested logs, in fixture order.
  * @param fixtures The existing fixture contents, in matching order.
+ * @param runCwd The run's own cwd; maps the raw spellings that remain in log
+ *   bodies when a harvested header is already tokenized.
  * @returns Literal replacements from fresh values to the fixture's existing values.
  */
 export function refreshFixtureReplacements(

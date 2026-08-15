@@ -718,10 +718,10 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       const { stdout, code, stderr } = await runBuiltBin(['--profile', 'web', '--dump-default-config'], { LASMEX_HOME: home })
       expect(code).toBe(0)
       expect(stderr).toBe('')
-      expect(stdout).toContain("name: 'lasmex-agent-loop'")
+      expect(stdout).toContain('name: lasmex-agent-loop')
       expect(stdout).toContain('agents: []')
       expect(stdout).toContain('# == lasmex-base')
-      expect(stdout).toContain("name: 'lasmex-host-webserver'")
+      expect(stdout).toContain('name: lasmex-host-webserver')
     }, 30_000)
 
     it('prints the headless profile without Host or browser layers', async () => {
@@ -731,10 +731,10 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       )
       expect(code).toBe(0)
       expect(stderr).toBe('')
-      expect(stdout).toContain("name: 'lasmex-headless'")
-      expect(stdout).not.toMatch(/name: 'lasmex-host-/)
-      expect(stdout).not.toContain("name: 'lasmex-web-app'")
-      expect(stdout).not.toMatch(/name: 'lasmex-client-/)
+      expect(stdout).toContain('name: lasmex-headless')
+      expect(stdout).not.toMatch(/name: lasmex-host-/)
+      expect(stdout).not.toContain('name: lasmex-web-app')
+      expect(stdout).not.toMatch(/name: lasmex-client-/)
     }, 30_000)
 
     it('composes the profile user layer and a --patch overlay in order', async () => {

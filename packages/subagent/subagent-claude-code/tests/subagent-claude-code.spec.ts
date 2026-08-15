@@ -464,11 +464,11 @@ describe('official spawn projection', () => {
     }), 7, 'win32')
 
     expect(spec.argv).toEqual([
-      'cmd.exe', '/d', '/v:off', '/s', '/c', '%DSH_CLAUDE_CODE_EXECUTABLE%',
+      'cmd.exe', '/d', '/v:off', '/s', '/c', '%LASMEX_CLAUDE_CODE_EXECUTABLE%',
       '--output-format', 'stream-json',
     ])
     expect(spec.env).toEqual(expect.objectContaining({
-      DSH_CLAUDE_CODE_EXECUTABLE: `"${command}"`,
+      LASMEX_CLAUDE_CODE_EXECUTABLE: `"${command}"`,
     }))
   })
 
@@ -533,7 +533,7 @@ describe('query options and result mapping', () => {
   it('builds the fixed unattended options over the scrubbed environment', () => {
     vi.stubEnv('HOST_VISIBLE', 'visible')
     vi.stubEnv('HOST_SECRET_TOKEN', 'must-not-leak')
-    vi.stubEnv('DSH_INTERNAL', 'must-not-leak')
+    vi.stubEnv('LASMEX_INTERNAL', 'must-not-leak')
     const child = fakeChild()
     const spawn = vi.fn(() => child.handle)
     const captured: SubprocessHandle[] = []
@@ -564,7 +564,7 @@ describe('query options and result mapping', () => {
       ANTHROPIC_API_KEY: 'explicit-fake-key',
     })
     expect(options.env).not.toHaveProperty('HOST_SECRET_TOKEN')
-    expect(options.env).not.toHaveProperty('DSH_INTERNAL')
+    expect(options.env).not.toHaveProperty('LASMEX_INTERNAL')
     for (const omitted of [
       'settingSources',
       'canUseTool',
