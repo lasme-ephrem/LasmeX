@@ -297,5 +297,5 @@ list(): BashEnvVariableInfo[]
 
 Types: [LasmexEnvironment](subprocess.md) · [ToolExecution](tools.md)
 
-Source: [`packages/shell/shell-env/src/index.ts:88`](../../packages/shell/shell-env/src/index.ts)
+Source: [`packages/shell/shell-env/src/index.ts:89`](../../packages/shell/shell-env/src/index.ts)
 <!-- END GENERATED cordis-surface -->
