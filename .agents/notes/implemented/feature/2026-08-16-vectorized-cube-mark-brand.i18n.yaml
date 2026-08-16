@@ -1,6 +1,0 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
-#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-16-vectorized-cube-mark-brand.md
-2026-08-16-vectorized-cube-mark-brand.md: f9003910dad3e35cf86006f518a9e21655597301
-2026-08-16-vectorized-cube-mark-brand.zh.md: 9f1df3bb9513fe43962401478efc18b263eaa70a

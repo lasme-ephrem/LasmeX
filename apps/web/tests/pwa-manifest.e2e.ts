@@ -26,10 +26,12 @@ it('ships install metadata with the built web application', async () => {
   })
 })
 
-it('ships the cube-mark favicon as a scalable SVG', async () => {
+it('ships the cube-mark favicon as an exact embedded-raster SVG', async () => {
   const favicon = await readFile(join(DIST_ROOT, 'favicon.svg'), 'utf8')
   expect(favicon).toContain('<svg')
   expect(favicon).toMatch(/viewBox="0 0 \d+ \d+"/)
-  // The traced mark ships its own palette; no background key survives.
+  // The validated exact-transparent favicon embeds the detoured PNG.
+  expect(favicon).toContain('<image')
+  expect(favicon).toContain('data:image/png;base64,')
   expect(favicon).not.toContain('#ff00ff')
 })

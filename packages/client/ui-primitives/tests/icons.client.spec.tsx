@@ -55,23 +55,25 @@ describe('ic_ds_ icon set', () => {
 })
 
 describe('FullLogo', () => {
-  it('renders the traced full logo at a fixed aspect ratio', () => {
+  it('renders the exact embedded logo at a fixed aspect ratio', () => {
     const { container } = render(<primitives.FullLogo />)
     const svg = container.querySelector('svg')!
     expect(svg.getAttribute('height')).toBe('44')
     expect(svg.getAttribute('viewBox')).toBe('0 0 1140 463')
     expect(svg.getAttribute('aria-hidden')).toBe('true')
-    expect(container.querySelectorAll('path').length).toBeGreaterThan(100)
+    const image = container.querySelector('image')!
+    expect(image.getAttribute('href')).toMatch(/^data:image\/png;base64,/)
   })
 })
 
 describe('CubeMark', () => {
-  it('renders the traced cube mark at a fixed aspect ratio', () => {
+  it('renders the exact embedded cube mark at a fixed aspect ratio', () => {
     const { container } = render(<primitives.CubeMark />)
     const svg = container.querySelector('svg')!
     expect(svg.getAttribute('height')).toBe('24')
     expect(svg.getAttribute('viewBox')).toBe('0 0 828 1131')
     expect(svg.getAttribute('aria-hidden')).toBe('true')
-    expect(container.querySelectorAll('path').length).toBeGreaterThan(100)
+    const image = container.querySelector('image')!
+    expect(image.getAttribute('href')).toMatch(/^data:image\/png;base64,/)
   })
 })

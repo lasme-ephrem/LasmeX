@@ -1,10 +1,10 @@
-/** LasmeX cube mark as traced vector paths. */
+/** LasmeX cube mark as the validated exact-transparent embedded raster. */
 
-import { CUBE_MARK_HEIGHT, CUBE_MARK_WIDTH, cubeMarkPaths } from './cubeMarkPaths.ts'
+import { CUBE_MARK_DATA, CUBE_MARK_HEIGHT, CUBE_MARK_WIDTH } from './cubeMarkImage.ts'
 import type { IconProps } from './icons/props.ts'
 
 /**
- * Render the LasmeX cube mark from traced vector paths.
+ * Render the LasmeX cube mark (pixel-exact embedded PNG).
  * @param props.size - rendered height in px; the aspect ratio is preserved.
  * @param props.className - extra class for layout placement.
  * @returns the cube-mark SVG.
@@ -18,9 +18,7 @@ export function CubeMark({ size = 24, className }: IconProps) {
       className={className}
       aria-hidden="true"
     >
-      {cubeMarkPaths.map((path, index) => (
-        <path key={index} d={path.d} fill={path.fill} />
-      ))}
+      <image width={CUBE_MARK_WIDTH} height={CUBE_MARK_HEIGHT} href={CUBE_MARK_DATA} />
     </svg>
   )
 }
