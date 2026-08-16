@@ -44,4 +44,4 @@ Status: implemented
 
 剥离 chrome 不改动规范 Markdown——切换行与徽章仍服务于 GitHub 读者。代价是投影器现在知晓源语料的两项呈现约定，而采用不同切换行措辞的页面将不会被匹配到。
 
-字标是同一图形的第二份副本，另两份位于 `apps/web/public/favicon.svg` 和 `packages/client/ui-primitives/src/LasmexMark.tsx`，各自承载自己的呈现方式。产品字标的变更只有通过更新这份副本才能到达文档站。
+文档站的锁式标志内联了矢量化的方块 logo（`website/public/full.svg`）；应用的宽侧栏打包同一份资源（`packages/client/ui-primitives/src/full-logo.svg`，经 `FullLogo`），`LasmexMark.tsx` 为 hero 与窄栏保留 LX 标记，favicon 则发布矢量方块标记（`apps/web/public/favicon.svg`）。产品标记的变更只有通过更新这份副本才能到达文档站。

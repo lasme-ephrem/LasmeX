@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-06-web-install-manifest.md
-2026-08-06-web-install-manifest.md: aac733de4e91bfe5d62b64292da502fd01237014
-2026-08-06-web-install-manifest.zh.md: 2a06b4dfead2cb06726e90794d67191a614391b9
+2026-08-06-web-install-manifest.md: da377fde674154faa65bfdabbe18db73f8bf251b
+2026-08-06-web-install-manifest.zh.md: ee6b47a4b588c699f14bab930bda8a6567f8daee

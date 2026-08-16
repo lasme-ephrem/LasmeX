@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  BrandWordmark, LasmexMark,
+  FullLogo, LasmexMark,
   IconNewChatOutline16, IconPanelLeftOutline16,
   Tooltip,
 } from 'lasmex-client-ui-primitives'
@@ -128,7 +128,7 @@ export function SidebarRoot({
       onPointerLeave={() => { armLinger() }}
     >
       <div className={css.logoRow}>
-        {/* Expanded, the wordmark doubles as a New Session shortcut; the
+        {/* Expanded, the full logo doubles as a New Session shortcut; the
             collapsed rail's logo is the expand toggle below instead. */}
         {wide && (
           <button
@@ -137,7 +137,7 @@ export function SidebarRoot({
             aria-label={t('session.new.label')}
             onClick={() => { startSession() }}
           >
-            <BrandWordmark />
+            <FullLogo className={css.brandLogo} />
           </button>
         )}
         {/* Rail resting state is the LasmeX mark; hovering swaps in the panel

@@ -65,3 +65,14 @@ describe('LasmexMark', () => {
     expect(container.innerHTML).toContain('currentColor')
   })
 })
+
+describe('FullLogo', () => {
+  it('renders the traced full logo at a fixed aspect ratio', () => {
+    const { container } = render(<primitives.FullLogo />)
+    const svg = container.querySelector('svg')!
+    expect(svg.getAttribute('height')).toBe('44')
+    expect(svg.getAttribute('viewBox')).toBe('0 0 1140 463')
+    expect(svg.getAttribute('aria-label')).toBe('LasmeX')
+    expect(container.querySelectorAll('path').length).toBeGreaterThan(100)
+  })
+})

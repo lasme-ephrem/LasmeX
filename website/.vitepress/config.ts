@@ -186,12 +186,13 @@ const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks'> = {
 const base = process.env.DOCS_BASE ?? '/'
 
 /**
- * The LasmeX wordmark, inlined so its `currentColor` fills follow the active
- * theme. An `<img>` would freeze the mark at the colors the file declares.
+ * The full LasmeX logo (cube mark + wordmark + slogan), inlined so the
+ * navigation bar renders it without an extra request. The traced file ships
+ * its own palette.
  */
-const wordmark = readFileSync(resolve(import.meta.dirname, '../public/wordmark.svg'), 'utf8')
+const fullLogo = readFileSync(resolve(import.meta.dirname, '../public/full.svg'), 'utf8')
   .trim()
-  .replace('<svg ', '<svg class="lasmex-wordmark" ')
+  .replace('<svg ', '<svg class="lasmex-logo" ')
 
 /**
  * Styles the default theme does not provide, carried inline because the site
@@ -206,7 +207,7 @@ const wordmark = readFileSync(resolve(import.meta.dirname, '../public/wordmark.s
  */
 const siteStyle = `
 .lasmex-lockup { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.lasmex-wordmark { display: block; height: 22px; width: auto; color: var(--vp-c-text-1); }
+.lasmex-logo { display: block; height: 44px; width: auto; }
 .lasmex-tag {
   display: inline-flex;
   align-items: center;
@@ -258,14 +259,14 @@ const scrollbarScript = `
 `
 
 /**
- * Navigation-bar title: the LasmeX wordmark and the release-stage tag.
+ * Navigation-bar title: the full LasmeX logo and the release-stage tag.
  * VitePress renders `siteTitle` as HTML.
  *
  * @param previewTag - Localized release-stage label.
  * @returns Markup placed beside the navigation-bar home link.
  */
 function siteTitle(previewTag: string): string {
-  return `<span class="lasmex-lockup">${wordmark}<span class="lasmex-tag">${previewTag}</span></span>`
+  return `<span class="lasmex-lockup">${fullLogo}<span class="lasmex-tag">${previewTag}</span></span>`
 }
 
 function upstreamNav(label: string): DefaultTheme.NavItem {

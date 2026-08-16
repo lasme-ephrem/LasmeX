@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/lasmex-full.svg" alt="LasmeX — AGENTIC SYSTEMS. CLEAN CODE." width="460"></p>
+
 # LasmeX
 
 Français | [English](README.md) | [中文](README.zh.md)

@@ -124,6 +124,12 @@
   cursor: pointer;
 }
 
+.brandLogo {
+  display: block;
+  height: 44px;
+  width: auto;
+}
+
 .iconButton {
   flex: none;
   display: inline-flex;
