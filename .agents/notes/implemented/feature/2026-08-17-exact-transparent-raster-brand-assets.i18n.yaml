@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-17-exact-transparent-raster-brand-assets.md
-2026-08-17-exact-transparent-raster-brand-assets.md: 0ec0c132f29af9fe265b40437c3bec590f8438ff
-2026-08-17-exact-transparent-raster-brand-assets.zh.md: eae6e237cd45f609b800acee6be65b0065f6646b
+2026-08-17-exact-transparent-raster-brand-assets.md: f793ffc3b6ba31c41b2c0bfc91d07863bc25e78f
+2026-08-17-exact-transparent-raster-brand-assets.zh.md: ee2ff0ab9a368865593ce0f0c26bf4115186cffa

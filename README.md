@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/lasmex-full.svg" alt="LasmeX — AGENTIC SYSTEMS. CLEAN CODE." width="460"></p>
+<p align="center"><img src="assets/lasmex-full.png" alt="LasmeX — AGENTIC SYSTEMS. CLEAN CODE." width="460"></p>
 
 # LasmeX
 

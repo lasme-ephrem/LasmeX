@@ -10,13 +10,15 @@ LasmeX 标记只以白底平面画布上的光栅 PNG 存在（`icon`、`full`�
 
 ## 决策
 
-已验证的「精确透明」方案：每张 PNG 先做去底（所有近白像素——包括封闭的字母中空与立方体分隔——被移除；alpha 二值化；画布紧密裁剪），再以 `<image href="data:image/png;base64,…">` 嵌入到带尺寸的 SVG 中——SVG2 的 `<image>` 元素，favicon、`<img>`、GitHub README 与 React 渲染均支持。规范副本位于 [`assets/lasmex-icon.svg`](../../../../assets/lasmex-icon.svg)、[`assets/lasmex-full.svg`](../../../../assets/lasmex-full.svg) 与 [`assets/lasmex-text.svg`](../../../../assets/lasmex-text.svg)；每个表面都从它们复制。
+已验证的「精确透明」方案：每张 PNG 先做去底（所有近白像素——包括封闭的字母中空与立方体分隔——被移除；alpha 二值化；画布紧密裁剪），再以 `<image href="data:image/png;base64,…">` 嵌入到带尺寸的 SVG 中——SVG2 的 `<image>` 元素，favicon、`<img>` 与 React 渲染均支持。规范副本位于 [`assets/lasmex-icon.svg`](../../../../assets/lasmex-icon.svg)、[`assets/lasmex-full.svg`](../../../../assets/lasmex-full.svg) 与 [`assets/lasmex-text.svg`](../../../../assets/lasmex-text.svg)；每个表面都从它们复制。
 
-各表面：应用 favicon 与文档站 favicon 发布 `lasmex-icon.svg`（`/favicon.svg`，尺寸 `any` 的 SVG），取代黑色 LX 字标。文档站导航锁式标志内联 `lasmex-full.svg`（44px）。应用的 hero 与窄栏挂载嵌入的方块标记（`CubeMark`），宽侧栏渲染完整 logo（`FullLogo`）；二者都从生成的数据模块（`cubeMarkImage.ts`、`fullLogoImage.ts`）以 data URL 渲染 PNG，因为 tsdown 无法从源码打包 `.svg` 资源导入。桌面应用发布 `apps/desktop/assets/icon.svg` 以及 `icon.png` 与重新生成的 `icon.ico`/`icon.icns`。`README.md`、`README.zh.md` 与 `LASMEX.md` 以完整 logo 开头。
+各表面：应用 favicon 与文档站 favicon 发布 `lasmex-icon.svg`（`/favicon.svg`，尺寸 `any` 的 SVG），取代黑色 LX 字标。文档站导航锁式标志内联 `lasmex-full.svg`（44px）。应用的 hero 与窄栏挂载嵌入的方块标记（`CubeMark`），宽侧栏渲染完整 logo（`FullLogo`）；二者都从生成的数据模块（`cubeMarkImage.ts`、`fullLogoImage.ts`）以 data URL 渲染 PNG，因为 tsdown 无法从源码打包 `.svg` 资源导入。桌面应用发布 `apps/desktop/assets/icon.svg` 以及 `icon.png` 与重新生成的 `icon.ico`/`icon.icns`。
+
+GitHub 通过 `raw.githubusercontent.com` 提供仓库 SVG 时附带 `Content-Security-Policy: default-src 'none'`，会阻止以图像方式渲染的 SVG 内部的 `data:` 图像：嵌入光栅的 SVG 在仓库 README 中会显示为空白。面向 GitHub 的表面因此引用纯 PNG 文件——[`assets/lasmex-full.png`](../../../../assets/lasmex-full.png)（以及同族的 icon/text PNG），即同一份去底光栅——于是 `README.md`、`README.zh.md` 与 `LASMEX.md` 以完整 logo 开头。
 
 ## 后果
 
-在原生尺寸下于浅色与深色背景上像素级精确渲染，且具有真实透明度。超出原生光栅尺寸后没有任何缩放增益（嵌入的是 PNG，并非矢量化），文件较重（base64 后 icon 约 920 KB、full 约 720 KB）。重新生成标记意味着重新执行去底并重新复制每个表面——规范的 `assets/lasmex-*.svg` 副本是部署点。
+在原生尺寸下于浅色与深色背景上像素级精确渲染，且具有真实透明度。超出原生光栅尺寸后没有任何缩放增益（嵌入的是 PNG，并非矢量化），文件较重（base64 后 icon 约 920 KB、full 约 720 KB）。重新生成标记意味着重新执行去底并重新复制每个表面——规范的 `assets/lasmex-*.svg` 副本是部署点，面向 GitHub 的 `assets/lasmex-*.png` 副本与其并排存放。
 
 ## 备选方案
 
