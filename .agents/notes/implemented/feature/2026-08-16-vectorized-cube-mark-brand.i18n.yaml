@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-16-vectorized-cube-mark-brand.md
-2026-08-16-vectorized-cube-mark-brand.md: 3af0bae0e538fca48e2e8f4eb71a0462b18ab699
-2026-08-16-vectorized-cube-mark-brand.zh.md: 0612fe52cb155a4a433485238eaa08c46def498d
+2026-08-16-vectorized-cube-mark-brand.md: f9003910dad3e35cf86006f518a9e21655597301
+2026-08-16-vectorized-cube-mark-brand.zh.md: 9f1df3bb9513fe43962401478efc18b263eaa70a

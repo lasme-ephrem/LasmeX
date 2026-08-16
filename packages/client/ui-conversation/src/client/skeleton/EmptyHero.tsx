@@ -7,7 +7,7 @@
 import { useId } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import {
-  LasmexMark, IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
+  CubeMark, IconChevronDownOutline14, IconFolderClose16, IconFolderOpen16,
 } from 'lasmex-client-ui-primitives'
 import { workspaceTitleOf } from 'lasmex-client-runtime/client'
 import type { ConversationSlotProps } from '../contract/slots.ts'
@@ -117,9 +117,9 @@ export function HeroShell({ t, children }: HeroShellProps) {
     <div className={css.root}>
       <div className={css.stack}>
         <div className={css.headline}>
-          {/* LasmeX mark leading the headline. */}
+          {/* Cube mark leading the headline. */}
           <span className={css.fishHitbox}>
-            <LasmexMark size={34} className={css.fish} />
+            <CubeMark size={34} className={css.fish} />
           </span>
           <span className={css.headlineText}>{t('hero.headline')}</span>
           <span className={css.previewBadge}>{t('hero.preview')}</span>

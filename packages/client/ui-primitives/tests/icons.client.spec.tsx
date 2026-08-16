@@ -54,25 +54,24 @@ describe('ic_ds_ icon set', () => {
   })
 })
 
-describe('LasmexMark', () => {
-  it('renders the LX mark in currentColor at a square ratio', () => {
-    const { container } = render(<primitives.LasmexMark />)
-    const svg = container.querySelector('svg')!
-    expect(svg.getAttribute('width')).toBe('24')
-    expect(svg.getAttribute('height')).toBe('24')
-    expect(svg.getAttribute('viewBox')).toBe('0 0 24 24')
-    expect(container.querySelectorAll('path')).toHaveLength(2)
-    expect(container.innerHTML).toContain('currentColor')
-  })
-})
-
 describe('FullLogo', () => {
   it('renders the traced full logo at a fixed aspect ratio', () => {
     const { container } = render(<primitives.FullLogo />)
     const svg = container.querySelector('svg')!
     expect(svg.getAttribute('height')).toBe('44')
     expect(svg.getAttribute('viewBox')).toBe('0 0 1140 463')
-    expect(svg.getAttribute('aria-label')).toBe('LasmeX')
+    expect(svg.getAttribute('aria-hidden')).toBe('true')
+    expect(container.querySelectorAll('path').length).toBeGreaterThan(100)
+  })
+})
+
+describe('CubeMark', () => {
+  it('renders the traced cube mark at a fixed aspect ratio', () => {
+    const { container } = render(<primitives.CubeMark />)
+    const svg = container.querySelector('svg')!
+    expect(svg.getAttribute('height')).toBe('24')
+    expect(svg.getAttribute('viewBox')).toBe('0 0 828 1131')
+    expect(svg.getAttribute('aria-hidden')).toBe('true')
     expect(container.querySelectorAll('path').length).toBeGreaterThan(100)
   })
 })

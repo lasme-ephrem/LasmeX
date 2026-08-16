@@ -44,4 +44,4 @@ The Chinese reference sidebar measures 1452px with every subsystem group collaps
 
 Canonical Markdown is unchanged by the chrome stripping — the switcher and badge still serve GitHub readers. The cost is that the projector now knows two presentation conventions of the source corpus, which a page written with a different switcher wording would not match.
 
-The documentation-site lockup inlines the traced cube logo (`website/public/full.svg`); the app's wide sidebar bundles the same asset (`packages/client/ui-primitives/src/full-logo.svg` via `FullLogo`), `LasmexMark.tsx` keeps the LX mark for the hero and rail, and the favicon ships the vector cube mark (`apps/web/public/favicon.svg`). A change to the product mark reaches the documentation site only by updating this copy.
+The documentation-site lockup inlines the traced cube logo (`website/public/full.svg`); the app's wide sidebar renders the same traced logo (`FullLogo`) and the hero and rail mount the traced cube mark (`CubeMark`), while the favicon ships the vector cube mark (`apps/web/public/favicon.svg`). A change to the product mark reaches the documentation site only by updating this copy.

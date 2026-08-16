@@ -16,7 +16,7 @@ export function FullLogo({ size = 44, className }: IconProps) {
       height={size}
       viewBox={`0 0 ${FULL_LOGO_WIDTH} ${FULL_LOGO_HEIGHT}`}
       className={className}
-      aria-label="LasmeX"
+      aria-hidden="true"
     >
       {fullLogoPaths.map((path, index) => (
         <path key={index} d={path.d} fill={path.fill} />
