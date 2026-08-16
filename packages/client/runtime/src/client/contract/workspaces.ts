@@ -91,4 +91,17 @@ export interface IWorkspaces {
    * @param sessionId - session to archive.
    */
   archiveSession(sessionId: SessionId): Promise<void>
+  /**
+   * Durably delete a session: stored log, workspace account, and archive
+   * entry. The Host rejects live sessions — close the session first.
+   * @param sessionId - session to delete.
+   */
+  deleteSession(sessionId: SessionId): Promise<void>
+  /**
+   * Restore an archived session: it leaves the archive set and returns to
+   * its workspace at its stored position. A currently-open archived session
+   * unfreezes its composer in place.
+   * @param sessionId - session to restore.
+   */
+  unarchiveSession(sessionId: SessionId): Promise<void>
 }

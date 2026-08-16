@@ -211,6 +211,27 @@ insertBefore(id: WorkspaceId, beforeId?: WorkspaceId): Promise<readonly Workspac
 archiveSession(sessionId: SessionId): Promise<void>
 
 /**
+ * Restore an archived session into every grouping surface by removing its
+ * archive entry. Its workspace account was never touched, so the row
+ * returns to its stored position. Idempotent: an unarchived id resolves
+ * without writing; an unknown id rejects ({@link WorkspaceUnknownSessionError}).
+ * @param sessionId - The session to restore.
+ * @returns resolution after durability.
+ */
+unarchiveSession(sessionId: SessionId): Promise<void>
+
+/**
+ * Durably delete one session: its stored log, every workspace account,
+ * and its archive entry. A live session rejects before any write
+ * ({@link WorkspaceLiveSessionError} — close it first); an unknown id
+ * rejects ({@link WorkspaceUnknownSessionError}). Idempotent: deleting a
+ * session already absent from persistence and accounts resolves.
+ * @param sessionId - The session to delete.
+ * @returns resolution after every durable write.
+ */
+deleteSession(sessionId: SessionId): Promise<void>
+
+/**
  * Resolve by canonical directory path without creating or mutating a
  * workspace. A missing path rejects during `realpath`; an existing unowned
  * directory returns `undefined`.
@@ -222,5 +243,32 @@ async resolveByPath(path: string): Promise<Workspace | undefined>
 
 Types: [SessionId](core.md)
 
-Source: [`packages/workspace/workspace/src/index.ts:92`](../../packages/workspace/workspace/src/index.ts)
+Source: [`packages/workspace/workspace/src/index.ts:122`](../../packages/workspace/workspace/src/index.ts)
+
+<a id="workspace-events"></a>
+
+### Événements `workspace/*`
+
+<a id="workspacesession-removed--emit"></a>
+
+#### `workspace/session-removed` — emit
+
+Une session a été supprimée durablement : son journal stocké a disparu, son compte d’espace de travail et son entrée d’archive sont effacés. Émis après la validation de chaque écriture du registre et de la persistance. Les sessions vivantes n’atteignent jamais ce point (elles rejettent d’abord WorkspaceLiveSessionError puis se défont via `session/disposed`).
+
+```ts cordis-catalog
+/**
+ * A session was durably deleted: its stored log is gone, its workspace
+ * account and archive entry are cleared. Emitted after every registry
+ * and persistence write committed. Live sessions never reach this point
+ * (they reject {@link WorkspaceLiveSessionError} first and dispose
+ * through `session/disposed` instead).
+ * @param payload - the deleted session id.
+ * @mode emit
+ */
+'workspace/session-removed'(payload: { sessionId: SessionId }): void
+```
+
+Types: [SessionId](core.md)
+
+Source: [`packages/workspace/workspace/src/index.ts:81`](../../packages/workspace/workspace/src/index.ts)
 <!-- END GENERATED cordis-surface -->

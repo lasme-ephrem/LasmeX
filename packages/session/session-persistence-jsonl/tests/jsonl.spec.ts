@@ -287,6 +287,22 @@ describe('JsonlSessionPersistence: durability and crash semantics', () => {
     expect((await ctx.sessionPersistence.list()).map(h => h.id)).toContain(m.id)
   })
 
+  it('deletes a stored session directory and tolerates an absent id', async () => {
+    const m = meta('delete-me', '/work')
+    await ctx.sessionPersistence.create(m)
+    await ctx.sessionPersistence.append(m.id, oneTurnLog())
+    expect((await ctx.sessionPersistence.list()).map(h => h.id)).toContain(m.id)
+
+    await ctx.sessionPersistence.delete(m.id)
+    expect((await ctx.sessionPersistence.list()).map(h => h.id)).not.toContain(m.id)
+    expect(await ctx.sessionPersistence.readRaw(m.id)).toBeUndefined()
+    // The whole per-session directory goes down with the log.
+    await expect(stat(sessionDir(root, '/work', m.id))).rejects.toThrow()
+
+    // Idempotent: deleting an absent session resolves.
+    await expect(ctx.sessionPersistence.delete(m.id)).resolves.toBeUndefined()
+  })
+
   it('readRaw returns the stored artifact text verbatim with its original filename', async () => {
     const m = meta('raw-read', '/work')
     await ctx.sessionPersistence.create(m)

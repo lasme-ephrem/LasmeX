@@ -106,4 +106,23 @@ export interface WorkspaceApi {
    */
   archiveSession(request: RpcRequest<{ sessionId: SessionId }>):
   Promise<RpcResponse<{ archivedSessionIds: SessionId[] }>>
+
+  /**
+   * Restores an archived session: it leaves the archive set and returns to
+   * its workspace at its stored position (the account was never touched).
+   * Idempotent for a session that is not archived. An unknown session fails
+   * with `session-not-found`. Returns the full updated archive set.
+   */
+  unarchiveSession(request: RpcRequest<{ sessionId: SessionId }>):
+  Promise<RpcResponse<{ archivedSessionIds: SessionId[] }>>
+
+  /**
+   * Durably deletes one session: its stored log, every workspace account,
+   * and its archive entry. An unknown session fails with
+   * `session-not-found`; a live session (still open anywhere) fails with
+   * `session-live` — close it first. Returns the full updated archive set
+   * (same snapshot the changed frame carries).
+   */
+  deleteSession(request: RpcRequest<{ sessionId: SessionId }>):
+  Promise<RpcResponse<{ archivedSessionIds: SessionId[] }>>
 }

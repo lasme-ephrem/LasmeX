@@ -424,6 +424,18 @@ export class SessionRuntime implements ISessions {
   }
 
   /**
+   * Relay the archive state into one session instance's snapshot so the
+   * composer freezes while archived and unfreezes when restored. A
+   * non-resident instance is a no-op (the next instantiation reads the
+   * flag from the current selection's archive state).
+   * @param id - session id.
+   * @param archived - new archive flag.
+   */
+  setArchived(id: SessionId, archived: boolean): void {
+    this.manager.get(id)?.handleArchived(archived)
+  }
+
+  /**
    * Refresh the real Session baseline, reusing an in-flight pull.
    * @returns completion of the current or newly started baseline pull.
    */

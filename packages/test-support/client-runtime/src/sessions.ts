@@ -185,7 +185,7 @@ export class TestSessions implements ISessions {
   /** Calls observed on the service-level face, newest last. */
   readonly calls: {
     method: 'open' | 'openSubagent' | 'setSubagentCatalogOpen' | 'refreshSubagents'
-      | 'clear' | 'search' | 'fork'
+      | 'clear' | 'search' | 'fork' | 'setArchived'
     args: unknown[]
   }[] = []
 
@@ -455,6 +455,15 @@ export class TestSessions implements ISessions {
       draft.current = undefined
       draft.currentAddress = undefined
     })
+  }
+
+  /**
+   * Archive-state relay (recorded; fixture snapshots drive the composer flag).
+   * @param id - the session whose archive state to relay.
+   * @param archived - whether the fixture now reads the session as archived.
+   */
+  setArchived(id: SessionId, archived: boolean): void {
+    this.calls.push({ method: 'setArchived', args: [id, archived] })
   }
 
   /**

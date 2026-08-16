@@ -39,6 +39,14 @@ export class WorkspaceCreateError extends Error {
   }
 }
 
+/** Structured archive failure so the UI can surface the running-session refusal. */
+export class SessionArchiveError extends Error {
+  constructor(readonly rpcError: RpcError) {
+    super(`session archive failed: ${rpcError.code}: ${rpcError.message}`)
+    this.name = 'SessionArchiveError'
+  }
+}
+
 /** Structured browse failure so the directory browser can branch on Host business codes. */
 export class DirectoryBrowseError extends Error {
   constructor(readonly rpcError: RpcError) {
@@ -282,14 +290,36 @@ export class WorkspaceRuntime implements IWorkspaces {
   }
 
   /**
-   * Archive a session into the registry-global set. Clearing an archived
-   * current selection is the projection sweep's job (one rule for the local
-   * echo and a remote tab's frame alike).
+   * Archive a session into the registry-global set. An archived current
+   * selection freezes its composer in place instead of clearing. The Host
+   * refuses a still-running session with `session-running`.
    * @param sessionId - session to archive.
    */
   async archiveSession(sessionId: SessionId): Promise<void> {
     const result = await this.manager.archiveSession(sessionId)
-    if (!result.ok) throw new Error(`session archive failed: ${result.error.code}: ${result.error.message}`)
+    if (!result.ok) throw new SessionArchiveError(result.error)
+  }
+
+  /**
+   * Durably delete a session (log, workspace account, and archive entry).
+   * The Host rejects a live session, so close it before deleting. The
+   * Host's session-removed frame retires the session from the list.
+   * @param sessionId - session to delete.
+   */
+  async deleteSession(sessionId: SessionId): Promise<void> {
+    const result = await this.manager.deleteSession(sessionId)
+    if (!result.ok) throw new Error(`session delete failed: ${result.error.code}: ${result.error.message}`)
+  }
+
+  /**
+   * Restore an archived session: it leaves the archive set and returns to
+   * its workspace at its stored position. A currently-open archived session
+   * unfreezes its composer in place (the projection sweep re-flags it).
+   * @param sessionId - session to restore.
+   */
+  async unarchiveSession(sessionId: SessionId): Promise<void> {
+    const result = await this.manager.unarchiveSession(sessionId)
+    if (!result.ok) throw new Error(`session unarchive failed: ${result.error.code}: ${result.error.message}`)
   }
 
   /**
@@ -334,13 +364,14 @@ export class WorkspaceRuntime implements IWorkspaces {
     const workspace = this.manager.getSnapshot()
     const sessions = this.sessions.list.getSnapshot()
     const baselinesReady = workspace.phase === 'ready' && sessions.phase === 'ready'
-    // An archived current selection clears into the New Session view state —
-    // a hidden row must not stay open behind the list. Sweeping here covers
-    // every install path with one rule: the local unary echo, another tab's
-    // changed frame, and a reconnect baseline restoring a persisted
-    // selection that was archived while this client was away.
-    if (sessions.current !== undefined && workspace.archivedSessionIds.includes(sessions.current)) {
-      this.sessions.clear()
+    // An archived selection is kept open in read-only form: the sweep flags
+    // the current session's composer frozen while the id sits in the archive
+    // set, and unfreezes it the moment the id leaves the set (a local
+    // restore, another tab's frame, or a reconnect baseline). This replaces
+    // the earlier clear-on-archive rule — archived rows are visible and
+    // clickable under the Archives bucket now.
+    if (sessions.current !== undefined) {
+      this.sessions.setArchived(sessions.current, workspace.archivedSessionIds.includes(sessions.current))
     }
     this.list.set({
       items: workspace.items,

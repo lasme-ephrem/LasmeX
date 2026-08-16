@@ -181,6 +181,23 @@ export class JsonlSessionPersistence extends SessionPersistence implements Persi
     return this.coordinator.append(id, events)
   }
 
+  /**
+   * Remove the stored session directory (`<root>/<project>/<segment>/`) when
+   * a log exists for the id. An absent log resolves without writing; the
+   * per-session directory is removed even when leftover temp files remain
+   * inside it.
+   * @param id - the persisted session to remove.
+   * @param signal - optional cancellation for the discovery scan.
+   */
+  override async delete(id: SessionId, signal?: AbortSignal): Promise<void> {
+    signal?.throwIfAborted()
+    await this.ensureRootEncoding()
+    signal?.throwIfAborted()
+    const path = await this.findLog(id, signal)
+    if (path === undefined) return
+    await rm(dirname(path), { recursive: true, force: true })
+  }
+
   override prepare(id: SessionId, signal?: AbortSignal): Promise<SessionPreparation> {
     return this.coordinator.prepare(id, signal)
   }

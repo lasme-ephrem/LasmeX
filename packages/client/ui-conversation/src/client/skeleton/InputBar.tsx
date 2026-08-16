@@ -59,6 +59,7 @@ export function InputBar({
   const running = useSession(s => s.running) ?? false
   const subagent = useSession(s => s.subagent) ?? null
   const removed = useSession(s => s.removed) ?? false
+  const archived = useSession(s => s.archived) ?? false
   // Plan mode swaps the textarea placeholder (the projection is the folded
   // host value; owner-prop placeholders — hero, session-unavailable — win).
   const planActive = useProjection('plan', plan => plan !== undefined && (plan.pending ? !plan.active : plan.active))
@@ -126,24 +127,24 @@ export function InputBar({
   // but its independent Stop below stays available while it runs.
   const continuable = subagent?.address.mode === 'continuable'
   const parentOffline = continuable && !subagent.parentAvailable
-  // Running input stays free; locked = session removed, the
+  // Running input stays free; locked = session removed or archived, the
   // inert no-workspace state, the machine faces absent (no session), or a
   // parent-offline continuable child. An owner block also disables input;
   // adjudicating and submitting render read-only so the draft stays visible.
-  const disabled = removed || inert || !live || blocked !== undefined || parentOffline
+  const disabled = removed || archived || inert || !live || blocked !== undefined || parentOffline
   const locked = disabled
   // The model seat is the ONE control a block leaves live: every block this
   // contract has is cleared by choosing a model, so locking it too would leave
   // the composer asking for the only thing it prevents. The other reasons to
   // be disabled do lock it — there is no session to choose a model for.
-  const modelSeatLocked = removed || inert || !live
+  const modelSeatLocked = removed || archived || inert || !live
   const machineBusy = input?.phase === 'adjudicating' || input?.phase === 'submitting'
   // The no-workspace textarea remains the resident DOM node but acts as the
   // existing picker trigger. Message controls stay locked until a Session
   // exists; the trigger itself is read-only rather than disabled so pointer
   // and keyboard users can reach the recovery action.
   const workspaceTrigger = inert && !removed && onRequestWorkspace !== undefined
-  const textareaDisabled = removed || (locked && !workspaceTrigger)
+  const textareaDisabled = removed || archived || (locked && !workspaceTrigger)
   const canSteerQueue = !locked && !machineBusy && !commandMenuOpen && empty && running && subagent === null
     && input.queue.some(row => row.placement === 'queued')
 
@@ -199,7 +200,6 @@ export function InputBar({
   const revealSelectionFocus = (el: HTMLTextAreaElement): void => {
     // selectionStart/End are number|null in lib.dom; the type-aware lint program narrows them.
     const caret = el.selectionDirection === 'backward' ? el.selectionStart : el.selectionEnd
-    // oxlint-disable-next-line typescript/no-unnecessary-condition
     revealCaret(caret ?? el.value.length)
   }
 
@@ -282,7 +282,6 @@ export function InputBar({
     // IME guard so a composition-closing Shift+Enter still breaks the line.
     if (e.key === 'Enter' && e.shiftKey) return
     // keyCode 229 is the legacy IME-composition signal engines emit without isComposing.
-    // oxlint-disable-next-line typescript/no-deprecated
     const composing = composingRef.current || e.nativeEvent.isComposing || e.nativeEvent.keyCode === 229
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       if (keyboard.arbitrate(e.key === 'ArrowUp' ? 'up' : 'down', composing) === 'consumed') e.preventDefault()
@@ -345,7 +344,6 @@ export function InputBar({
     const next = e.target.value
     keyboard.setDraft(next)
     // selectionStart is number|null in lib.dom; the type-aware lint program narrows it.
-    // oxlint-disable-next-line typescript/no-unnecessary-condition
     keyboard.track(next, e.target.selectionStart ?? next.length)
   }
 
@@ -358,12 +356,10 @@ export function InputBar({
   // backdrop click handler below. Undo/redo must NOT reach the browser: the
   // machine owns the transaction log.
   // selectionStart/End are number|null in lib.dom; the type-aware lint program narrows them.
-  /* oxlint-disable typescript/no-unnecessary-condition */
   const selectionOf = (el: HTMLTextAreaElement) => ({
     start: el.selectionStart ?? 0,
     end: el.selectionEnd ?? el.selectionStart ?? 0,
   })
-  /* oxlint-enable typescript/no-unnecessary-condition */
 
   const onCopyOrCut = (e: React.ClipboardEvent<HTMLTextAreaElement>, cut: boolean): void => {
     if (input === undefined || keyboard === undefined) return // absent machine: no draft can be copied or cut
@@ -706,16 +702,18 @@ export function InputBar({
               aria-haspopup={workspaceTrigger ? 'menu' : undefined}
               aria-expanded={workspaceTrigger ? workspacePickerOpen : undefined}
               data-phase={input?.phase ?? 'inert'}
-              placeholder={placeholder ?? (parentOffline
-                ? t('placeholder.parentOffline')
-                : disabled
-                  ? t('placeholder.unavailable')
-                  // The steer hint deliberately outranks the plan placeholder:
-                  // while it shows, the whole-queue gesture is genuinely available
-                  // (the gate never consults plan mode), so the actionable hint wins.
-                  : canSteerQueue
-                    ? t('placeholder.steerQueue')
-                    : planActive ? t('placeholder.plan') : t('placeholder.default'))}
+              placeholder={placeholder ?? (archived
+                ? t('placeholder.archived')
+                : parentOffline
+                  ? t('placeholder.parentOffline')
+                  : disabled
+                    ? t('placeholder.unavailable')
+                    // The steer hint deliberately outranks the plan placeholder:
+                    // while it shows, the whole-queue gesture is genuinely available
+                    // (the gate never consults plan mode), so the actionable hint wins.
+                    : canSteerQueue
+                      ? t('placeholder.steerQueue')
+                      : planActive ? t('placeholder.plan') : t('placeholder.default'))}
               rows={2}
               onChange={onChange}
               onKeyDown={onKeyDown}

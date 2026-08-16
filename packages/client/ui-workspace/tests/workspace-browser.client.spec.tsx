@@ -8,6 +8,7 @@ import type {
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
 import type { WorkspaceBrowserProps } from '../src/client/contract/slots.ts'
+import { SessionArchiveError } from 'lasmex-client-runtime/client'
 import { createWorkspaceViewStore, FLAT_SESSION_ORDER_KEY } from '../src/client/stores.ts'
 import { UNGROUPED_KEY } from '../src/client/tree.ts'
 import { WorkspaceBrowser } from '../src/client/WorkspaceBrowser.tsx'
@@ -76,6 +77,8 @@ function mount(overrides: Partial<WorkspaceBrowserProps> = {}) {
     renameWorkspace: vi.fn(async () => {}),
     deleteWorkspace: vi.fn(async () => {}),
     archiveSession: vi.fn(async () => {}),
+    deleteSession: vi.fn(async () => {}),
+    unarchiveSession: vi.fn(async () => {}),
     insertWorkspaceBefore: vi.fn(async () => {}),
     insertSessionBefore: vi.fn(async () => {}),
     createWorkspace: vi.fn(async () => workspace('created', [])),
@@ -314,7 +317,7 @@ describe('WorkspaceBrowser', () => {
     expect(screen.getAllByRole('treeitem').slice(1)[0]?.textContent).toContain('two')
   })
 
-  it('archives a session from the row menu and hides archived rows in both modes', async () => {
+  it('archives a session from the row menu and lists it under Archives while flat mode hides it', async () => {
     const archiveSession = vi.fn(async () => {})
     const b = mount({
       useSessions: hook(sessionState([summary('kept-s', 2), summary('gone-s', 1)])),
@@ -326,13 +329,98 @@ describe('WorkspaceBrowser', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: '归档会话' }))
     expect(archiveSession).toHaveBeenCalledWith(sid('gone-s'))
 
-    // The archive-set echo hides the row in grouped and flat modes.
+    // The archive-set echo moves the row into the Archives bucket in grouped
+    // mode (collapsed by default, like every group); flat mode keeps
+    // archived rows hidden.
     rerender(b, { useWorkspaces: hook(workspaceState([workspace('alpha', ['kept-s', 'gone-s'])], [sid('gone-s')])) })
-    expect(screen.queryByText('gone-s')).toBeNull()
+    fireEvent.click(screen.getByText('归档'))
+    expect(screen.getByText('gone-s')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '视图选项' }))
     fireEvent.click(screen.getByRole('menuitem', { name: '单列表' }))
     expect(screen.getByText('kept-s')).toBeTruthy()
     expect(screen.queryByText('gone-s')).toBeNull()
+  })
+
+  it('deletes an archived session from its row menu after confirmation', async () => {
+    const deleteSession = vi.fn(async () => {})
+    mount({
+      useSessions: hook(sessionState([summary('gone-s', 1)])),
+      useWorkspaces: hook(workspaceState([workspace('alpha', [])], [sid('gone-s')])),
+      deleteSession,
+    })
+    fireEvent.click(screen.getByText('归档'))
+    fireEvent.click(screen.getByRole('button', { name: '会话“gone-s”的操作' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '删除会话' }))
+    // The destructive action opens a browser-owned confirmation dialog; the
+    // dialog's confirm button carries the same localized label.
+    expect(screen.getByRole('button', { name: '删除会话' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '删除会话' }))
+    await waitFor(() => {
+      expect(deleteSession).toHaveBeenCalledWith(sid('gone-s'))
+    })
+  })
+
+  it('keeps the Archives bucket expanded across session deletions', () => {
+    const deleteSession = vi.fn(async () => {})
+    const b = mount({
+      useSessions: hook(sessionState([summary('gone-a', 2), summary('gone-b', 1)])),
+      useWorkspaces: hook(workspaceState([workspace('alpha', [])], [sid('gone-a'), sid('gone-b')])),
+      deleteSession,
+    })
+    fireEvent.click(screen.getByText('归档'))
+    expect(screen.getByText('gone-a')).toBeTruthy()
+    expect(screen.getByText('gone-b')).toBeTruthy()
+
+    // Deleting one archived session changes the workspace list (the account
+    // detach echoes through host/workspace-changed); the retain sweep must
+    // keep the Archives key, so the bucket stays expanded without another
+    // click.
+    rerender(b, {
+      useSessions: hook(sessionState([summary('gone-b', 1)])),
+      useWorkspaces: hook(workspaceState([workspace('alpha', [])], [sid('gone-b')])),
+    })
+    expect(screen.getByText('gone-b')).toBeTruthy()
+  })
+
+  it('restores an archived session from its row menu', async () => {
+    const unarchiveSession = vi.fn(async () => {})
+    mount({
+      useSessions: hook(sessionState([summary('gone-s', 1)])),
+      useWorkspaces: hook(workspaceState([workspace('alpha', [])], [sid('gone-s')])),
+      unarchiveSession,
+    })
+    fireEvent.click(screen.getByText('归档'))
+    fireEvent.click(screen.getByRole('button', { name: '会话“gone-s”的操作' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '恢复会话' }))
+    await waitFor(() => {
+      expect(unarchiveSession).toHaveBeenCalledWith(sid('gone-s'))
+    })
+  })
+
+  it('shows an explanatory dialog when the Host refuses to archive a running session', async () => {
+    const archiveSession = vi.fn(async () => {
+      throw new SessionArchiveError({
+        code: 'session-running',
+        message: 'cannot archive: still running',
+        details: { sessionId: sid('gone-s') },
+      })
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      mount({
+        useSessions: hook(sessionState([summary('gone-s', 1)])),
+        useWorkspaces: hook(workspaceState([workspace('alpha', ['gone-s'])])),
+        archiveSession,
+      })
+      fireEvent.click(screen.getByText('alpha'))
+      fireEvent.click(screen.getByRole('button', { name: '会话“gone-s”的操作' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: '归档会话' }))
+      expect(await screen.findByText('无法归档会话')).toBeTruthy()
+      expect(screen.getByText(/会话仍在运行/)).toBeTruthy()
+      expect(warn).not.toHaveBeenCalled()
+    } finally {
+      warn.mockRestore()
+    }
   })
 
   it('logs and keeps the tree when the archive call rejects', async () => {
@@ -387,7 +475,7 @@ describe('WorkspaceBrowser', () => {
     expect(startSession).toHaveBeenCalledWith(wid('alpha'))
   })
 
-  it('auto-expands the Ungrouped bucket for a loose current session; its header has no menu and its ＋ is inert', () => {
+  it('auto-expands the Ungrouped bucket for a loose current session; its header has no menu and no ＋', () => {
     const startSession = vi.fn()
     mount({
       useSessions: hook(sessionState([summary('loose', 1)], { current: sid('loose') })),
@@ -397,7 +485,8 @@ describe('WorkspaceBrowser', () => {
     // The loose session's group is UNGROUPED_KEY: expanded by the effect.
     expect(screen.getByText('loose')).toBeTruthy()
     expect(screen.queryByRole('button', { name: '工作区“未分组”的操作' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: '在“未分组”中新建会话' }))
+    // Only real Workspaces offer the create action; buckets show no ＋.
+    expect(screen.queryByRole('button', { name: '在“未分组”中新建会话' })).toBeNull()
     expect(startSession).not.toHaveBeenCalled()
   })
 

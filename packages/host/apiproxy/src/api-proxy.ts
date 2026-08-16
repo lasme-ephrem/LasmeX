@@ -8,7 +8,7 @@ import { mkdir, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { installModelSelection } from 'lasmex-agent'
-import type { Agent, ModelSelection, ModelSelectionRef, AgentOptions, AgentStatus } from 'lasmex-agent'
+import type { Agent, AgentHandle, ModelSelection, ModelSelectionRef, AgentOptions, AgentStatus } from 'lasmex-agent'
 import type {} from 'lasmex-agent-presets/types'
 import { AttachmentError } from 'lasmex-attachment'
 import type { ImageAttachmentRef } from 'lasmex-attachment'
@@ -25,7 +25,7 @@ import { isUserInvocable } from 'lasmex-skill'
 import type { Workspace, WorkspaceRecord } from 'lasmex-workspace'
 import {
   workspaceDomainState, workspaceRecord, WorkspaceId as brandWorkspaceId,
-  WorkspaceMoveInvalidError, WorkspaceOrderInvalidError, WorkspaceUnknownSessionError,
+  WorkspaceLiveSessionError, WorkspaceMoveInvalidError, WorkspaceOrderInvalidError, WorkspaceUnknownSessionError,
 } from 'lasmex-workspace'
 // Type-only: brings the `ctx.tools` Context merge into this program (viewFor reads presenters).
 import {
@@ -1264,11 +1264,15 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
   // composition, and the header is written once at creation. Reading the
   // header here would silently undo the switch on the next restart and
   // restore that history under the old tool set.
-  const agentFor = createApiRemoteAgentResolver(ctx, {
+  const { agentFor, disposeAgent } = createApiRemoteAgentResolver(ctx, {
     agentOptions,
     setup: async ({ meta, events }) =>
       (await composeAgent(resolveSessionPreset({ header: meta, events }))).setup,
   })
+  // Handles minted by session.create (the resolver retains its own resume
+  // handles); durable deletion disposes either so an idle agent never
+  // blocks its session's removal.
+  const createdAgentHandles = new Map<SessionId, AgentHandle>()
 
   /** Send one transient frame to every connected mux consumer. */
   function broadcast(payload: MuxFrame): void {
@@ -1667,7 +1671,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           throw new Error(`failed to ensure project directory "${cwd}": ${String(error)}`, { cause: error })
         }
         const composition = await composeAgent(presetId)
-        return (await ctx.agents.create({
+        const handle = await ctx.agents.create({
           sessionId,
           agentOptions: agentOptions(),
           meta: {
@@ -1675,7 +1679,9 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             ...composition.agentPreset === undefined ? {} : { agentPreset: composition.agentPreset },
           },
           setup: composition.setup,
-        })).agent
+        })
+        createdAgentHandles.set(sessionId, handle)
+        return handle.agent
       })().catch((error: unknown) => {
         // Another Host entry path may have published the same identity while
         // this operation crossed an asynchronous persistence/filesystem step.
@@ -2420,7 +2426,9 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         // plane, composing nothing would leave the child with no tools at all.
         const forkComposition = await composeAgent(resolveSessionPreset(source))
         try {
-          await ctx.agents.create({
+          // The handle is retained like every other created agent so durable
+          // deletion can close the forked child cleanly.
+          const childHandle = await ctx.agents.create({
             sessionId: childId,
             seed: events.slice(0, cut),
             meta: {
@@ -2434,6 +2442,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             agentOptions: agentOptions(),
             setup: forkComposition.setup,
           })
+          createdAgentHandles.set(childId, childHandle)
         } catch (error: unknown) {
           return err(request, {
             code: 'internal',
@@ -2460,6 +2469,15 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
 
       async prompt(request) {
         const { sessionId, mode, content, clientTimeZone } = request.payload
+        // An archived session is read-only for conversation writes; unarchive
+        // to resume. Rename/fork stay available (harmless metadata writes).
+        if (ctx.workspaceRegistry.archivedSessionIds.includes(sessionId)) {
+          return err(request, {
+            code: 'session-archived',
+            message: `session '${sessionId}' is archived: unarchive it to send messages`,
+            details: { sessionId },
+          })
+        }
         const canonicalTimeZone = clientTimeZone === undefined
           ? undefined
           : canonicalClientTimeZone(clientTimeZone)
@@ -2567,6 +2585,13 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
 
       updateQueue(request) {
         const { sessionId, itemId, action } = request.payload
+        if (ctx.workspaceRegistry.archivedSessionIds.includes(sessionId)) {
+          return Promise.resolve(err(request, {
+            code: 'session-archived',
+            message: `session '${sessionId}' is archived: unarchive it to edit the queue`,
+            details: { sessionId },
+          }))
+        }
         if (action.kind === 'edit' && action.content.some(block => block.type !== 'text')) {
           return Promise.resolve(err(request, {
             code: 'attachment-error',
@@ -2904,6 +2929,15 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
 
       async archiveSession(request) {
         const { sessionId } = request.payload
+        // A running agent would keep appending to the log behind the frozen
+        // read-only view, so archiving is refused until the turn completes.
+        if (ctx.agents.get(sessionId)?.status === 'running') {
+          return err(request, {
+            code: 'session-running',
+            message: `cannot archive session '${sessionId}': the session is still running; wait for it to finish`,
+            details: { sessionId },
+          })
+        }
         try {
           await ctx.workspaceRegistry.archiveSession(sessionId)
         } catch (error: unknown) {
@@ -2915,6 +2949,63 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             message: error.message,
             details: { sessionId },
           })
+        }
+        return ok(request, { archivedSessionIds: [...ctx.workspaceRegistry.archivedSessionIds] })
+      },
+
+      async unarchiveSession(request) {
+        const { sessionId } = request.payload
+        try {
+          await ctx.workspaceRegistry.unarchiveSession(sessionId)
+        } catch (error: unknown) {
+          if (!(error instanceof WorkspaceUnknownSessionError)) throw error
+          return err(request, {
+            code: 'session-not-found',
+            message: error.message,
+            details: { sessionId },
+          })
+        }
+        return ok(request, { archivedSessionIds: [...ctx.workspaceRegistry.archivedSessionIds] })
+      },
+
+      async deleteSession(request) {
+        const { sessionId } = request.payload
+        // A running agent must not be torn down mid-turn; an idle resumed
+        // agent (e.g. the session was opened read-only) closes cleanly before
+        // the durable log is removed.
+        if (ctx.agents.get(sessionId)?.status === 'running') {
+          return err(request, {
+            code: 'session-running',
+            message: `cannot delete session '${sessionId}': the session is still running; wait for it to finish`,
+            details: { sessionId },
+          })
+        }
+        await disposeAgent(sessionId)
+        const created = createdAgentHandles.get(sessionId)
+        if (created !== undefined) {
+          createdAgentHandles.delete(sessionId)
+          await created.dispose()
+        }
+        try {
+          await ctx.workspaceRegistry.deleteSession(sessionId)
+        } catch (error: unknown) {
+          // Only the registry's business rejections are business codes;
+          // storage/durability failures propagate as internal errors.
+          if (error instanceof WorkspaceUnknownSessionError) {
+            return err(request, {
+              code: 'session-not-found',
+              message: error.message,
+              details: { sessionId },
+            })
+          }
+          if (error instanceof WorkspaceLiveSessionError) {
+            return err(request, {
+              code: 'session-live',
+              message: error.message,
+              details: { sessionId },
+            })
+          }
+          throw error
         }
         return ok(request, { archivedSessionIds: [...ctx.workspaceRegistry.archivedSessionIds] })
       },
@@ -3556,6 +3647,11 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           }),
           ctx.on('session/disposed', (session: Session) => {
             queue.push(frame({ type: 'host/session-removed', sessionId: session.id }))
+          }),
+          // Durable deletion (archive cleanup) rides the workspace registry's
+          // own event: no Session instance ever existed for it to dispose.
+          ctx.on('workspace/session-removed', ({ sessionId }) => {
+            queue.push(frame({ type: 'host/session-removed', sessionId }))
           }),
           ctx.on('agent/status', ({ agent, status }: { agent: Agent; status: AgentStatus }) => {
             queue.push(frame({ type: 'host/session-status', sessionId: agent.id, running: status === 'running' }))

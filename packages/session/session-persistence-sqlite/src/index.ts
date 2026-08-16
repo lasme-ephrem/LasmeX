@@ -182,6 +182,17 @@ export class SqliteSessionPersistence extends SessionPersistence implements Pers
     return this.coordinator.append(id, events)
   }
 
+  /**
+   * Remove the session's metadata row; the schema's `ON DELETE CASCADE`
+   * removes its event rows in the same statement. An unknown id resolves
+   * without writing.
+   * @param id - the persisted session to remove.
+   */
+  override async delete(id: SessionId): Promise<void> {
+    await this.ready
+    this.db.prepare('DELETE FROM sessions WHERE id = ?').run(id)
+  }
+
   override prepare(id: SessionId, signal?: AbortSignal): Promise<SessionPreparation> {
     return this.coordinator.prepare(id, signal)
   }

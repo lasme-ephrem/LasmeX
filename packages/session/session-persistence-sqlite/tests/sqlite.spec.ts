@@ -539,6 +539,24 @@ describe('SqliteSessionPersistence: durability and crash semantics', () => {
     await fiber.dispose()
   })
 
+  it('deletes a stored session row and its events, and tolerates an absent id', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SessionStore)
+    const fiber = await ctx.plugin(SqliteSessionPersistence, { path: ':memory:' })
+    const m = meta('delete')
+    await ctx.sessionPersistence.create(m)
+    await ctx.sessionPersistence.append(m.id, oneTurnLog())
+    expect((await ctx.sessionPersistence.list()).map(x => x.id)).toContain(m.id)
+
+    await ctx.sessionPersistence.delete(m.id)
+    expect(await ctx.sessionPersistence.list()).toEqual([])
+    await expect(ctx.sessionPersistence.load(m.id)).rejects.toThrow()
+
+    // Idempotent: deleting an absent session resolves.
+    await expect(ctx.sessionPersistence.delete(m.id)).resolves.toBeUndefined()
+    await fiber.dispose()
+  })
+
   it('persists across separate backend instances over the same file', async () => {
     const path = await freshDbPath()
     const m = meta('persist', '/proj')

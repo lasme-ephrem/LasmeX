@@ -44,4 +44,11 @@ export interface SessionsPort {
   open(id: SessionId): void
   /** Clear the current selection into the no-session view state. */
   clear(): void
+  /**
+   * Freeze or unfreeze one session's composer because of its archive state
+   * (read-only while archived; unfreezing reactivates the input in place).
+   * @param id - session id (no-op when the instance is not resident).
+   * @param archived - new archive flag.
+   */
+  setArchived(id: SessionId, archived: boolean): void
 }

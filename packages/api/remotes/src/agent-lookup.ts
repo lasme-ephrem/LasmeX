@@ -1,7 +1,7 @@
 /** Host BFF policy for resolving Remote Agent and Session identities. */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, AgentOptions, AgentSetup } from 'lasmex-agent'
+import type { Agent, AgentHandle, AgentOptions, AgentSetup } from 'lasmex-agent'
 import type { Session, SessionEvent, SessionHeader, SessionId } from 'lasmex-session'
 import type {} from 'lasmex-session-persistence'
 import { TypertLookupFailure } from 'lasmex-typert-protocol'
@@ -110,19 +110,42 @@ export async function inspectApiRemoteSession(
   return { meta: inspected.meta, events: [...inspected.events] }
 }
 
+/** The resolver face shared by legacy API Proxy methods and Typert lookups. */
+export interface ApiRemoteAgentResolver {
+  /**
+   * Resolve one session identity to its live Agent, reusing attached agents
+   * and resuming cold sessions once per identity.
+   * @param sessionId - durable identity to resolve.
+   * @returns the live Agent or the caller-facing lookup error.
+   */
+  agentFor(sessionId: SessionId): Promise<ApiRemoteAgentResult>
+  /**
+   * Dispose the resumed Agent handle this resolver holds for one identity
+   * (stop, unregister, remove its session from the store, unwind its scope).
+   * Idempotent: an identity without a held handle — never resumed, already
+   * disposed, or attached by another owner — resolves without work.
+   * @param sessionId - identity whose resumed agent must be closed.
+   */
+  disposeAgent(sessionId: SessionId): Promise<void>
+}
+
 /**
  * Create the Host's shared Agent resolver and configure Agent/Session Typert lookups.
  * Live Agents are reused, ordinary cold sessions resume once per identity, and
- * subagent-owned identities retain the legacy `agent-busy` fence.
+ * subagent-owned identities retain the legacy `agent-busy` fence. The resolver
+ * retains every resume handle so {@link ApiRemoteAgentResolver.disposeAgent}
+ * can close an idle resumed agent cleanly (durable deletion closes before it
+ * removes the log).
  * @param ctx - owning Host Context.
  * @param options - defaults and Agent-scope setup used only for cold resume.
- * @returns resolver shared by legacy API Proxy methods and Typert lookups.
+ * @returns the resolver face shared by legacy API Proxy methods and Typert lookups.
  */
 export function createApiRemoteAgentResolver(
   ctx: Context,
   options: ApiRemoteAgentOptions,
-): (sessionId: SessionId) => Promise<ApiRemoteAgentResult> {
+): ApiRemoteAgentResolver {
   const resumes = new Map<SessionId, Promise<Agent>>()
+  const handles = new Map<SessionId, AgentHandle>()
 
   const fencedLiveAgent = (sessionId: SessionId): ApiRemoteAgentResult | undefined => {
     const live = ctx.agents.get(sessionId)
@@ -164,6 +187,7 @@ export function createApiRemoteAgentResolver(
             ...options.agentOptions === undefined ? {} : { agentOptions: options.agentOptions() },
             ...setup === undefined ? {} : { setup },
           })
+          handles.set(sessionId, handle)
           return handle.agent
         } finally {
           resumes.delete(sessionId)
@@ -207,5 +231,13 @@ export function createApiRemoteAgentResolver(
     typeCtx.typert.contexts.configureHost('agent', async sessionId => (await resolveAgent(sessionId)).ctx)
   })
 
-  return agentFor
+  return {
+    agentFor,
+    disposeAgent: async (sessionId) => {
+      const handle = handles.get(sessionId)
+      if (handle === undefined) return
+      handles.delete(sessionId)
+      await handle.dispose()
+    },
+  }
 }

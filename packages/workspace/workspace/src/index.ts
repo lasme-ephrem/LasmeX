@@ -47,8 +47,38 @@ export class WorkspaceUnknownSessionError extends Error {
    * @param sessionId - The unknown session id.
    */
   constructor(readonly sessionId: SessionId) {
-    super(`cannot archive session '${sessionId}': live sessions and session persistence hold no such session`)
+    super(`cannot archive or delete session '${sessionId}': live sessions and session persistence hold no such session`)
     this.name = 'WorkspaceUnknownSessionError'
+  }
+}
+
+/**
+ * A deleteSession request named a session still live in the Session store.
+ * Deleting a live session would race its agent and durability listeners, so
+ * the caller must close it first.
+ */
+export class WorkspaceLiveSessionError extends Error {
+  /**
+   * @param sessionId - The live session id.
+   */
+  constructor(readonly sessionId: SessionId) {
+    super(`cannot delete session '${sessionId}': the session is live; close it first`)
+    this.name = 'WorkspaceLiveSessionError'
+  }
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Events {
+    /**
+     * A session was durably deleted: its stored log is gone, its workspace
+     * account and archive entry are cleared. Emitted after every registry
+     * and persistence write committed. Live sessions never reach this point
+     * (they reject {@link WorkspaceLiveSessionError} first and dispose
+     * through `session/disposed` instead).
+     * @param payload - the deleted session id.
+     * @mode emit
+     */
+    'workspace/session-removed'(payload: { sessionId: SessionId }): void
   }
 }
 
@@ -265,6 +295,73 @@ export class WorkspaceRegistry extends Service {
     if (this.headers.has(id)) return true
     await this.indexHeaders(await this.ctx.sessionPersistence.list())
     return this.headers.has(id)
+  }
+
+  /**
+   * Restore an archived session into every grouping surface by removing its
+   * archive entry. Its workspace account was never touched, so the row
+   * returns to its stored position. Idempotent: an unarchived id resolves
+   * without writing; an unknown id rejects ({@link WorkspaceUnknownSessionError}).
+   * @param sessionId - The session to restore.
+   * @returns resolution after durability.
+   */
+  unarchiveSession(sessionId: SessionId): Promise<void> {
+    return this.enqueueOperation(async () => {
+      if (!this.requireState().archivedSessionIds.includes(sessionId)) {
+        if (!(await this.sessionKnown(sessionId))) {
+          throw new WorkspaceUnknownSessionError(sessionId)
+        }
+        return
+      }
+      const state = this.requireState()
+      await this.setState({
+        ...state,
+        archivedSessionIds: state.archivedSessionIds.filter(id => id !== sessionId),
+      })
+    })
+  }
+
+  /**
+   * Durably delete one session: its stored log, every workspace account,
+   * and its archive entry. A live session rejects before any write
+   * ({@link WorkspaceLiveSessionError} — close it first); an unknown id
+   * rejects ({@link WorkspaceUnknownSessionError}). Idempotent: deleting a
+   * session already absent from persistence and accounts resolves.
+   * @param sessionId - The session to delete.
+   * @returns resolution after every durable write.
+   */
+  deleteSession(sessionId: SessionId): Promise<void> {
+    return this.enqueueOperation(async () => {
+      if (this.ctx.get('sessions')?.get(sessionId) !== undefined) {
+        throw new WorkspaceLiveSessionError(sessionId)
+      }
+      if (!(await this.sessionKnown(sessionId))) {
+        throw new WorkspaceUnknownSessionError(sessionId)
+      }
+      // Drop the header index before the physical delete: entity accounts
+      // filter the id out from this point, even if a later write fails.
+      this.headers.delete(sessionId)
+      this.sessionPaths.delete(sessionId)
+      this.invalidSessionPaths.delete(sessionId)
+      await this.ctx.sessionPersistence.delete(sessionId)
+      // Detach from the durable record, not the filtered getter: the header
+      // index already dropped the id, so `entity.sessionIds` no longer shows
+      // it even though the stored record still accounts it.
+      for (const entity of this.entities.values()) {
+        const record = this.requireTable().get(entity.id)
+        if (record !== undefined && record.sessionIds.includes(sessionId)) {
+          await entity.detachSession(sessionId)
+        }
+      }
+      const state = this.requireState()
+      if (state.archivedSessionIds.includes(sessionId)) {
+        await this.setState({
+          ...state,
+          archivedSessionIds: state.archivedSessionIds.filter(id => id !== sessionId),
+        })
+      }
+      this.ctx.emit('workspace/session-removed', { sessionId })
+    })
   }
 
   /**

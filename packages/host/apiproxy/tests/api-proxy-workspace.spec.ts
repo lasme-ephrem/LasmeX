@@ -6,7 +6,7 @@ import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry, { Inbox } from 'lasmex-agent'
 import type { Agent, AgentFactory } from 'lasmex-agent'
 import SessionStore, { SessionId } from 'lasmex-session'
-import type { Session } from 'lasmex-session'
+import type { Session, SessionHeader } from 'lasmex-session'
 import Storage from 'lasmex-storage'
 import { DomainFacility } from 'lasmex-storage-domain'
 import UserQuestionService from 'lasmex-user-questions'
@@ -65,6 +65,7 @@ async function harness(
     openPath?: (path: string, signal: AbortSignal) => Promise<void>
     canOpenPath?: () => boolean
   } = {},
+  persisted: SessionHeader[] = [],
 ) {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
@@ -75,7 +76,14 @@ async function harness(
   const storageDomain = new DomainFacility(ctx, { backend: 'memory', routes: {} })
   ctx.storage.mount('domain', storageDomain)
   ctx.provide('storageDomain', storageDomain)
-  ctx.provide('sessionPersistence', { list: () => Promise.resolve([]) } as never)
+  ctx.provide('sessionPersistence', {
+    list: () => Promise.resolve(persisted),
+    delete: (id: SessionId) => {
+      const at = persisted.findIndex(header => header.id === id)
+      if (at !== -1) persisted.splice(at, 1)
+      return Promise.resolve()
+    },
+  } as never)
   await ctx.plugin(WorkspaceRegistry)
 
   const factory: AgentFactory = {
@@ -564,6 +572,104 @@ describe('Host Workspace increments', () => {
     expect(missing.result).toMatchObject({
       ok: false,
       error: { code: 'session-not-found', details: { sessionId: 'session-ghost' } },
+    })
+    abort.abort()
+  })
+
+  it('deletes an archived session durably, streams its removal, and rejects live or unknown ids', async () => {
+    const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-apiproxy-workspace-')))
+    const dir = stageDir(root, 'delete-home')
+    const sessionId = SessionId('session-to-delete')
+    const persisted: SessionHeader[] = [{ version: 0, id: sessionId, createdAt: 0, cwd: dir }]
+    const { api } = await harness(root, undefined, {}, persisted)
+    const workspace = expectOk(await api.workspace.list(request({}))).items[0]!
+    expect(workspace.sessionIds).toEqual([sessionId])
+    expectOk(await api.workspace.archiveSession(request({ sessionId })))
+
+    const abort = new AbortController()
+    const stream: AsyncIterator<RpcRequest<HostFrame>> =
+      api.events.host(request({}), abort.signal)[Symbol.asyncIterator]()
+    const changed = nextHostFrame(stream)
+    expect(expectOk(await api.workspace.deleteSession(request({ sessionId }))).archivedSessionIds)
+      .toEqual([])
+    // Deletion commits in order: account detach, archive-set rewrite, then
+    // the registry's removal event riding the host stream.
+    expect(await changed).toMatchObject({ payload: { type: 'host/workspace-changed' } })
+    expect(await nextHostFrame(stream)).toMatchObject({
+      payload: { type: 'host/archived-sessions-changed', archivedSessionIds: [] },
+    })
+    expect(await nextHostFrame(stream)).toMatchObject({
+      payload: { type: 'host/session-removed', sessionId },
+    })
+
+    const listed = expectOk(await api.workspace.list(request({})))
+    expect(listed.archivedSessionIds).toEqual([])
+    expect(listed.items[0]?.sessionIds).toEqual([])
+
+    // A live session rejects before any durable write.
+    expectOk(await api.sessions.create(request({ workspaceId: workspace.workspaceId, sessionId: SessionId('live-keeper') })))
+    const live = await api.workspace.deleteSession(request({ sessionId: SessionId('live-keeper') }))
+    expect(live.result).toMatchObject({
+      ok: false,
+      error: { code: 'session-live', details: { sessionId: 'live-keeper' } },
+    })
+
+    const unknown = await api.workspace.deleteSession(request({ sessionId: SessionId('session-ghost') }))
+    expect(unknown.result).toMatchObject({
+      ok: false,
+      error: { code: 'session-not-found', details: { sessionId: 'session-ghost' } },
+    })
+    abort.abort()
+  })
+
+  it('restores an archived session, refuses conversation writes while archived, and refuses to archive a running session', async () => {
+    const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dsh-apiproxy-workspace-')))
+    const dir = stageDir(root, 'unarchive-home')
+    const sessionId = SessionId('session-to-restore')
+    const persisted: SessionHeader[] = [{ version: 0, id: sessionId, createdAt: 0, cwd: dir }]
+    const { api, ctx } = await harness(root, undefined, {}, persisted)
+    expectOk(await api.workspace.archiveSession(request({ sessionId })))
+
+    // Conversation writes are refused while archived: prompt and queue edits.
+    const prompt = await api.sessions.prompt(request({
+      sessionId, mode: 'queue', content: [{ type: 'text', text: 'hi' }],
+    }))
+    expect(prompt.result).toMatchObject({
+      ok: false, error: { code: 'session-archived', details: { sessionId } },
+    })
+    const queueEdit = await api.sessions.updateQueue(request({
+      sessionId, itemId: 'm1' as never, action: { kind: 'drop' } as never,
+    }))
+    expect(queueEdit.result).toMatchObject({
+      ok: false, error: { code: 'session-archived', details: { sessionId } },
+    })
+
+    // Restoration streams the updated set and keeps the workspace account.
+    const abort = new AbortController()
+    const stream: AsyncIterator<RpcRequest<HostFrame>> =
+      api.events.host(request({}), abort.signal)[Symbol.asyncIterator]()
+    const changed = nextHostFrame(stream)
+    expect(expectOk(await api.workspace.unarchiveSession(request({ sessionId }))).archivedSessionIds)
+      .toEqual([])
+    expect(await changed).toMatchObject({
+      payload: { type: 'host/archived-sessions-changed', archivedSessionIds: [] },
+    })
+    const listed = expectOk(await api.workspace.list(request({})))
+    expect(listed.archivedSessionIds).toEqual([])
+    expect(listed.items[0]?.sessionIds).toEqual([sessionId])
+
+    // A running session cannot be archived: the refusal names the reason.
+    const runningId = SessionId('running-one')
+    const runningSession = ctx.sessions.create(runningId)
+    const unregisterRunning = ctx.agents.register({ ...stubAgent(runningSession), status: 'running' as const })
+    const running = await api.workspace.archiveSession(request({ sessionId: runningId }))
+    expect(running.result).toMatchObject({
+      ok: false, error: { code: 'session-running', details: { sessionId: runningId } },
+    })
+    unregisterRunning()
+    const unarchiveUnknown = await api.workspace.unarchiveSession(request({ sessionId: SessionId('session-ghost') }))
+    expect(unarchiveUnknown.result).toMatchObject({
+      ok: false, error: { code: 'session-not-found', details: { sessionId: 'session-ghost' } },
     })
     abort.abort()
   })

@@ -457,6 +457,12 @@ export interface ConversationSnapshot {
   composerPhase: ComposerPhase
   /** Set after host/session-removed; the UI grays out and disables input. */
   removed: boolean
+  /**
+   * Set while the session is in the registry-global archive set; the UI
+   * freezes the composer (read-only). Optional so bare test snapshots need
+   * not set it.
+   */
+  archived?: boolean
   openState: OpenState
   openError: RpcError | null
   hasMore: boolean

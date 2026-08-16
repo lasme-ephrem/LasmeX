@@ -4,7 +4,7 @@ import type {
 } from 'lasmex-client-runtime/client'
 import {
   deriveFlat, deriveGroups, deriveSearchResults, workspaceLabel, relativeTime,
-  UNGROUPED_KEY, UNGROUPED_LABEL,
+  ARCHIVES_KEY, UNGROUPED_KEY, UNGROUPED_LABEL,
 } from '../src/client/tree.ts'
 import { createWorkspaceViewStore } from '../src/client/stores.ts'
 
@@ -179,19 +179,28 @@ describe('deriveGroups', () => {
     expect(groups[0]!.sessions.map(node => node.id)).toEqual([sid('present')])
   })
 
-  it('hides archived sessions from workspace groups and Ungrouped', () => {
+  it('lists archived sessions only under the Archives group, in archive order', () => {
     const kept = summary('kept', 1, '/projects/first')
     const gone = summary('gone', 2, '/projects/first')
     const looseGone = summary('loose-gone', 3, '/other')
     const sessions = list(kept, gone, looseGone)
     const groups = deriveGroups(
-      sessions, [workspace('first', ['kept', 'gone'])], archived('gone', 'loose-gone'), view(['first', UNGROUPED_KEY]),
+      sessions, [workspace('first', ['kept', 'gone'])], archived('gone', 'loose-gone'),
+      view(['first', UNGROUPED_KEY, ARCHIVES_KEY]),
     )
     // The archived member drops from its group AND the archived stray never
-    // surfaces an Ungrouped bucket; counts follow the visible rows.
-    expect(groups.map(group => group.key)).toEqual(['first'])
+    // surfaces an Ungrouped bucket; both trail under Archives, which spawns
+    // only while the set is non-empty.
+    expect(groups.map(group => group.key)).toEqual(['first', ARCHIVES_KEY])
     expect(groups[0]!.sessions.map(node => node.id)).toEqual([kept.id])
     expect(groups[0]!.sessionCount).toBe(1)
+    expect(groups[1]!.kind).toBe('archives')
+    expect(groups[1]!.sessions.map(node => node.id)).toEqual([gone.id, looseGone.id])
+    expect(groups[1]!.sessionCount).toBe(2)
+    expect(groups[1]!.containsCurrent).toBe(false)
+    // An empty archive set spawns no bucket at all.
+    expect(deriveGroups(sessions, [workspace('first', ['kept', 'gone'])], noArchive, view(['first']))
+      .some(group => group.key === ARCHIVES_KEY)).toBe(false)
   })
 
   it('marks selected Workspace and Ungrouped sessions without relying on an Intent', () => {

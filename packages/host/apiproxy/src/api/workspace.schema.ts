@@ -98,3 +98,23 @@ export const workspaceArchiveSessionRequestSchema = z.object({
 export const workspaceArchiveSessionValueSchema = z.object({
   archivedSessionIds: z.array(sessionIdSchema),
 }) satisfies z.ZodType<Wire<ResponseValue<'workspace.archiveSession'>>>
+
+/** workspace.deleteSession request payload. */
+export const workspaceDeleteSessionRequestSchema = z.object({
+  sessionId: sessionIdSchema,
+}) satisfies z.ZodType<Wire<RequestPayload<'workspace.deleteSession'>>>
+
+/** workspace.deleteSession response value: the full updated archive set. */
+export const workspaceDeleteSessionValueSchema = z.object({
+  archivedSessionIds: z.array(sessionIdSchema),
+}) satisfies z.ZodType<Wire<ResponseValue<'workspace.deleteSession'>>>
+
+/** workspace.unarchiveSession request payload. */
+export const workspaceUnarchiveSessionRequestSchema = z.object({
+  sessionId: sessionIdSchema,
+}) satisfies z.ZodType<Wire<RequestPayload<'workspace.unarchiveSession'>>>
+
+/** workspace.unarchiveSession response value: the full updated archive set. */
+export const workspaceUnarchiveSessionValueSchema = z.object({
+  archivedSessionIds: z.array(sessionIdSchema),
+}) satisfies z.ZodType<Wire<ResponseValue<'workspace.unarchiveSession'>>>

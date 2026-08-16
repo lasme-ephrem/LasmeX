@@ -99,6 +99,7 @@ export class Session implements SessionFace {
   /** Empty-log mirror (see ConversationSnapshot.blank); unknown bare sessions begin conservatively blank. */
   private blankBit = true
   private removed = false
+  private archived = false
   private promptError: PromptError | null = null
   private lastAgentError: string | null = null
   /** Live events buffered during open/resync and stitched by sequence once history lands. */
@@ -578,6 +579,17 @@ export class Session implements SessionFace {
   }
 
   /**
+   * Archive-state relay from the workspaces domain: the flag freezes the
+   * composer while the session is archived and unfreezes it when restored.
+   * @param archived - new archive flag.
+   */
+  handleArchived(archived: boolean): void {
+    if (this.archived === archived) return
+    this.archived = archived
+    this.notifier.markDirty()
+  }
+
+  /**
    * host/agent-error relay: the only outlet for live failures with no turn position.
    * @param message - the stringified error.
    */
@@ -757,6 +769,7 @@ export class Session implements SessionFace {
         this.promptAttempted,
       ),
       removed: this.removed,
+      archived: this.archived,
       openState: this.openState,
       openError: this.openError,
       hasMore: this.hasMore,

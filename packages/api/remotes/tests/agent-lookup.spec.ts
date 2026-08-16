@@ -48,7 +48,7 @@ describe('API Remote Agent resolver races', () => {
       events: [],
     }))
 
-    const result = await createApiRemoteAgentResolver(ctx, {})(sessionId)
+    const result = await createApiRemoteAgentResolver(ctx, {}).agentFor(sessionId)
 
     expect(result).toMatchObject({ error: { code: 'session-not-found', details: { sessionId } } })
     await ctx.fiber.dispose()
@@ -68,7 +68,7 @@ describe('API Remote Agent resolver races', () => {
       return { agent: stubAgent(ctx, published), dispose: () => Promise.resolve() }
     })
 
-    const result = await createApiRemoteAgentResolver(ctx, {})(sessionId)
+    const result = await createApiRemoteAgentResolver(ctx, {}).agentFor(sessionId)
 
     expect(result).toMatchObject({ agent: { id: sessionId } })
     expect(resume).toHaveBeenCalledWith({ resumeSessionId: sessionId })
@@ -85,7 +85,7 @@ describe('API Remote Agent resolver races', () => {
     })
     const resume = vi.spyOn(ctx.agents, 'resume')
 
-    const result = await createApiRemoteAgentResolver(ctx, {})(sessionId)
+    const result = await createApiRemoteAgentResolver(ctx, {}).agentFor(sessionId)
 
     expect(result).toMatchObject({ error: { code: 'agent-busy' } })
     expect(resume).not.toHaveBeenCalled()
@@ -104,7 +104,7 @@ describe('API Remote Agent resolver races', () => {
         throw new Error('session id already published')
       })
 
-      const result = await createApiRemoteAgentResolver(ctx, {})(sessionId)
+      const result = await createApiRemoteAgentResolver(ctx, {}).agentFor(sessionId)
 
       expect(result).toMatchObject({ error: { code: 'agent-busy' } })
       await ctx.fiber.dispose()
@@ -132,6 +132,34 @@ describe('API Remote Agent resolver races', () => {
     if (provider === undefined) throw new Error('Agent Host Context provider was not mounted')
 
     await expect(provider.resolve(sessionId)).resolves.toBe(agentCtx)
+    await ctx.fiber.dispose()
+  })
+
+  it('retains the resume handle and disposes it on demand, idempotently', async () => {
+    const ctx = await createContext()
+    const sessionId = sid('dispose-handle')
+    const meta = header(sessionId)
+    let published: Session | undefined
+    provideSession(ctx, meta, () => {
+      published = ctx.sessions.create(sessionId, { meta: { cwd: '/proj' } })
+      return Promise.resolve({ meta, events: [] })
+    })
+    const disposed: SessionId[] = []
+    vi.spyOn(ctx.agents, 'resume').mockImplementation(async () => {
+      if (published === undefined) throw new Error('Session was not published')
+      return {
+        agent: stubAgent(ctx, published),
+        dispose: () => { disposed.push(sessionId); return Promise.resolve() },
+      }
+    })
+    const resolver = createApiRemoteAgentResolver(ctx, {})
+    await expect(resolver.agentFor(sessionId)).resolves.toMatchObject({ agent: { id: sessionId } })
+
+    await resolver.disposeAgent(sessionId)
+    expect(disposed).toEqual([sessionId])
+    // Idempotent: a second dispose does nothing.
+    await resolver.disposeAgent(sessionId)
+    expect(disposed).toEqual([sessionId])
     await ctx.fiber.dispose()
   })
 

@@ -126,6 +126,12 @@ class TestPersistence extends SessionPersistence {
     return Promise.resolve()
   }
 
+  delete(id: SessionIdType): Promise<void> {
+    TestPersistence.entries.delete(id)
+    TestPersistence.revisions.delete(id)
+    return Promise.resolve()
+  }
+
   async load(id: SessionIdType): Promise<{ meta: SessionHeader; events: SessionEvent[] }> {
     TestPersistence.loads.set(id, (TestPersistence.loads.get(id) ?? 0) + 1)
     if (TestPersistence.failure !== undefined) throw TestPersistence.failure

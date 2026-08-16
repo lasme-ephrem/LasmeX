@@ -66,6 +66,7 @@ interface BenchOptions {
   }
   draft?: string
   running?: boolean
+  archived?: boolean
   subagent?: Exclude<ConversationSnapshot['subagent'], null>
   disabled?: boolean
   inert?: boolean
@@ -107,6 +108,7 @@ function bench(over?: BenchOptions) {
     running: over?.running ?? false,
     subagent: over?.subagent ?? null,
     removed: over?.disabled ?? false,
+    archived: over?.archived ?? false,
     promptError: over?.promptError ?? null,
     queue: over?.queue ?? [],
   }))
@@ -1261,6 +1263,18 @@ describe('command launcher chrome and control seats', () => {
     openConfirmation()
     expect((view.getByRole('checkbox') as HTMLInputElement).checked).toBe(false)
     expect((view.getByRole('button', { name: '启用完全访问' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('an archived session freezes the composer with its own placeholder and unfreezes on restore', () => {
+    const { view, session } = bench({ archived: true, draft: 'kept draft' })
+    const textarea = view.getByRole('textbox') as HTMLTextAreaElement
+    expect(textarea.disabled).toBe(true)
+    // Read-only keeps the draft visible instead of wiping it.
+    expect(textarea.value).toBe('kept draft')
+    expect(textarea.placeholder).toBe('会话已归档，无法发送；恢复后可继续')
+    // Unarchiving reactivates the same composer in place.
+    act(() => { session.set(snapshotOf({ archived: false })) })
+    expect((view.getByRole('textbox') as HTMLTextAreaElement).disabled).toBe(false)
   })
 
   it('revokes an open Full access confirmation when the task locks', () => {

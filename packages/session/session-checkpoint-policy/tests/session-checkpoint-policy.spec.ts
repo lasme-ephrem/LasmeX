@@ -28,6 +28,7 @@ class TestPersistence extends SessionPersistence {
     return Promise.reject(new Error('not used'))
   }
   list(): Promise<SessionHeader[]> { return Promise.resolve([]) }
+  delete(_id: SessionId): Promise<void> { return Promise.resolve() }
   listSnapshots(): Promise<never[]> { return Promise.resolve([]) }
 }
 

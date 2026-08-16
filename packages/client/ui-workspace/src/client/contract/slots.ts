@@ -128,6 +128,16 @@ export type WorkspaceBrowserInjected = DirectoryPickingInjected & {
    */
   archiveSession: (sessionId: SessionId) => Promise<void>
   /**
+   * Durably delete a Session: stored log, workspace account, and archive
+   * entry. The Host rejects live sessions — close the session first.
+   */
+  deleteSession: (sessionId: SessionId) => Promise<void>
+  /**
+   * Restore an archived Session: it leaves the archive set and returns to
+   * its workspace at its stored position.
+   */
+  unarchiveSession: (sessionId: SessionId) => Promise<void>
+  /**
    * Reorder a session inside its Workspace account (DOM-insertBefore
    * semantics: omitted anchor appends to the end). The view refreshes from
    * the Host response/changed frame; failures leave the order unchanged.

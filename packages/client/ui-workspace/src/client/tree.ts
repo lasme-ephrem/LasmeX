@@ -1,7 +1,7 @@
 /**
  * Derives the workspace browser tree from Host Workspace order and membership.
- * Unassigned Sessions trail under Ungrouped; only the selected blank Session
- * remains visible.
+ * Unassigned Sessions trail under Ungrouped; archived Sessions trail under
+ * the Archives group, which appears only while the archive set is non-empty.
  */
 import {
   indexSubagentDescendants, type PendingInteractionStatus, type SessionId, type SessionListState,
@@ -14,6 +14,15 @@ export const UNGROUPED_KEY = ''
 
 /** Display label for the ungrouped bucket row. */
 export const UNGROUPED_LABEL = 'Ungrouped'
+
+/** Group key for the registry-global archive set (spawns only when non-empty). */
+export const ARCHIVES_KEY = '__archives__'
+
+/** Display label for the archives bucket row. */
+export const ARCHIVES_LABEL = 'Archives'
+
+/** Which bucket a derived group row represents. */
+export type GroupKind = 'workspace' | 'ungrouped' | 'archives'
 
 /** One top-level session row in a group or the flat list. */
 export interface SessionNode {
@@ -37,12 +46,14 @@ export type SessionOrderBy = 'manual' | 'updated'
 
 /** One workspace group section: header row facts + visible top-level session rows. */
 export interface GroupNode {
-  /** Group key: the workspace id or {@link UNGROUPED_KEY}. */
+  /** Group key: the workspace id, {@link UNGROUPED_KEY}, or {@link ARCHIVES_KEY}. */
   key: string
-  /** Backing Workspace id; absent only for the ungrouped bucket. */
+  /** Bucket kind; discriminates the ungrouped and archives buckets (both lack a backing Workspace). */
+  kind: GroupKind
+  /** Backing Workspace id; absent for the ungrouped and archives buckets. */
   workspaceId: WorkspaceId | undefined
   cwd: string | undefined
-  /** Workspace creation time (epoch ms); absent only for the ungrouped bucket. */
+  /** Workspace creation time (epoch ms); absent for the ungrouped and archives buckets. */
   createdAt: number | undefined
   label: string
   /** Total visible sessions in the group. */
@@ -84,6 +95,7 @@ export interface TreeView {
 
 interface Group {
   key: string
+  kind: GroupKind
   workspaceId: WorkspaceId | undefined
   cwd: string | undefined
   createdAt: number | undefined
@@ -133,6 +145,7 @@ function sessionTitle(session: SessionSummary): string {
 /** Build one group without projecting session lineage into presentation. */
 function buildGroup(
   key: string,
+  kind: GroupKind,
   workspaceId: WorkspaceId | undefined,
   cwd: string | undefined,
   createdAt: number | undefined,
@@ -144,7 +157,7 @@ function buildGroup(
   // Real Workspace order comes from sessionIds. Ungrouped falls back to
   // recency until the browser supplies its persisted local order.
   if (order === 'recency') sessions.sort(byRecency)
-  return { key, workspaceId, cwd, createdAt, label, sessions }
+  return { key, kind, workspaceId, cwd, createdAt, label, sessions }
 }
 
 /** Apply a stored Ungrouped order and append newly loose Sessions by recency. */
@@ -189,7 +202,7 @@ function groupByWorkspace(
       members.push(summary)
     }
     groups.push(buildGroup(
-      workspace.workspaceId, workspace.workspaceId, workspace.path,
+      workspace.workspaceId, 'workspace', workspace.workspaceId, workspace.path,
       Date.parse(workspace.createdAt), workspace.title, members, 'account',
     ))
   }
@@ -200,6 +213,7 @@ function groupByWorkspace(
   if (stray.length > 0) {
     groups.push(buildGroup(
       UNGROUPED_KEY,
+      'ungrouped',
       undefined,
       undefined,
       undefined,
@@ -232,14 +246,16 @@ function sessionNode(
  *
  * Every group shows; sessions populate under expanded groups in the selected
  * local order. Blank sessions are excluded except for the selected
- * provisional New Session row; archived sessions are excluded everywhere.
- * Content search lives outside this derivation
+ * provisional New Session row. Archived sessions appear only under the
+ * Archives group (Host archive order), which exists only while the archive
+ * set is non-empty; every other grouping surface hides them. Content search
+ * lives outside this derivation
  * (see {@link deriveSearchResults}).
  * @param list - sessions list snapshot (`current` feeds containsCurrent).
  * @param workspaces - real workspaces in stable Host order.
- * @param archivedSessionIds - registry-global archive set.
+ * @param archivedSessionIds - registry-global archive set, in archive order.
  * @param view - local expansion arrays.
- * @returns group sections in render order.
+ * @returns group sections in render order (workspaces, ungrouped, archives).
  */
 export function deriveGroups(
   list: SessionListState,
@@ -259,6 +275,7 @@ export function deriveGroups(
     const expanded = expandedGroups.has(g.key)
     groups.push({
       key: g.key,
+      kind: g.kind,
       workspaceId: g.workspaceId,
       cwd: g.cwd,
       createdAt: g.createdAt,
@@ -267,6 +284,28 @@ export function deriveGroups(
       expanded,
       containsCurrent: g.key === currentGroup,
       sessions: expanded ? g.sessions.map(session => sessionNode(session, descendants)) : [],
+    })
+  }
+  // The Archives bucket spawns only while it has members; its rows keep the
+  // Host archive order (the set is append-ordered) and hold no local order.
+  if (archivedSessionIds.length > 0) {
+    const members = archivedSessionIds
+      .map(id => list.byId[id])
+      .filter((s): s is SessionSummary => s !== undefined)
+    const expanded = expandedGroups.has(ARCHIVES_KEY)
+    groups.push({
+      key: ARCHIVES_KEY,
+      kind: 'archives',
+      workspaceId: undefined,
+      cwd: undefined,
+      createdAt: undefined,
+      label: ARCHIVES_LABEL,
+      sessionCount: members.length,
+      expanded,
+      // The runtime clears an archived current selection, so no archives
+      // bucket ever contains the current session.
+      containsCurrent: false,
+      sessions: expanded ? members.map(session => sessionNode(session, descendants)) : [],
     })
   }
   return groups

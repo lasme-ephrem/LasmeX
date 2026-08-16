@@ -183,6 +183,7 @@ export const EVENT_SCOPE_PAGE: Record<string, string> = {
   'session-telemetry': 'session-telemetry.md',
   'tools': 'tools.md',
   'workflow': 'workflow.md',
+  'workspace': 'workspace.md',
 }
 
 /**

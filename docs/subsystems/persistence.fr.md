@@ -294,6 +294,15 @@ abstract create(meta: SessionHeader): Promise<void>
 abstract append(id: SessionId, events: readonly SessionEvent[]): Promise<void>
 
 /**
+ * Durably remove one stored session: its metadata and every stored event.
+ * An unknown id resolves without writing — the owning domain checks
+ * existence before calling, and deletion stays idempotent at the backend
+ * boundary. Live sessions are the caller's problem, not the backend's.
+ * @param id - the persisted session to remove.
+ */
+abstract delete(id: SessionId): Promise<void>
+
+/**
  * Prepare the exact unpublished Session used by resume. Implementations may
  * reuse object graphs retained by an earlier {@link inspect} after confirming
  * their durable revision is still current; disposal releases an unpublished

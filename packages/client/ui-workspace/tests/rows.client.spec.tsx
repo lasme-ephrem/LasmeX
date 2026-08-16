@@ -115,7 +115,7 @@ describe('workspace browser rows', () => {
     const onToggle = vi.fn()
     const onCreate = vi.fn()
     const group: GroupNode = {
-      key: 'project', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
+      key: 'project', kind: 'workspace', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
       sessionCount: 1, expanded: true, containsCurrent: true, sessions: [],
     }
     render(<ProjectRowItem group={group} onToggle={onToggle} onCreate={onCreate} t={t} />)
@@ -254,7 +254,7 @@ describe('workspace browser rows', () => {
     const onDelete = vi.fn()
     const onToggle = vi.fn()
     const group: GroupNode = {
-      key: 'project', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
+      key: 'project', kind: 'workspace', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
       sessionCount: 0, expanded: false, containsCurrent: false, sessions: [],
     }
     render(<ProjectRowItem
@@ -285,7 +285,7 @@ describe('workspace browser rows', () => {
     const restoreClipboard = installClipboard(writeText)
     try {
       const group: GroupNode = {
-        key: 'project', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
+        key: 'project', kind: 'workspace', workspaceId: wid('project'), cwd: '/projects/project', createdAt: 0, label: 'Project',
         sessionCount: 0, expanded: false, containsCurrent: false, sessions: [],
       }
       render(<ProjectRowItem group={group} onToggle={vi.fn()} onCreate={vi.fn()} t={t} />)
@@ -306,11 +306,43 @@ describe('workspace browser rows', () => {
 
   it('ungrouped bucket renders no workspace menu', () => {
     const group: GroupNode = {
-      key: '', workspaceId: undefined, cwd: undefined, createdAt: undefined, label: 'Ungrouped',
+      key: '', kind: 'ungrouped', workspaceId: undefined, cwd: undefined, createdAt: undefined, label: 'Ungrouped',
       sessionCount: 0, expanded: false, containsCurrent: false, sessions: [],
     }
     render(<ProjectRowItem group={group} onToggle={vi.fn()} onCreate={vi.fn()} t={t} />)
     expect(screen.queryByRole('button', { name: /工作区/ })).toBeNull()
+  })
+
+  it('archives bucket renders its localized label and no create action', () => {
+    const group: GroupNode = {
+      key: '__archives__', kind: 'archives', workspaceId: undefined, cwd: undefined, createdAt: undefined, label: 'Archives',
+      sessionCount: 0, expanded: false, containsCurrent: false, sessions: [],
+    }
+    render(<ProjectRowItem group={group} onToggle={vi.fn()} onCreate={vi.fn()} t={t} />)
+    expect(screen.getByText('归档')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /工作区|新建会话/ })).toBeNull()
+  })
+
+  it('archived row menu offers restore and the danger delete action', () => {
+    const onDelete = vi.fn()
+    const onRestore = vi.fn()
+    const node: SessionNode = {
+      id: sid('s-archived'), title: 'Gone', blank: false, running: false,
+      runningSubagentCount: 0, completed: false, updatedAt: 0,
+    }
+    render(<SessionNodeItem node={node} currentId={undefined} now={0} onOpen={vi.fn()}
+      onRename={vi.fn()} onFork={vi.fn()} onArchive={vi.fn()} onDelete={onDelete}
+      onRestore={onRestore} archived t={t} />)
+    fireEvent.click(screen.getByRole('button', { name: '会话“Gone”的操作' }))
+    expect(screen.queryByRole('menuitem', { name: '归档会话' })).toBeNull()
+    expect(screen.queryByRole('menuitem', { name: '重命名' })).toBeNull()
+    expect(screen.getByRole('menuitem', { name: '恢复会话' }).className).not.toMatch(/danger/)
+    expect(screen.getByRole('menuitem', { name: '删除会话' }).className).toMatch(/danger/)
+    fireEvent.click(screen.getByRole('menuitem', { name: '恢复会话' }))
+    expect(onRestore).toHaveBeenCalledWith(node.id)
+    fireEvent.click(screen.getByRole('button', { name: '会话“Gone”的操作' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '删除会话' }))
+    expect(onDelete).toHaveBeenCalledWith(node.id, 'Gone')
   })
 
   it('blank New Session rows carry no menu, no time label, and no hover-card time', () => {

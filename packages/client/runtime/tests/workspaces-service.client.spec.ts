@@ -462,18 +462,31 @@ describe('WorkspaceRuntime', () => {
     expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-idle'])
     expect(sessions.list.getSnapshot().current).toBe('s-open')
 
-    // Archiving the current session clears it into the New Session view state.
+    // Archiving the current session freezes its composer in place instead of
+    // clearing the selection (the Archives bucket keeps the row clickable).
     api.onWorkspaceArchiveSession = () => Promise.resolve(ok({ archivedSessionIds: [sid('s-idle'), sid('s-open')] }))
     await workspaces.archiveSession(sid('s-open'))
     expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-idle', 's-open'])
-    expect(sessions.list.getSnapshot().current).toBeUndefined()
+    expect(sessions.list.getSnapshot().current).toBe('s-open')
+    // The sweep flags the open instance after the install's microtask batch.
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(sessions.binding(sid('s-open'))?.session.getSnapshot().archived).toBe(true)
+
+    // Unarchiving unfreezes the same open session in place.
+    api.onWorkspaceDeleteSession = () => Promise.resolve(ok({ archivedSessionIds: [sid('s-idle')] }))
+    await workspaces.unarchiveSession(sid('s-open'))
+    expect(api.callsOf('workspace.unarchiveSession')).toEqual([{ sessionId: 's-open' }])
+    expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-idle'])
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(sessions.binding(sid('s-open'))?.session.getSnapshot().archived).toBe(false)
+    expect(sessions.list.getSnapshot().current).toBe('s-open')
 
     // A Host failure leaves the set and the selection untouched.
     api.onWorkspaceArchiveSession = () => Promise.resolve(err({
       code: 'session-not-found', message: 'no session ghost', details: { sessionId: sid('ghost') },
     }))
     await expect(workspaces.archiveSession(sid('ghost'))).rejects.toThrow(/session-not-found/)
-    expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-idle', 's-open'])
+    expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-idle'])
 
     // The changed frame and the list baseline both re-install the full set.
     workspaces.handleHostEnvelope({
@@ -488,7 +501,7 @@ describe('WorkspaceRuntime', () => {
     expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-open'])
   })
 
-  it('clears a current archived by a remote frame and shields the set from a stale in-flight baseline', async () => {
+  it('freezes a current archived by a remote frame and shields the set from a stale in-flight baseline', async () => {
     const ctx = new Context()
     const api = new FakeApiClient()
     const sessions = new SessionRuntime(ctx, api, fakeRemote())
@@ -500,8 +513,8 @@ describe('WorkspaceRuntime', () => {
     sessions.open(sid('s-open'))
 
     // A stale baseline is in flight (older, empty set) when another tab's
-    // archive frame lands: the frame clears the current selection and its
-    // set survives the baseline's later resolution.
+    // archive frame lands: the frame freezes the current session's composer
+    // in place, and the set survives the baseline's later resolution.
     const gate = deferred<Awaited<ReturnType<FakeApiClient['onWorkspaceList']>>>()
     api.onWorkspaceList = () => gate.promise
     const hydration = workspaces.refresh()
@@ -510,16 +523,46 @@ describe('WorkspaceRuntime', () => {
       payload: { type: 'host/archived-sessions-changed', archivedSessionIds: [sid('s-open')] },
     } as never)
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(sessions.list.getSnapshot().current).toBeUndefined()
+    expect(sessions.list.getSnapshot().current).toBe('s-open')
+    expect(sessions.binding(sid('s-open'))?.session.getSnapshot().archived).toBe(true)
     gate.resolve(ok({ items: [], archivedSessionIds: [] }))
     await hydration
     expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-open'])
-    // The next (fresh) baseline is authoritative again.
+    // The next (fresh) baseline is authoritative again and unfreezes the composer.
     api.onWorkspaceList = () => Promise.resolve(ok({ items: [], archivedSessionIds: [] }) as never)
     await workspaces.refresh()
     expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual([])
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(sessions.binding(sid('s-open'))?.session.getSnapshot().archived).toBe(false)
   })
-})
+  it('deletes a session and installs the returned archive set', async () => {
+    const ctx = new Context()
+    const api = new FakeApiClient()
+    const sessions = new SessionRuntime(ctx, api, fakeRemote())
+    const workspaces = new WorkspaceRuntime(ctx, api, sessions)
+    api.onList = () => Promise.resolve(ok({
+      items: [
+        { sessionId: sid('s-archived'), updatedAt: 2, running: false, blank: false },
+        { sessionId: sid('s-kept'), updatedAt: 1, running: false, blank: false },
+      ],
+    }) as never)
+    api.onWorkspaceList = () => Promise.resolve(ok({
+      items: [], archivedSessionIds: [sid('s-archived'), sid('s-kept')],
+    }) as never)
+    await Promise.all([workspaces.refresh(), sessions.refresh()])
+
+    api.onWorkspaceDeleteSession = () => Promise.resolve(ok({ archivedSessionIds: [sid('s-kept')] }))
+    await expect(workspaces.deleteSession(sid('s-archived'))).resolves.toBeUndefined()
+    expect(api.callsOf('workspace.deleteSession')).toEqual([{ sessionId: 's-archived' }])
+    expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-kept'])
+
+    // A Host rejection surfaces as an error without installing anything.
+    api.onWorkspaceDeleteSession = () => Promise.resolve(err({
+      code: 'session-live', message: 'close it first', details: { sessionId: sid('s-kept') },
+    }))
+    await expect(workspaces.deleteSession(sid('s-kept'))).rejects.toThrow(/session-live/)
+    expect(workspaces.list.getSnapshot().archivedSessionIds).toEqual(['s-kept'])
+  })})
 
 describe('startInitialSelection', () => {
   function bench() {

@@ -7,6 +7,7 @@
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
   'group.ungrouped': '未分组',
+  'group.archives': '归档',
   'session.new': '新会话',
   'section.workspaces': '工作区',
   'section.sessions': '会话',
@@ -45,6 +46,12 @@ export const zh = {
   'delete.pending': '正在删除工作区…',
   'menu.fork': '分叉会话',
   'menu.archiveSession': '归档会话',
+  'menu.unarchiveSession': '恢复会话',
+  'archive.running.title': '无法归档会话',
+  'archive.running.desc': '会话仍在运行。请等待其结束后再归档。',
+  'delete.session': '删除会话',
+  'delete.session.desc': '将永久删除“{name}”及其会话日志，且无法撤销。',
+  'delete.session.pending': '正在删除会话…',
   'sessions.count.one': '{n} 个会话',
   'sessions.count.other': '{n} 个会话',
   'actions.workspace.aria': '工作区“{name}”的操作',
@@ -76,6 +83,7 @@ export type WorkspaceKey = keyof typeof zh
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
   'group.ungrouped': 'Ungrouped',
+  'group.archives': 'Archives',
   'session.new': 'New Session',
   'section.workspaces': 'Workspaces',
   'section.sessions': 'Sessions',
@@ -114,6 +122,12 @@ export const en = {
   'delete.pending': 'Deleting workspace…',
   'menu.fork': 'Fork session',
   'menu.archiveSession': 'Archive session',
+  'menu.unarchiveSession': 'Restore session',
+  'archive.running.title': 'Cannot archive session',
+  'archive.running.desc': 'The session is still running. Wait for it to finish, then archive again.',
+  'delete.session': 'Delete session',
+  'delete.session.desc': 'This permanently deletes “{name}” and its session log. This cannot be undone.',
+  'delete.session.pending': 'Deleting session…',
   'sessions.count.one': '{n} session',
   'sessions.count.other': '{n} sessions',
   'actions.workspace.aria': 'Workspace actions for {name}',
@@ -142,6 +156,7 @@ export const en = {
 /** Dictionnaire français. */
 export const fr = {
   'group.ungrouped': 'Non classées',
+  'group.archives': 'Archives',
   'session.new': 'Nouvelle session',
   'section.workspaces': 'Espaces de travail',
   'section.sessions': 'Sessions',
@@ -180,6 +195,12 @@ export const fr = {
   'delete.pending': 'Suppression de l’espace de travail…',
   'menu.fork': 'Dupliquer la session',
   'menu.archiveSession': 'Archiver la session',
+  'menu.unarchiveSession': 'Restaurer la session',
+  'archive.running.title': 'Impossible d’archiver la session',
+  'archive.running.desc': 'La session est encore en cours d’exécution. Attendez qu’elle se termine puis réessayez.',
+  'delete.session': 'Supprimer la session',
+  'delete.session.desc': '« {name} » et son journal de session seront définitivement supprimés. Cette action est irréversible.',
+  'delete.session.pending': 'Suppression de la session…',
   'sessions.count.one': '{n} session',
   'sessions.count.other': '{n} sessions',
   'actions.workspace.aria': 'Actions de l’espace de travail {name}',

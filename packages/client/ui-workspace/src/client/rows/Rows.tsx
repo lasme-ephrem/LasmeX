@@ -111,15 +111,18 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, t }: 
   group: GroupNode
   onToggle: () => void
   onCreate: () => void
-  /** Real-Workspace actions; absent for the ungrouped bucket (no menu shown). */
+  /** Real-Workspace actions; absent for the ungrouped and archives buckets (no menu shown). */
   actions?: { rename: () => void; delete: () => void } | undefined
   /** Present only for real Workspace rows in the grouped view. */
   drag?: WorkspaceRowDragProps | undefined
   t: RowTranslate
 }) {
   const row = group
-  // The ungrouped bucket has no workspace title: its label is dictionary copy.
-  const label = row.workspaceId === undefined ? t('group.ungrouped') : row.label
+  // The ungrouped and archives buckets have no workspace title: their labels
+  // are dictionary copy.
+  const label = row.kind === 'archives'
+    ? t('group.archives')
+    : row.workspaceId === undefined ? t('group.ungrouped') : row.label
   const active = group.expanded && group.containsCurrent
   const [menuOpen, setMenuOpen] = useState(false)
   const workspaceMenuItems = [
@@ -143,7 +146,9 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, t }: 
       onDragEnd={drag?.end}
     >
       <span className={clsx(css.slot, css.folder, active && css.folderActive)}>
-        {row.expanded ? <IconFolderOpen16 /> : <IconFolderClose16 />}
+        {row.kind === 'archives'
+          ? <IconArchiveOutline20 size={16} />
+          : row.expanded ? <IconFolderOpen16 /> : <IconFolderClose16 />}
       </span>
       <span className={clsx(css.slot, css.chevron)}>
         <IconTriangleRightFill14 className={clsx(css.arrow, row.expanded && css.arrowOpen)} />
@@ -180,18 +185,20 @@ export function ProjectRowItem({ group, onToggle, onCreate, actions, drag, t }: 
             )}
           />
         )}
-        <button
-          type="button"
-          className={css.iconButton}
-          aria-label={t('actions.newSession.aria', { name: label })}
-          onClick={(e) => { e.stopPropagation(); onCreate() }}
-        >
-          <IconPlusOutline16 />
-        </button>
+        {row.kind === 'workspace' && (
+          <button
+            type="button"
+            className={css.iconButton}
+            aria-label={t('actions.newSession.aria', { name: label })}
+            onClick={(e) => { e.stopPropagation(); onCreate() }}
+          >
+            <IconPlusOutline16 />
+          </button>
+        )}
       </span>
     </div>
   )
-  // The ungrouped bucket has no backing Workspace: no card to show.
+  // The ungrouped and archives buckets have no backing Workspace: no card to show.
   if (row.createdAt === undefined) return ownRow
   return (
     <HoverCard
@@ -345,12 +352,19 @@ export function SearchResultItem({ result, currentId, onOpen, t }: {
  * @param props.onRename - open the session rename dialog (id + current title).
  * @param props.onFork - fork a session at its last completed turn.
  * @param props.onArchive - archive a session by id.
+ * @param props.onDelete - open the session delete confirmation (id + current title);
+ *   used only by archived rows, whose menu carries the single destructive action.
+ * @param props.archived - the row lives in the Archives bucket; its menu
+ *   offers only permanent deletion.
  * @param props.drag - optional draggable-row wiring.
  * @param props.flat - omit the empty status slot in the hierarchy-free flat list.
  * @param props.t - the browser root's locale seat.
  * @returns the session row.
  */
-export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork, onArchive, drag, flat = false, t }: {
+export function SessionNodeItem({
+  node, currentId, now, onOpen, onRename, onFork, onArchive, onDelete, onRestore,
+  archived = false, drag, flat = false, t,
+}: {
   node: SessionNode
   currentId: string | undefined
   now: number
@@ -361,6 +375,13 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
   onFork: (id: SessionNode['id']) => void
   /** Archive this session (row menu action; commits without a dialog). */
   onArchive: (id: SessionNode['id']) => void
+  /** Open the browser-owned session delete confirmation (archived-row menu
+   * action). Required only with `archived`; ordinary rows never dispatch it. */
+  onDelete?: (id: SessionNode['id'], currentTitle: string) => void | undefined
+  /** Restore an archived session into its workspace (archived-row menu action). */
+  onRestore?: (id: SessionNode['id']) => void | undefined
+  /** The row is rendered inside the Archives bucket. */
+  archived?: boolean | undefined
   /** Present only on draggable rows (workspace-group sessions outside search). */
   drag?: RowDragProps | undefined
   /** The row is rendered without a parent Workspace header. */
@@ -376,13 +397,19 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
   const [menuOpen, setMenuOpen] = useState(false)
   // Archive hides the row through the registry-global archive set and never
   // touches the session log, so it is not styled as destructive and needs no
-  // confirmation dialog.
-  const sessionMenuItems = [
-    { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
-    { id: 'fork', label: t('menu.fork'), icon: <IconBranchOutline16 /> },
-    // 20-native glyph in the menu's 16px icon slot (Menu.module.css .itemIcon).
-    { id: 'archive', label: t('menu.archiveSession'), icon: <IconArchiveOutline20 size={16} /> },
-  ]
+  // confirmation dialog. An archived row offers restoration and permanent
+  // deletion (destructive, confirmed by the browser's dialog).
+  const sessionMenuItems = archived
+    ? [
+      { id: 'restore', label: t('menu.unarchiveSession'), icon: <IconArchiveOutline20 size={16} /> },
+      { id: 'delete', label: t('delete.session'), icon: <IconTrashOutline16 />, danger: true },
+    ]
+    : [
+      { id: 'rename', label: t('rename'), icon: <IconEditOutline16 /> },
+      { id: 'fork', label: t('menu.fork'), icon: <IconBranchOutline16 /> },
+      // 20-native glyph in the menu's 16px icon slot (Menu.module.css .itemIcon).
+      { id: 'archive', label: t('menu.archiveSession'), icon: <IconArchiveOutline20 size={16} /> },
+    ]
   // Figma session cell: pad 8, status slot 16, then a 4px title gap.
   const ownRow = (
     <div
@@ -444,6 +471,8 @@ export function SessionNodeItem({ node, currentId, now, onOpen, onRename, onFork
               if (id === 'rename') onRename(node.id, row.title)
               if (id === 'fork') onFork(node.id)
               if (id === 'archive') onArchive(node.id)
+              if (id === 'delete') onDelete?.(node.id, row.title)
+              if (id === 'restore') onRestore?.(node.id)
             }}
             portal
             closeOnPointerLeave

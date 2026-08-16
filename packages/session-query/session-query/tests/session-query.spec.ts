@@ -76,6 +76,11 @@ class TestPersistence extends SessionPersistence {
     return Promise.resolve()
   }
 
+  delete(id: SessionIdType): Promise<void> {
+    TestPersistence.entries.delete(id)
+    return Promise.resolve()
+  }
+
   load(id: SessionIdType): Promise<{ meta: SessionHeader; events: SessionEvent[] }> {
     return this.inspect(id)
   }
@@ -135,7 +140,7 @@ function expectCode(code: SessionQueryErrorCode): Error {
 
 function rejectUnknown<T>(reason: unknown): Promise<T> {
   // Exercise containment for an implementation that violates the Error rejection convention.
-  return Promise.reject(reason) // oxlint-disable-line typescript/prefer-promise-reject-errors
+  return Promise.reject(reason)
 }
 
 const cancellableSessionListings = [

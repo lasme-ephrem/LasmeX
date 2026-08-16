@@ -12,6 +12,7 @@ import type { SessionHeader } from 'lasmex-session'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 import WorkspaceRegistry, {
   WorkspaceId,
+  WorkspaceLiveSessionError,
   WorkspaceMoveInvalidError,
   WorkspaceOrderInvalidError,
 } from '../src/index.ts'
@@ -48,7 +49,8 @@ async function harness(options: HarnessOptions = {}) {
   const list = vi.fn(async () => listed)
   const load = vi.fn(() => { throw new Error('event bodies must not be loaded') })
   const inspect = vi.fn(() => { throw new Error('event bodies must not be inspected') })
-  ctx.provide('sessionPersistence', { list, load, inspect } as never)
+  const deleteStored = vi.fn(async () => {})
+  ctx.provide('sessionPersistence', { list, load, inspect, delete: deleteStored } as never)
 
   if (options.sessionStore === true) {
     await ctx.plugin(SessionStore)
@@ -75,6 +77,7 @@ async function harness(options: HarnessOptions = {}) {
     list,
     load,
     inspect,
+    deleteStored,
     setSessions: (headers: SessionHeader[]) => { listed = headers },
   }
 }
@@ -844,6 +847,96 @@ describe('header-validated membership projection', () => {
   })
 })
 
+describe('registry-global session deletion', () => {
+  it('deletes the stored log, every workspace account, and the archive entry, then emits the removal event', async () => {
+    const dir = await makeDir('delete-home')
+    const result = await harness({ sessions: [header('kept', dir, 100), header('gone', dir, 200)] })
+    const workspace = result.registry.list()[0]!
+    expect(workspace.sessionIds).toEqual([SessionId('gone'), SessionId('kept')])
+    await result.registry.archiveSession(SessionId('gone'))
+
+    const removed: SessionId[] = []
+    result.ctx.on('workspace/session-removed', ({ sessionId }) => { removed.push(sessionId) })
+    await result.registry.deleteSession(SessionId('gone'))
+
+    expect(result.deleteStored).toHaveBeenCalledWith(SessionId('gone'))
+    expect(workspace.sessionIds).toEqual([SessionId('kept')])
+    expect(result.registry.archivedSessionIds).toEqual([])
+    expect(storedState(result.pool).archivedSessionIds).toEqual([])
+    expect(removed).toEqual([SessionId('gone')])
+    // The detach is durable: the stored record no longer accounts the id.
+    const record = result.pool.media.get('workspace')!.tables.get('workspaces')!.get(workspace.id) as WorkspaceRecord
+    expect(record.sessionIds).toEqual([SessionId('kept')])
+  })
+
+  it('rejects a live session and an unknown id without any write', async () => {
+    const dir = await makeDir('delete-guards')
+    const liveDir = await makeDir('delete-live')
+    const result = await harness({
+      sessions: [header('stored', dir, 100)],
+      liveSessions: [header('open', liveDir, 200)],
+    })
+    const changesBefore = result.changes.length
+
+    await expect(result.registry.deleteSession(SessionId('open')))
+      .rejects.toBeInstanceOf(WorkspaceLiveSessionError)
+    await expect(result.registry.deleteSession(SessionId('ghost')))
+      .rejects.toThrow(/cannot archive or delete session 'ghost'/)
+
+    expect(result.deleteStored).not.toHaveBeenCalled()
+    expect(result.changes.length).toBe(changesBefore)
+    expect(storedState(result.pool).archivedSessionIds).toEqual([])
+  })
+
+  it('propagates a persistence-delete failure without touching the archive set', async () => {
+    const dir = await makeDir('delete-fault')
+    const result = await harness({ sessions: [header('gone', dir, 100)] })
+    await result.registry.archiveSession(SessionId('gone'))
+    result.deleteStored.mockRejectedValueOnce(new Error('delete backend down'))
+
+    await expect(result.registry.deleteSession(SessionId('gone')))
+      .rejects.toThrow(/delete backend down/)
+    expect(storedState(result.pool).archivedSessionIds).toEqual([SessionId('gone')])
+  })
+
+  it('deleting an unarchived session resolves without archive-set writes', async () => {
+    const dir = await makeDir('delete-unarchived')
+    const result = await harness({ sessions: [header('plain', dir, 100)] })
+    const globalWritesBefore = result.changes.filter(change => change.table === '').length
+
+    await result.registry.deleteSession(SessionId('plain'))
+
+    expect(result.deleteStored).toHaveBeenCalledWith(SessionId('plain'))
+    // The archive set was already empty: no global rewrite, no removal event
+    // listener failure, no duplicate durable state.
+    expect(result.changes.filter(change => change.table === '').length).toBe(globalWritesBefore)
+    expect(result.registry.list()[0]!.sessionIds).toEqual([])
+  })
+})
+
+describe('registry-global session unarchive', () => {
+  it('restores the archive entry and never touches the workspace account', async () => {
+    const dir = await makeDir('unarchive-home')
+    const result = await harness({ sessions: [header('kept', dir, 100), header('gone', dir, 200)] })
+    const workspace = result.registry.list()[0]!
+    await result.registry.archiveSession(SessionId('gone'))
+    expect(workspace.sessionIds).toEqual([SessionId('gone'), SessionId('kept')])
+
+    await result.registry.unarchiveSession(SessionId('gone'))
+    expect(result.registry.archivedSessionIds).toEqual([])
+    // The account was never touched: the row returns to its stored position.
+    expect(workspace.sessionIds).toEqual([SessionId('gone'), SessionId('kept')])
+    expect(storedState(result.pool).archivedSessionIds).toEqual([])
+
+    // Idempotent for a known non-archived session; unknown ids reject.
+    const globalWritesAfterRestore = result.changes.filter(change => change.table === '').length
+    await result.registry.unarchiveSession(SessionId('gone'))
+    expect(result.changes.filter(change => change.table === '').length).toBe(globalWritesAfterRestore)
+    await expect(result.registry.unarchiveSession(SessionId('ghost')))
+      .rejects.toThrow(/cannot archive or delete session 'ghost'/)
+  })
+})
+
 describe('workspace mutation and status', () => {
   it('keeps createdAt stable, advances updatedAt, and preserves snapshot on write failure', async () => {
     const dir = await makeDir('timestamps')
@@ -907,7 +1000,7 @@ describe('registry-global session archive', () => {
     expect(result.registry.archivedSessionIds).toEqual(['stray', 'live-only'])
 
     await expect(result.registry.archiveSession(SessionId('ghost')))
-      .rejects.toThrow(/cannot archive session 'ghost'/)
+      .rejects.toThrow(/cannot archive or delete session 'ghost'/)
     expect(storedState(result.pool).archivedSessionIds).toEqual(['stray', 'live-only'])
   })
 
