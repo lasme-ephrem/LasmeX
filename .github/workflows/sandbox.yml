@@ -87,14 +87,6 @@ jobs:
           pnpm --dir native/landlock-run run build:ts
           pnpm --dir native/landlock-run run build:native
 
-      # The unit suite runs on ubuntu in `checks`; this is the one darwin leg
-      # in the workflow, so run it here too — the platform-dependent unit
-      # expectations (Seatbelt path canonicalization: /tmp IS /private/tmp)
-      # take their darwin branch only on this runner.
-      - name: Unit tests (darwin parity)
-        if: matrix.runner == 'seatbelt'
-        run: pnpm run test
-
       - name: Sandbox e2e (real kernel confinement, world-verified)
         # NO_COLOR: vitest force-enables ANSI color under GITHUB_ACTIONS even
         # without a TTY, which would thread escape codes through the summary
@@ -130,3 +122,28 @@ jobs:
           echo "$out"
           [ "$status" -eq 0 ]
           echo "$out" | grep -qE 'Test Files[[:space:]]+1 passed \(1\)'
+
+  # The full unit suite runs on ubuntu in `checks`; macOS is the one darwin leg,
+  # so the platform-dependent unit expectations (Seatbelt path canonicalization:
+  # /tmp IS /private/tmp) take their darwin branch only here. It is tracked as a
+  # separate job because it is not part of the sandbox proof: it currently
+  # carries a backlog of darwin-only unit failures that must not block the
+  # sandbox e2e leg, and a distinct job keeps that backlog visible while the
+  # sandbox leg stays focused on real kernel confinement.
+  darwin-unit-parity:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Install (immutable)
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests (darwin parity)
+        run: pnpm run test
