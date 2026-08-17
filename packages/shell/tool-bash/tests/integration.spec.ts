@@ -206,8 +206,14 @@ describe('bash tool through the agent loop', () => {
     expect(firstResult.data.message.content[0].isError).toBe(false)
     expect(resultText(firstResult)).toBe('started background job bash-1')
     // The turn closed with the task still running, so the notice cannot exist yet.
+    // The agent loop appends its own plugin notice ("Continue after tool
+    // result") at every continuation step; only the tool-jobs completion
+    // notice proves the background job settled, so the predicate must name it.
     const isNotice = (e: SessionEvent): e is SessionEvent<'user/message'> =>
-      e.type === 'user/message' && e.data.source.kind === 'plugin'
+      e.type === 'user/message'
+      && e.data.source.kind === 'plugin'
+      && e.data.source.plugin === 'tool-jobs'
+      && e.data.source.form === 'notice'
     expect(events(agent).some(isNotice)).toBe(false)
 
     // Releasing the command now settles it against a provably idle owner. No

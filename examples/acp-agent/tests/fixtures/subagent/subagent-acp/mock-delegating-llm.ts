@@ -10,14 +10,14 @@ import { CallId, LlmAdapter } from 'lasmex-llm'
  */
 class MockDelegatingAdapter extends LlmAdapter {
   async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
-    const toolResultText = options.messages.at(-1)?.content
-      .filter(block => block.type === 'tool-result')
-      .flatMap(block => block.content)
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('') ?? ''
+    // The loop appends a plugin continuation notice after tool results, so the
+    // tool result is not necessarily the last block of the last message; scan
+    // messages backwards for it (same pattern as the headless cli mock).
+    const toolResult = [...options.messages].reverse()
+      .flatMap(message => message.content)
+      .find(block => block.type === 'tool-result')
 
-    if (toolResultText.length === 0) {
+    if (toolResult === undefined) {
       const args = JSON.stringify({ description: 'cwd probe', prompt: 'report your workspace' })
       yield { type: 'block-start', index: 0, blockType: 'tool-call' }
       yield { type: 'tool-call-delta', index: 0, id: CallId('call-delegate'), name: 'subagent', argumentsDelta: args }
@@ -26,6 +26,11 @@ class MockDelegatingAdapter extends LlmAdapter {
       yield { type: 'finish', reason: { kind: 'tool-calls' } }
       return
     }
+
+    const toolResultText = toolResult.content
+      .filter(block => block.type === 'text')
+      .map(block => block.text)
+      .join('')
 
     const reply = `child reported:\n${toolResultText}`
     yield { type: 'block-start', index: 0, blockType: 'text' }

@@ -195,7 +195,7 @@ describe('jsonrpc-agent keyless smoke', () => {
 
     expect(exitCode, stderr).toBe(1)
     expect(stdout).toBe('')
-    expect(stderr).toContain('plugin tree failed to load')
+    expect(stderr).toContain("échec du chargement de l'arbre de plugins")
     expect(stderr).toContain('failed to apply loader entry sdk-jsonrpc-server (lasmex-sdk-jsonrpc-server)')
     expect(stderr).toContain('sometimes')
   }, 30_000)
