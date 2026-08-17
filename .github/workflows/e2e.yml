@@ -7,9 +7,9 @@ name: E2E (real DeepSeek API)
 # stray repo-root .env can't redirect the run).
 #
 # pull_request IS a trigger, but GitHub withholds repo secrets from BOTH forked
-# PRs and Dependabot PRs (the latter are same-repo, fork==false, but still
-# keyless). The job-level `if:` below skips the whole job for those untrusted
-# PRs. The Dependabot test keys on the PR AUTHOR (pull_request.user.login), not
+# PRs and Dependabot PRs (Dependabot PRs are same-repo but still keyless). The
+# job-level `if:` below skips the whole job for those untrusted PRs. The
+# Dependabot test keys on the PR AUTHOR (pull_request.user.login), not
 # github.actor (the run trigger) — a maintainer reopening a Dependabot PR would
 # make github.actor human while the PR is still keyless. When the job runs, the
 # secret is expected, so the preflight hard-fails if it's missing (a missing
@@ -57,9 +57,14 @@ jobs:
     name: e2e
     # Run on every trusted event. Skip untrusted PRs (forks + Dependabot) where
     # the secret is withheld — they would otherwise hard-fail the preflight.
+    # NOTE: `head.repo.fork` is unusable here — this repository IS a fork of
+    # deepseek-harness, so `head.repo.fork` is true even for same-repo PRs and
+    # would skip every trusted PR. A cross-repository PR is instead detected by
+    # comparing head and base full names.
     if: >-
       github.event_name != 'pull_request'
-      || !(github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]')
+      || (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
+          && github.event.pull_request.user.login != 'dependabot[bot]')
     # Bounded file parallelism (DSH_E2E_MAX_WORKERS), 120s/test, retry 2. 45m
     # still bounds retry storms against a slow API while the happy path fans out.
     timeout-minutes: 45

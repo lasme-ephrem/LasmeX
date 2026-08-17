@@ -34,6 +34,9 @@ describe('goal domain through a real cordis.yml and headless process', () => {
       configPath,
       binArgs: [configPath, 'prove the persisted goal domain'],
       tsconfigPath: repoTsconfig,
+      // The scripted model defaults to the memory tool; the goal-domain
+      // composition ships `bash` instead, so pin the bash round trip.
+      env: { CLI_MOCK_TOOL: 'bash' },
       inspect: async (cwd) => {
         const logs = await jsonlFiles(join(cwd, '.sessions'))
         expect(logs).toHaveLength(1)

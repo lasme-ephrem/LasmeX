@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { type SessionEvent } from 'lasmex-session'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from 'lasmex-loader-smoke'
+import { runLoaderSmoke } from 'lasmex-loader-smoke'
 
 /**
  * Keyless REAL-composition coverage for parent-session cwd inheritance: a
@@ -47,6 +47,9 @@ describe('ACP subagent cwd inheritance through a real cordis.yml', () => {
       libBinScript: driver,
       configPath,
       tsconfigPath: repoTsconfig,
+      // Two complete harness runtimes boot in sequence (driver, then the ACP
+      // child); under CI load they need more than the default 30s window.
+      processTimeoutMs: 120_000,
       env: { DSH_TEST_MOCK_ACP_SERVER: mockServer },
       inspect: async (cwd) => {
         // The child reports realpaths; canonicalize the temp workspace to match.
@@ -69,5 +72,5 @@ describe('ACP subagent cwd inheritance through a real cordis.yml', () => {
       .map(block => block.text)
       .join('')
     expect(resultText).toBe(`${workspace}\n${workspace}`)
-  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+  }, 135_000)
 })
