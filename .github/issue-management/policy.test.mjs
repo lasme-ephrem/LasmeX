@@ -230,6 +230,16 @@ test('separates resolving and informational references', () => {
   )
 })
 
+test('ignores HTML link anchors carrying other-repository issue numbers', () => {
+  assert.deepEqual(
+    parseReferences({
+      body: 'Bumps hono.\n<li><a href="https://redirect.github.com/honojs/hono/issues/5199">#5199</a></li>\n<li><a href="https://redirect.github.com/honojs/hono/pull/5199">honojs/hono#5199</a></li>',
+      repository: 'lasme-ephrem/LasmeX',
+    }),
+    { all: [], resolving: [], related: [] },
+  )
+})
+
 test('does not treat pull request references as Issue associations', () => {
   const references = {
     all: [123, 1180, 1181],
