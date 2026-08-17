@@ -44,4 +44,4 @@ Status: implemented
 
 剥离 chrome 不改动规范 Markdown——切换行与徽章仍服务于 GitHub 读者。代价是投影器现在知晓源语料的两项呈现约定，而采用不同切换行措辞的页面将不会被匹配到。
 
-文档站的锁式标志内联了精确透明的方块 logo（`website/public/full.svg`）；应用的宽侧栏渲染同一嵌入 logo（`FullLogo`），hero 与窄栏挂载嵌入的方块标记（`CubeMark`），favicon 则发布嵌入的方块标记（`apps/web/public/favicon.svg`）。产品标记的变更只有通过更新这份副本才能到达文档站。
+文档站的锁式标志以图像方式引用精确透明的方块 logo（`website/public/full.svg`），而非内联：约 1 MB 的嵌入光栅不应被复制进每个渲染页面（内联曾导致文档构建以 V8 中止崩溃）。应用的宽侧栏渲染同一嵌入 logo（`FullLogo`），hero 与窄栏挂载嵌入的方块标记（`CubeMark`），favicon 则发布嵌入的方块标记（`apps/web/public/favicon.svg`）。产品标记的变更只有通过更新这份副本才能到达文档站。

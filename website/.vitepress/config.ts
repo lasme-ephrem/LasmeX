@@ -1,6 +1,5 @@
 /** VitePress configuration for the locally projected documentation site. */
 
-import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { DefaultTheme } from 'vitepress'
 import type { ViteDevServer } from 'vite'
@@ -186,13 +185,12 @@ const sharedTheme: Pick<DefaultTheme.Config, 'search' | 'socialLinks'> = {
 const base = process.env.DOCS_BASE ?? '/'
 
 /**
- * The full LasmeX logo (cube mark + wordmark + slogan), inlined so the
- * navigation bar renders it without an extra request. The traced file ships
- * its own palette.
+ * The full LasmeX logo (cube mark + wordmark + slogan). Referenced, not
+ * inlined: the exact-transparent asset carries a ~1 MB embedded raster, and
+ * inlining it would duplicate that payload into every rendered page and
+ * exhaust the build's memory.
  */
-const fullLogo = readFileSync(resolve(import.meta.dirname, '../public/full.svg'), 'utf8')
-  .trim()
-  .replace('<svg ', '<svg class="lasmex-logo" ')
+const fullLogo = `<img class="lasmex-logo" src="${base}full.svg" alt="" aria-hidden="true" />`
 
 /**
  * Styles the default theme does not provide, carried inline because the site
