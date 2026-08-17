@@ -102,7 +102,7 @@ function ModelRetryItem({ node, active, t }: {
       <div className={css.retryDetails}>
         <div>
           <span className={css.retryDetailLabel}>{t('message.retry.delay')}</span>
-          {Math.round(node.delayMs)}ms
+          {t('message.retry.delayValue', { delay: Math.round(node.delayMs) })}
         </div>
         <div>
           <span className={css.retryDetailLabel}>{t('message.retry.failure')}</span>
