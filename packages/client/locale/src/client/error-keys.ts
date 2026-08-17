@@ -1,0 +1,52 @@
+import type { RpcError } from 'lasmex-api-remotes/client'
+
+/**
+ * Catalog key for every RpcError code — exhaustive by construction: the
+ * Record keys are the closed RpcError union, so a new code added to the
+ * host error map fails this module's typecheck until it gets a key here.
+ */
+export const ERROR_KEYS = {
+  'bad-request': 'error.bad-request',
+  'cancelled': 'error.cancelled',
+  'session-not-found': 'error.session-not-found',
+  'session-live': 'error.session-live',
+  'session-running': 'error.session-running',
+  'session-archived': 'error.session-archived',
+  'model-unavailable': 'error.model-unavailable',
+  'session-conflict': 'error.session-conflict',
+  'invalid-time-zone': 'error.invalid-time-zone',
+  'workspace-attach-failed': 'error.workspace-attach-failed',
+  'workspace-not-found': 'error.workspace-not-found',
+  'workspace-invalid-path': 'error.workspace-invalid-path',
+  'workspace-name-conflict': 'error.workspace-name-conflict',
+  'workspace-move-invalid': 'error.workspace-move-invalid',
+  'directory-unreadable': 'error.directory-unreadable',
+  'directory-exists': 'error.directory-exists',
+  'directory-create-failed': 'error.directory-create-failed',
+  'directory-picker-unavailable': 'error.directory-picker-unavailable',
+  'agent-preset-read-only': 'error.agent-preset-read-only',
+  'agent-preset-locked': 'error.agent-preset-locked',
+  'agent-preset-conflict': 'error.agent-preset-conflict',
+  'agent-preset-not-found': 'error.agent-preset-not-found',
+  'agent-preset-invalid': 'error.agent-preset-invalid',
+  'agent-busy': 'error.agent-busy',
+  'attachment-error': 'error.attachment-error',
+  'queue-item-not-found': 'error.queue-item-not-found',
+  'steer-unavailable': 'error.steer-unavailable',
+  'command-error': 'error.command-error',
+  'unknown-command': 'error.unknown-command',
+  'settings-rejected': 'error.settings-rejected',
+  'settings-not-exposed': 'error.settings-not-exposed',
+  'settings-conflict': 'error.settings-conflict',
+  'credential-rejected': 'error.credential-rejected',
+  'model-discovery-failed': 'error.model-discovery-failed',
+  'title-invalid': 'error.title-invalid',
+  'fork-unavailable': 'error.fork-unavailable',
+  'subagent-parent-unavailable': 'error.subagent-parent-unavailable',
+  'subagent-not-found': 'error.subagent-not-found',
+  'subagent-catalog-diagnostic': 'error.subagent-catalog-diagnostic',
+  'subagent-not-resumable': 'error.subagent-not-resumable',
+  'subagent-unauthorized': 'error.subagent-unauthorized',
+  'subagent-delivery-unavailable': 'error.subagent-delivery-unavailable',
+  'internal': 'error.internal',
+} satisfies Record<RpcError['code'], string>

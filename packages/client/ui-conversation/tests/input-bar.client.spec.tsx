@@ -12,6 +12,7 @@ import {
 } from 'lasmex-client-runtime/client'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError as describeErrorFromCatalog } from 'lasmex-client-locale/src/client/describe-error.ts'
 import type { ClientContext, ConversationSnapshot, SessionId } from 'lasmex-client-runtime/client'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import type { ComposerAttachment } from '../src/client/contract/slots.ts'
@@ -143,6 +144,9 @@ function bench(over?: BenchOptions) {
     if (key === 'conversation.input.model') return over?.modelEntry ?? null
     return null
   }) as InputBarProps['renderSlot']
+  // The framework-injected t seat, stubbed over the zh dictionaries (the
+  // default locale); the error presenter mirrors the locale service face.
+  const t = over?.t ?? makeTranslate(zh, commonZh)
   const props: InputBarProps = {
     sessionId: SID,
     SessionProvider: ({ children }) => children(SID),
@@ -180,7 +184,8 @@ function bench(over?: BenchOptions) {
     stop,
     command: over?.command ?? (() => Promise.resolve(true)),
     // Mirrors the real lookup chain (conversation namespace, then common).
-    t: over?.t ?? makeTranslate(zh, commonZh),
+    t,
+    describeError: error => describeErrorFromCatalog(error, t),
     renderSlot,
     variant: over?.variant ?? 'composer',
     ...(over?.inert === true ? { disabled: true } : {}),
@@ -336,7 +341,7 @@ describe('image draft rail', () => {
     expect(view.getByRole('status').textContent).toContain('最多 20 张，每张 5MB')
   })
 
-  it('announces server attachment rejections as product copy, other codes as developer text', () => {
+  it('announces server attachment rejections as product copy, other codes through the error catalog', () => {
     const attachmentError = (reason: string): ConversationSnapshot['promptError'] => ({
       op: 'send',
       error: { code: 'attachment-error', message: 'raw wire text', details: { reason } },
@@ -350,7 +355,7 @@ describe('image draft rail', () => {
     const other = bench({
       promptError: { op: 'send', error: { code: 'internal', message: 'boom', details: {} } },
     })
-    expect(other.view.getByRole('alert').textContent).toContain('boom (internal)')
+    expect(other.view.getByRole('alert').textContent).toContain('内部错误：boom')
   })
 
   it('shows the blocked overlay and refuses the drop while the composer is locked', () => {
@@ -1122,7 +1127,7 @@ describe('strips and variants', () => {
       const send = bench({ promptError: { op: 'send', error: { code: 'agent-busy', message: 'boom', details: { reason: 'boom' } } } })
       // The toast body-portals (transformed ancestors must not trap it), so
       // queries go through the view's document-bound helpers.
-      expect(send.view.getByRole('alert').textContent).toContain('boom (agent-busy)')
+      expect(send.view.getByRole('alert').textContent).toContain('代理忙：boom。')
       expect(send.view.queryByRole('button', { name: 'Retry' })).toBeNull()
       act(() => { vi.advanceTimersByTime(4000) })
       expect(send.view.queryByRole('alert')).toBeNull()

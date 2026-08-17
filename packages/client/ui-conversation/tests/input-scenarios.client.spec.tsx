@@ -19,6 +19,7 @@ import type { ClientSessionContext, CommandClaim, PickOutcome, SubmitOutcome } f
 import { FakeApiClient, fakeRemote, ok } from '../../runtime/tests/fake-api.client.ts'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError } from 'lasmex-client-locale/src/client/describe-error.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import { InputBar } from '../src/client/skeleton/InputBar.tsx'
 import type { InputBarProps } from '../src/client/skeleton/InputBar.tsx'
@@ -157,6 +158,7 @@ async function scopedBench(register?: (inputTriggers: InputTriggerService) => vo
     command: () => Promise.resolve(true),
     // Mirrors the real lookup chain (conversation namespace, then common).
     t: makeTranslate(zh, commonZh),
+    describeError: error => describeError(error, makeTranslate(zh, commonZh)),
     variant: 'composer',
   }
   const view = render(<InputBar {...barProps} />)

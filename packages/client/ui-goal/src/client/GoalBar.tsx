@@ -31,7 +31,7 @@ const PHASE_LABELS = {
   blocked: 'phase.blocked',
 } as const satisfies Record<string, GoalKey>
 
-export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBarProps & PropsLocale<'goal'>) {
+export function GoalBar({ goal, onEdit, onPause, onResume, onClear, describeError, t }: GoalBarProps & PropsLocale<'goal'>) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [pending, setPending] = useState(false)
@@ -58,9 +58,9 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
     const result = await action()
     pendingRef.current = false
     setPending(false)
-    if (!result.ok) setActionError(`${result.error.message} (${result.error.code})`)
+    if (!result.ok) setActionError(describeError(result.error))
     return result
-  }, [])
+  }, [describeError])
 
   const handleEdit = useCallback(async () => {
     const trimmed = draft.trim()
@@ -172,7 +172,7 @@ export function GoalBar({ goal, onEdit, onPause, onResume, onClear, t }: GoalBar
 export type GoalDockProps = import('lasmex-client-ui-slots').PropsRuntime<'conversation.input.dock'> & GoalBarActions & PropsLocale<'goal'>
 
 /** Dock adapter: reads the host-computed 'goal' projection (whole value; absent or null renders nothing). */
-export function GoalDock({ useProjection, onEdit, onPause, onResume, onClear, t }: GoalDockProps) {
+export function GoalDock({ useProjection, onEdit, onPause, onResume, onClear, describeError, t }: GoalDockProps) {
   const projection = useProjection('goal')
   return (
     <GoalBar
@@ -181,6 +181,7 @@ export function GoalDock({ useProjection, onEdit, onPause, onResume, onClear, t 
       onPause={onPause}
       onResume={onResume}
       onClear={onClear}
+      describeError={describeError}
       t={t}
     />
   )

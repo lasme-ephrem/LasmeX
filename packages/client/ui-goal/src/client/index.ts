@@ -15,6 +15,7 @@ import type {} from 'lasmex-api-remotes/client'
 import type {} from 'lasmex-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from 'lasmex-client-locale/client'
+import type { WireError } from 'lasmex-client-locale/client'
 // Type-only: the `goal` SessionProjectionMap key merge (single source, the domain's pure outlet).
 import type { GoalProjection, GoalRef } from 'lasmex-goal/client'
 import type { GoalActionResult, GoalBarActions } from './slots.ts'
@@ -56,6 +57,8 @@ export function apply(ctx: ClientContext): void {
 
   const sessions = ctx.sessions
 
+  const describeError = (error: WireError): string => ctx.locale.describeError(error)
+
   /** The session's current projected CAS ref, read at verb call time (no staleness fence: the RPC's CAS is the guard). */
   const refOf = (sessionId: SessionId): GoalRef | undefined => {
     const face = sessions.binding(sessionId)?.session.projections.faceOf('goal')
@@ -95,6 +98,7 @@ export function apply(ctx: ClientContext): void {
         if (ref === undefined) return noCurrentGoal
         return await ctx.remote.goals.clear(sessionId, ref)
       },
+      describeError,
     }),
   }, GoalDock))
 }

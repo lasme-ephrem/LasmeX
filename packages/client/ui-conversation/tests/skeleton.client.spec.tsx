@@ -16,6 +16,7 @@ import type { ClientContext } from 'lasmex-client-runtime/client'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { en as commonEn } from 'lasmex-client-locale/src/locales/en.ts'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError } from 'lasmex-client-locale/src/client/describe-error.ts'
 import { createChatStore } from '../src/client/stores.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import { en, zh } from '../src/client/locales.ts'
@@ -210,6 +211,7 @@ function mount(
           stop={stop}
           command={() => Promise.resolve(true)}
           t={t}
+          describeError={error => describeError(error, t)}
           renderSlot={((key: string, seatOwner: object) => {
             // The bar's own seats: recorded so a case can assert what share
             // each tool-row control received.

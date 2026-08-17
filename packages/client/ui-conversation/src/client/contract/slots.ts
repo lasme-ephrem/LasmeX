@@ -13,6 +13,7 @@ import type {
 import type { MarkdownFileMentions } from 'lasmex-client-ui-primitives'
 import type { MessageId } from 'lasmex-client-connection/client'
 import type {} from 'lasmex-client-ui-layout/client'
+import type { WireError } from 'lasmex-client-locale/client'
 import type { ComposerBlock } from '../input/blocks.ts'
 import type {
   ComposerKeyboard, DraftAttachmentId, EditSelection, InputActions, InputNotice, InputState,
@@ -509,6 +510,11 @@ export interface ComposerBarInjected {
   toggleCommandMenu: ((selection: EditSelection) => void) | undefined
   /** Cancel the in-flight turn; absent with the session. */
   stop: (() => void) | undefined
+  /**
+   * Present one wire error through the active locale's error catalog (the
+   * locale service face, injected so the bundle stays import-pure).
+   */
+  describeError: (error: WireError) => string
   /**
    * Submit one slash-command line against this session's agent (the chrome
    * controls' write path — the permission chip submits `/permission <preset>`);

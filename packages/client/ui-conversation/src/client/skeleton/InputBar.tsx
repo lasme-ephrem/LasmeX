@@ -45,7 +45,7 @@ export type InputBarProps = ComposerBarProps
 
 export function InputBar({
   useSession, useInput, inputActions, keyboard, addImages, removeImage, draftImages,
-  resolveSubmitMode, toggleCommandMenu, stop, command, t,
+  resolveSubmitMode, toggleCommandMenu, stop, command, t, describeError,
   renderSlot, useNotices, useLexicon, useMenuLauncher,
   useProjection, sessionId, variant, disabled: inert = false, blocked,
   workspacePickerOpen = false, onRequestWorkspace,
@@ -94,14 +94,14 @@ export function InputBar({
   // and the user resubmits. A remount over a session whose machine still holds
   // an unresolved promptError deliberately re-announces it once — the failure
   // is still pending, and a transient banner is its only surface. Attachment
-  // rejections show product copy keyed by the wire reason; other codes are
-  // developer-facing and keep the raw message plus code.
+  // rejections show product copy keyed by the wire reason; other codes present
+  // through the locale service's error catalog.
   useEffect(() => {
     if (promptError === null) return
     showToast(promptError.error.code === 'attachment-error'
       ? attachmentErrorText(t, promptError.error.details.reason, imageLimits)
-      : `${promptError.error.message} (${promptError.error.code})`)
-  }, [promptError, showToast, t, imageLimits])
+      : describeError(promptError.error))
+  }, [promptError, showToast, t, describeError, imageLimits])
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
   const cardRef = useRef<HTMLDivElement | null>(null)
   const dragDepthRef = useRef(0)
