@@ -235,7 +235,13 @@ export function nextResolvingIssueStatus(currentStatus, command) {
 }
 
 function stripIgnoredMarkdown(body) {
-  const lines = body.replace(/<!--[\s\S]*?-->/g, '').split(/\r?\n/)
+  const lines = body
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // HTML links are not same-repository references: their anchor text (for
+    // example Dependabot's `<a href=".../issues/5199">#5199</a>`) must not be
+    // parsed as a bare `#5199` reference to this repository.
+    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, '')
+    .split(/\r?\n/)
   const kept = []
   let fence = null
   for (const line of lines) {
