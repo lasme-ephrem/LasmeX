@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-08-17-fix-ci-e2e-keyless.md
-2026-08-17-fix-ci-e2e-keyless.md: 7a84fd188380705be90fa6ef3d2af7ce02a898d1
-2026-08-17-fix-ci-e2e-keyless.zh.md: c6828e715a176ae8b82ed51047fd6c0edcc59131
+2026-08-17-fix-ci-e2e-keyless.md: 5ba5fec1197956fb248ebe80c05db587df384176
+2026-08-17-fix-ci-e2e-keyless.zh.md: 1b84fa24fde031a953b35fbd07c4c9ec38ee973f
