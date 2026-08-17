@@ -38,3 +38,6 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+# Fichiers de travail non versionnés (audit + plan extrait de Codex)
+plan/codex.md
+plan/audit-etat-lasmex.md
