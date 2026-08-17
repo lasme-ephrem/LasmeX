@@ -606,6 +606,7 @@ function docSyncLeafGates(options: {
     pnpmScript('translation-prompt', 'verify-translation-prompt', { label: 'translation prompt' }),
     pnpmScript('translation-pairing', 'verify-translation-pairing', { label: 'translation pairing' }),
     pnpmScript('french-docs', 'verify-french-docs', { label: 'French documentation parity' }),
+    pnpmScript('client-i18n', 'verify-client-i18n', { label: 'client UI i18n' }),
     pnpmScript('doc-budgets', 'verify-doc-budgets', { label: 'doc budgets' }),
     pnpmExec('docs-site-projection', ['vitest', 'run', 'scripts/project-doc-site.spec.ts', 'scripts/verify-doc-site-fragments.spec.ts'], {
       label: 'documentation site checks',

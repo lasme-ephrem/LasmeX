@@ -106,6 +106,8 @@ export type TrajectoryKey =
   | 'usage.output'
   | 'usage.thisRequest'
   | 'usage.sessionCumulative'
+  | 'usage.tokenCount'
+  | 'usage.tokenRate'
   | 'request.optionsNotRecorded'
   | 'request.optionsJson'
   | 'json.copyValue'
@@ -294,6 +296,8 @@ export const en: Record<TrajectoryKey, string> = {
   'usage.output': 'Output',
   'usage.thisRequest': 'This request',
   'usage.sessionCumulative': 'Session cumulative',
+  'usage.tokenCount': '{count} tok',
+  'usage.tokenRate': '{rate} tok/s',
   'request.optionsNotRecorded': 'Options not recorded',
   'request.optionsJson': 'Request options JSON',
   'json.copyValue': 'Copy value',
@@ -473,6 +477,8 @@ export const fr: Record<TrajectoryKey, string> = {
   'usage.output': 'Sortie',
   'usage.thisRequest': 'Cette requête',
   'usage.sessionCumulative': 'Cumul de la session',
+  'usage.tokenCount': '{count} tok',
+  'usage.tokenRate': '{rate} tok/s',
   'request.optionsNotRecorded': 'Options non enregistrées',
   'request.optionsJson': 'Options de la requête au format JSON',
   'json.copyValue': 'Copier la valeur',
@@ -652,6 +658,8 @@ export const zh: Record<TrajectoryKey, string> = {
   'usage.output': '输出',
   'usage.thisRequest': '本次请求',
   'usage.sessionCumulative': '会话累计',
+  'usage.tokenCount': '{count} tok',
+  'usage.tokenRate': '{rate} tok/s',
   'request.optionsNotRecorded': '未记录请求选项',
   'request.optionsJson': '请求选项 JSON',
   'json.copyValue': '复制值',

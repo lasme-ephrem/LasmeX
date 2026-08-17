@@ -347,7 +347,7 @@ function throughput(metrics: AssistantMetricDetail, t: TrajectoryTranslate): str
   if (metrics.completedTime === null) return t('state.pending')
   const generationSeconds = (metrics.completedTime - metrics.firstTokenTime) / 1_000
   if (generationSeconds <= 0) return t('state.durationTooShort')
-  return `${(metrics.outputTokens / generationSeconds).toFixed(1)} tok/s`
+  return t('usage.tokenRate', { rate: (metrics.outputTokens / generationSeconds).toFixed(1) })
 }
 
 function AssistantTimingPanel({ metrics, t }: { metrics: AssistantMetricDetail; t: TrajectoryTranslate }) {
@@ -708,18 +708,18 @@ function TokenRows({ cell, t }: { cell: TrajectoryCellProps; t: TrajectoryTransl
     <>
       <div>
         <dt>{t('usage.tokens')}</dt>
-        <dd>{cell.output === undefined ? '—' : `${cell.output} tok`}</dd>
+        <dd>{cell.output === undefined ? '—' : t('usage.tokenCount', { count: cell.output })}</dd>
       </div>
       {cell.think !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.reasoning')}</dt>
-          <dd>{cell.think} tok</dd>
+          <dd>{t('usage.tokenCount', { count: cell.think })}</dd>
         </div>
       )}
       {content !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.content')}</dt>
-          <dd>{content} tok</dd>
+          <dd>{t('usage.tokenCount', { count: content })}</dd>
         </div>
       )}
     </>
@@ -744,39 +744,39 @@ function UsageRows({ usage, t }: { usage: TrajectoryUsage | undefined; t: Trajec
   return (
     <dl className={css.overview}>
       {totalInput !== undefined && (
-        <div><dt>{t('usage.input')}</dt><dd>{totalInput} tok</dd></div>
+        <div><dt>{t('usage.input')}</dt><dd>{t('usage.tokenCount', { count: totalInput })}</dd></div>
       )}
       {usage.cacheRead !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.cached')}</dt>
-          <dd>{usage.cacheRead} tok</dd>
+          <dd>{t('usage.tokenCount', { count: usage.cacheRead })}</dd>
         </div>
       )}
       {usage.cacheWrite !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.cacheCreated')}</dt>
-          <dd>{usage.cacheWrite} tok</dd>
+          <dd>{t('usage.tokenCount', { count: usage.cacheWrite })}</dd>
         </div>
       )}
       {usage.input !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.other')}</dt>
-          <dd>{usage.input} tok</dd>
+          <dd>{t('usage.tokenCount', { count: usage.input })}</dd>
         </div>
       )}
       {usage.output !== undefined && (
-        <div><dt>{t('usage.output')}</dt><dd>{usage.output} tok</dd></div>
+        <div><dt>{t('usage.output')}</dt><dd>{t('usage.tokenCount', { count: usage.output })}</dd></div>
       )}
       {usage.reasoning !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.reasoning')}</dt>
-          <dd>{usage.reasoning} tok</dd>
+          <dd>{t('usage.tokenCount', { count: usage.reasoning })}</dd>
         </div>
       )}
       {otherOutput !== undefined && (
         <div className={css.requestTokenDetail}>
           <dt>{t('usage.content')}</dt>
-          <dd>{otherOutput} tok</dd>
+          <dd>{t('usage.tokenCount', { count: otherOutput })}</dd>
         </div>
       )}
     </dl>

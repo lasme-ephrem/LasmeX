@@ -1319,9 +1319,9 @@ describe('ChatView', () => {
     })
 
     expect(view.queryByText('正在压缩…')).toBeNull()
-    expect(view.queryByText('上下文已压缩')).toBeNull()
+    expect(view.getByText('上下文已压缩')).toBeTruthy()
     expect(view.getByText('已压缩 16 条历史记录（约 11309 tokens）')).toBeTruthy()
-    const row = view.getByRole('button', { name: /compact/ })
+    const row = view.getByRole('button', { name: /上下文已压缩/ })
     expect(row.getAttribute('aria-expanded')).toBe('false')
     expect(row.querySelector('[data-compaction-icon="context"]')).not.toBeNull()
     expect(row.querySelector('[data-compaction-disclosure="collapsed"]')).not.toBeNull()

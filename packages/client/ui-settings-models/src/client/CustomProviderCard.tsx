@@ -198,7 +198,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           className={styles['input']}
           type="text"
           value={route}
-          placeholder="acme-gateway"
+          placeholder={t('customRoutePlaceholder')}
           aria-label={t('customRoute')}
           disabled={profileDisabled}
           onChange={(event) => { setRoute(event.target.value) }}
@@ -227,7 +227,7 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           className={styles['input']}
           type="text"
           value={baseURL}
-          placeholder="https://gateway.example/v1"
+          placeholder={t('baseUrlPlaceholder')}
           aria-label={t('baseUrl')}
           disabled={profileDisabled}
           onChange={(event) => { setBaseURL(event.target.value) }}
