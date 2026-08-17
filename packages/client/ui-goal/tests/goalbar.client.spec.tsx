@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { GoalSnapshot } from 'lasmex-goal/client'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError } from 'lasmex-client-locale/src/client/describe-error.ts'
 import { GoalBar } from '../src/client/GoalBar.tsx'
 import type { GoalActionResult, GoalBarActions } from '../src/client/slots.ts'
 import { zh } from '../src/client/locales.ts'
@@ -34,6 +35,7 @@ function makeActions() {
     onPause: vi.fn<GoalBarActions['onPause']>(() => Promise.resolve({ ok: true, value: undefined })),
     onResume: vi.fn<GoalBarActions['onResume']>(() => Promise.resolve({ ok: true, value: undefined })),
     onClear: vi.fn<GoalBarActions['onClear']>(() => Promise.resolve({ ok: true, value: undefined })),
+    describeError: (error: Parameters<GoalBarActions['describeError']>[0]) => describeError(error, t),
   } satisfies GoalBarActions
 }
 
@@ -178,14 +180,14 @@ describe('GoalBar', () => {
 
   it('keeps the edit draft open and reports a failed save', async () => {
     const actions = makeActions()
-    actions.onEdit.mockResolvedValue({ ok: false, error: { code: 'agent-busy', message: 'stale revision', details: {} } })
+    actions.onEdit.mockResolvedValue({ ok: false, error: { code: 'agent-busy', message: 'stale revision', details: { reason: 'stale revision' } } })
     render(<GoalBar goal={makeGoal()} {...actions} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '编辑目标' }))
     const box = screen.getByRole('textbox', { name: '目标内容' })
     fireEvent.change(box, { target: { value: 'retry this draft' } })
     fireEvent.click(screen.getByRole('button', { name: '保存目标' }))
 
-    expect((await screen.findByRole('alert')).textContent).toBe('stale revision (agent-busy)')
+    expect((await screen.findByRole('alert')).textContent).toBe('代理忙：stale revision。')
     expect(screen.getByRole('textbox', { name: '目标内容' })).toHaveProperty('value', 'retry this draft')
   })
 
@@ -194,12 +196,12 @@ describe('GoalBar', () => {
     actions.onResume.mockResolvedValue({ ok: false, error: { code: 'internal', message: 'resume failed', details: {} } })
     const { rerender } = render(<GoalBar goal={makeGoal({ phase: 'paused' })} {...actions} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '恢复目标' }))
-    expect((await screen.findByRole('alert')).textContent).toBe('resume failed (internal)')
+    expect((await screen.findByRole('alert')).textContent).toBe('内部错误：resume failed')
 
-    actions.onClear.mockResolvedValue({ ok: false, error: { code: 'agent-busy', message: 'clear failed', details: {} } })
+    actions.onClear.mockResolvedValue({ ok: false, error: { code: 'agent-busy', message: 'clear failed', details: { reason: 'clear failed' } } })
     rerender(<GoalBar goal={makeGoal()} {...actions} t={t} />)
     fireEvent.click(screen.getByRole('button', { name: '清除目标' }))
-    expect((await screen.findByRole('alert')).textContent).toBe('clear failed (agent-busy)')
+    expect((await screen.findByRole('alert')).textContent).toBe('代理忙：clear failed。')
     expect(screen.getByText('Ship the redesign')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: '清除目标' }))
     await waitFor(() => { expect(actions.onClear).toHaveBeenCalledTimes(2) })

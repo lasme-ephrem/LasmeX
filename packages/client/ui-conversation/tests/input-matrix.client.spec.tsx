@@ -15,6 +15,7 @@ import type { ClientContext, ConversationSnapshot, SessionId } from 'lasmex-clie
 import type { SubmitOutcome } from 'lasmex-client-ui-input-trigger/client'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError } from 'lasmex-client-locale/src/client/describe-error.ts'
 import { SessionInputShell } from '../src/client/input/facade.ts'
 import { InputBar } from '../src/client/skeleton/InputBar.tsx'
 import type { InputBarProps } from '../src/client/skeleton/InputBar.tsx'
@@ -63,6 +64,7 @@ function mountBar(shell: SessionInputShell, over?: { running?: boolean; disabled
     command: () => Promise.resolve(true),
     // Mirrors the real lookup chain (conversation namespace, then common).
     t: makeTranslate(zh, commonZh),
+    describeError: error => describeError(error, makeTranslate(zh, commonZh)),
     variant: 'composer',
   }
   return render(<InputBar {...props} />)

@@ -28,9 +28,12 @@ import {
 import type { LanguageRowInjected } from './LanguageRow.tsx'
 import { LanguageRow } from './LanguageRow.tsx'
 import { createLanguageRowStore } from './settings-store.ts'
+import { describeError } from './describe-error.ts'
+import type { WireError } from './describe-error.ts'
 
 export type { LanguageRowComponentProps, LanguageRowInjected } from './LanguageRow.tsx'
 export type { LanguageOptionRow, LanguageRowState } from './settings-store.ts'
+export type { WireError } from './describe-error.ts'
 export type { CommonKey } from '../locales/index.ts'
 export type { LocaleId, LocaleSettings } from '../locale-settings.ts'
 
@@ -38,6 +41,7 @@ export type { LocaleId, LocaleSettings } from '../locale-settings.ts'
 // the seat); re-exported here so dictionary owners import one package.
 // TranslateNS<'model'> is the namespace-addressed developer-facing form.
 export type { Translate, TranslateNS } from 'lasmex-client-ui-slots'
+export { describeError } from './describe-error.ts'
 
 declare module 'lasmex-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -272,6 +276,18 @@ export class LocaleRuntime {
       return t
     }
     return t
+  }
+
+  /**
+   * Present one wire error through the active locale's common error catalog —
+   * the service face of {@link describeError} (cross-plugin collaboration goes
+   * through the service, never a value import; client bundle purity gate).
+   * Unknown wire codes fall back to the raw `message (code)` form.
+   * @param error - the wire error (discriminated RpcError or a generic carrier failure).
+   * @returns the localized message.
+   */
+  describeError(error: WireError): string {
+    return describeError(error, this.bind(COMMON_NS))
   }
 
   private translate(ns: string, key: string, params?: Record<string, unknown>): string {

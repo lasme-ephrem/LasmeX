@@ -6,7 +6,7 @@
  * from the session's CURRENT projected value at call time (no fence — the
  * Remote method's compare-and-set is the guard), a missing projection short-circuits
  * to the no-current-goal error without touching the wire, and a Remote failure
- * reaches the strip verbatim. Registration disposal rides the
+ * presents through the injected locale error presenter. Registration disposal rides the
  * plugin fiber (HMR safety). The node half and the invariant companion are
  * exercised over the same Context.
  */
@@ -20,6 +20,7 @@ import type { GoalProjection } from 'lasmex-goal/client'
 import { LocaleRuntime } from 'lasmex-client-locale/client'
 import { makeTranslate } from 'lasmex-client-test-runtime'
 import { zh as commonZh } from 'lasmex-client-locale/src/locales/zh.ts'
+import { describeError as describeErrorFromCatalog } from 'lasmex-client-locale/src/client/describe-error.ts'
 import type { GoalBarActions } from '../src/client/slots.ts'
 import { apply, inject } from '../src/client/index.ts'
 import { GoalDock } from '../src/client/GoalBar.tsx'
@@ -211,13 +212,14 @@ describe('GoalDock adapter', () => {
   it('renders the projected goal snapshot and nothing for absent/null', () => {
     const projection = makeProjection()
     const useProjection = vi.fn(() => projection)
+    const t = makeTranslate(zh, commonZh)
     const actions: GoalBarActions = {
       onEdit: () => Promise.resolve({ ok: true, value: undefined }),
       onPause: () => Promise.resolve({ ok: true, value: undefined }),
       onResume: () => Promise.resolve({ ok: true, value: undefined }),
       onClear: () => Promise.resolve({ ok: true, value: undefined }),
+      describeError: error => describeErrorFromCatalog(error, t),
     }
-    const t = makeTranslate(zh, commonZh)
     const dockProps = (up: () => GoalProjection | null | undefined) =>
       ({ useProjection: up, ...actions, t }) as unknown as Parameters<typeof GoalDock>[0]
     const shown = render(<GoalDock {...dockProps(useProjection)} />)

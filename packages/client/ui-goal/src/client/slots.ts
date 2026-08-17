@@ -8,6 +8,7 @@
  */
 
 import type { RemoteResult } from 'lasmex-typert-protocol'
+import type { WireError } from 'lasmex-client-locale/client'
 
 /**
  * Settled outcome of one goal mutation, rendered inline by the strip. The
@@ -29,4 +30,9 @@ export interface GoalBarActions {
   onResume: () => Promise<GoalActionResult>
   /** Clear the current goal (tombstone). */
   onClear: () => Promise<GoalActionResult>
+  /**
+   * Present one wire error through the active locale's error catalog (the
+   * locale service face, injected so the bundle stays import-pure).
+   */
+  describeError: (error: WireError) => string
 }

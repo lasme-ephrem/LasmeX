@@ -10,6 +10,7 @@ import type {} from 'lasmex-client-ui-settings/client'
 import type {} from 'lasmex-client-ui-layout/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
 import type {} from 'lasmex-client-locale/client'
+import type { WireError } from 'lasmex-client-locale/client'
 import type { ViewTab } from './contract/views.ts'
 import type {
   ApprovalWait, ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected, ComposerBarInjected,
@@ -275,6 +276,8 @@ export function apply(ctx: Context): void {
   // Session-maybe: with no current session the machine faces are absent and
   // the hooks compartment binds static empty sources (module constants, so
   // observableHook caching and hook order stay stable across transitions).
+  // The locale error presenter rides the same inject (service face, session-independent).
+  const describeError = (error: WireError): string => ctx.locale.describeError(error)
   slots.register({
     name: 'conversation.composer.bar',
     locale: NS,
@@ -297,6 +300,7 @@ export function apply(ctx: Context): void {
           toggleCommandMenu: undefined,
           stop: undefined,
           command: undefined,
+          describeError,
           hooks: { notices: ABSENT_NOTICES, lexicon: ABSENT_LEXICON, menuLauncher: ABSENT_MENU_LAUNCHER },
         }
       }
@@ -345,6 +349,7 @@ export function apply(ctx: Context): void {
             // Stop failure surfaces via snapshot.promptError; nothing to restore.
           })
         },
+        describeError,
         command: async (line) => {
           const session = sessions.binding(sessionId)?.session
           if (session === undefined) return false
